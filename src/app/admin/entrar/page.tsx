@@ -1,4 +1,5 @@
 import { Logo } from "@/components/Logo";
+import { PasswordInput } from "@/components/RevealInput";
 import { SubmitButton } from "@/components/SubmitButton";
 import { signIn } from "./actions";
 
@@ -19,7 +20,7 @@ export default async function SignIn({ searchParams }: Props) {
         </label>
         <label className="field">
           <span>Contraseña</span>
-          <input className="input" name="password" type="password" autoComplete="current-password" required autoFocus />
+          <PasswordInput name="password" autoComplete="current-password" required autoFocus />
         </label>
         <SubmitButton className="btn btn-dark" pending="Entrando…">Entrar</SubmitButton>
         <small className="muted">Queda abierto en este celular por 6 meses.</small>

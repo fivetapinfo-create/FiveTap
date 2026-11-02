@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
 import { CopyButton } from "@/components/CopyButton";
+import { SecretValue } from "@/components/RevealInput";
 import { Logo } from "@/components/Logo";
 import { SubmitButton } from "@/components/SubmitButton";
 import { human, nextCharge, todayPanama } from "@/lib/agenda";
@@ -169,6 +170,14 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
           </dl>
           <div className="msg">
             <a className="btn btn-ghost btn-sm" style={{ width: "fit-content" }} href={help("Quiero cambiar un contacto del local en FiveTap.")}>Pedir un cambio</a>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-head"><h2>Tu acceso</h2></div>
+          <div className="msg">
+            <p className="muted">Tu FiveTap no usa contraseña: entras con este enlace privado. Guárdalo y no lo compartas fuera de tu equipo.</p>
+            <SecretValue value={`${SITE_URL}${home}`} label="Copiar mi enlace" />
           </div>
         </section>
 
