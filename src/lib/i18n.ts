@@ -1,0 +1,88 @@
+// Copy for the guest-facing pages. Tourists matter in Panama, so the page
+// follows the phone's language: Spanish by default, English otherwise.
+
+export type Lang = "es" | "en";
+
+export function langFrom(acceptLanguage: string | null): Lang {
+  const first = (acceptLanguage || "").split(",")[0]?.trim().toLowerCase() || "";
+  return first && !first.startsWith("es") ? "en" : "es";
+}
+
+export const COPY = {
+  es: {
+    question: "¿Cómo estuvo tu experiencia?",
+    review: "Dejar reseña en Google",
+    manager: "Hablar con el gerente",
+    formTitle: "Escríbele al gerente",
+    formLead: "Lo recibe al instante. Nadie más lo ve.",
+    nameLabel: "Tu nombre (opcional)",
+    phoneLabel: "Tu WhatsApp (opcional), para que el gerente te responda",
+    messageLabel: "Mensaje",
+    messagePlaceholder: "Cuéntanos qué pasó o qué podemos mejorar…",
+    send: "Enviar mensaje",
+    sending: "Enviando…",
+    back: "Volver",
+    thanksTitle: "¡Gracias! Ya lo recibieron.",
+    thanksBody: "El equipo leerá tu mensaje en minutos. Si quieres, también puedes dejar una reseña.",
+    thanksReview: "Dejar reseña en Google",
+    errorShort: "Escribe un mensaje un poco más largo.",
+    errorGeneric: "No se pudo enviar. Inténtalo de nuevo.",
+    inactiveTitle: "Esta placa no está activa",
+    inactiveBody: "Pídele al equipo que la revise. ¡Gracias por tu visita!",
+    club: "Recibe promociones de este lugar",
+    clubTitle: "Únete al club",
+    clubLead: "Promociones y novedades directo a tu WhatsApp. Sin spam.",
+    clubName: "Tu nombre",
+    clubPhone: "Tu WhatsApp",
+    clubBirthday: "Tu cumpleaños (opcional)",
+    clubDay: "Día",
+    clubMonth: "Mes",
+    clubConsent: "Acepto recibir promociones de {name} por WhatsApp. Puedo darme de baja cuando quiera.",
+    clubJoin: "Unirme",
+    clubPrivacy: "Privacidad",
+    clubThanksTitle: "¡Listo, ya eres parte!",
+    clubThanksBody: "Te escribirán cuando haya algo especial para ti.",
+    clubErrorPhone: "Revisa tu número de WhatsApp.",
+    clubErrorConsent: "Marca la casilla para unirte.",
+    months: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+  },
+  en: {
+    question: "How was your experience?",
+    review: "Leave a Google review",
+    manager: "Talk to the manager",
+    formTitle: "Message the manager",
+    formLead: "They get it instantly. No one else sees it.",
+    nameLabel: "Your name (optional)",
+    phoneLabel: "Your WhatsApp (optional), so the manager can reply",
+    messageLabel: "Message",
+    messagePlaceholder: "Tell us what happened or what we could do better…",
+    send: "Send message",
+    sending: "Sending…",
+    back: "Back",
+    thanksTitle: "Thank you! They got it.",
+    thanksBody: "The team will read your message within minutes. You can also leave a review.",
+    thanksReview: "Leave a Google review",
+    errorShort: "Please write a slightly longer message.",
+    errorGeneric: "Couldn't send. Please try again.",
+    inactiveTitle: "This tag isn't active",
+    inactiveBody: "Please let the staff know. Thanks for visiting!",
+    club: "Get offers from this place",
+    clubTitle: "Join the club",
+    clubLead: "Offers and news straight to your WhatsApp. No spam.",
+    clubName: "Your name",
+    clubPhone: "Your WhatsApp",
+    clubBirthday: "Your birthday (optional)",
+    clubDay: "Day",
+    clubMonth: "Month",
+    clubConsent: "I agree to receive offers from {name} on WhatsApp. I can unsubscribe anytime.",
+    clubJoin: "Join",
+    clubPrivacy: "Privacy",
+    clubThanksTitle: "You're in!",
+    clubThanksBody: "They'll message you when there's something special for you.",
+    clubErrorPhone: "Please check your WhatsApp number.",
+    clubErrorConsent: "Tick the box to join.",
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  },
+} as const;
+
+export type Copy = (typeof COPY)[Lang];

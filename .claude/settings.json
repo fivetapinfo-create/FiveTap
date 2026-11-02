@@ -1,0 +1,23 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": { "source": { "source": "github", "repo": "anthropics/claude-plugins-official" } },
+    "openai-codex": { "source": { "source": "github", "repo": "openai/codex-plugin-cc" } }
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "codex@openai-codex": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "command -v codex >/dev/null 2>&1 || npm install -g @openai/codex >/dev/null 2>&1 || true", "timeout": 120 }
+        ]
+      }
+    ]
+  }
+}
