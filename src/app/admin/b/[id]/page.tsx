@@ -72,9 +72,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <div className="row">
             <a className="btn btn-ghost btn-sm" href="#app">App del dueño</a>
             {preview && <a className="btn btn-ghost btn-sm" href={preview} target="_blank" rel="noreferrer">Ver página del cliente</a>}
-            <Link className="btn btn-ghost btn-sm" href={`/admin/b/${b.id}/print?formato=cuadrada`}>Stickers placa</Link>
-            <Link className="btn btn-ghost btn-sm" href={`/admin/b/${b.id}/print?formato=tarjeta`}>Stickers tarjeta</Link>
-            <Link className="btn btn-dark btn-sm" href={`/admin/b/${b.id}/print`}>Imprimir QR</Link>
+            <a className="btn btn-dark btn-sm" href="#placas">Placas NFC</a>
           </div>
         </div>
       </div>
@@ -93,18 +91,19 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <div className="panel-head"><h2>Siguientes pasos</h2></div>
           <div className="next-steps">
             <div>
-              <b>1. Imprime los QR</b>
-              <p>Una tarjeta por {v.spot.toLowerCase()}, con su logo. Lista para la imprenta.</p>
-              <Link className="btn btn-dark btn-sm" style={{ width: "fit-content" }} href={`/admin/b/${b.id}/print`}>Imprimir QR</Link>
+              <b>1. Graba las placas NFC</b>
+              <p>Con la app gratis NFC Tools: Escribir → URL → pega el enlace de cada placa (abajo) y acerca la placa.</p>
+              <a className="btn btn-dark btn-sm" style={{ width: "fit-content" }} href="#placas">Ver enlaces</a>
             </div>
             <div>
-              <b>2. Graba las placas NFC</b>
-              <p>Con la app gratis NFC Tools: Escribir → URL → pega el enlace de cada placa (abajo).</p>
-            </div>
-            <div>
-              <b>3. Pruébalo</b>
+              <b>2. Pruébalo</b>
               <p>Abre la página como la verá el cliente. No cuenta en las estadísticas.</p>
               {preview && <a className="btn btn-ghost btn-sm" style={{ width: "fit-content" }} href={preview} target="_blank" rel="noreferrer">Abrir página</a>}
+            </div>
+            <div>
+              <b>3. Instala la app del dueño</b>
+              <p>FiveTap Business en su celular: el dueño escanea el código desde tu pantalla.</p>
+              <a className="btn btn-ghost btn-sm" style={{ width: "fit-content" }} href="#app">App del dueño</a>
             </div>
           </div>
         </section>
@@ -234,9 +233,9 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         )}
       </section>
 
-      <section className="panel">
+      <section className="panel" id="placas">
         <div className="panel-head">
-          <h2>Placas NFC y QR · {tags.length}</h2>
+          <h2>Placas NFC · {tags.length}</h2>
           <form action={addTags} className="row">
             <input type="hidden" name="business_id" value={b.id} />
             <input className="input" name="count" type="number" min={1} max={80} defaultValue={1} style={{ width: 76, minHeight: 36, padding: "6px 10px" }} aria-label="Cantidad" />
@@ -252,7 +251,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 <th>Enlace para grabar en el NFC</th>
                 <th className="right">Toques</th>
                 <th className="right">A Google</th>
-                <th>QR</th>
+                <th>QR de respaldo</th>
                 <th />
               </tr>
             </thead>

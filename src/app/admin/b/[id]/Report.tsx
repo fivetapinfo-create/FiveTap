@@ -61,7 +61,7 @@ function reportText(business: string, p: ReportPeriod, stars: string, count: str
   const lines = [
     `Hola 👋 Este es el reporte de FiveTap de *${business}* — ${p.label}.`,
     "",
-    `📲 *${p.scans}* ${p.scans === 1 ? "cliente tocó o escaneó" : "clientes tocaron o escanearon"} la placa (${p.nfc} con NFC, ${p.qr} con QR).`,
+    `📲 *${p.scans}* ${p.scans === 1 ? "cliente tocó" : "clientes tocaron"} las placas.`,
     `⭐ *${p.reviews}* ${p.reviews === 1 ? "fue" : "fueron"} a dejar su reseña en Google${p.scans ? ` (${rate}% de los que la tocaron)` : ""}.`,
     `💬 *${p.feedback}* ${p.feedback === 1 ? "mensaje privado llegó" : "mensajes privados llegaron"} directo a ti, sin pasar por Google.`,
   ];

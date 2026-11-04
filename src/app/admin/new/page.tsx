@@ -15,7 +15,7 @@ export default async function NewBusiness({ searchParams }: Props) {
         <div className="admin-head" style={{ marginTop: 8 }}>
           <div>
             <h1>Nuevo negocio</h1>
-            <p>Cuatro datos. Las placas NFC y los QR se crean solos.</p>
+            <p>Cuatro datos. Las placas NFC se crean solas.</p>
           </div>
         </div>
       </div>

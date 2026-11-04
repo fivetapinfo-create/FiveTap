@@ -11,7 +11,7 @@ export default function Terms() {
       <p>Estos términos explican cómo funciona FiveTap para los negocios que lo contratan. Si firmaste un contrato con nosotros, el contrato manda sobre esta página.</p>
 
       <h2>1. Qué es FiveTap</h2>
-      <p>FiveTap instala placas y tarjetas con NFC y código QR en tu local. Tus clientes las tocan con el celular y pueden dejar una reseña en Google, escribirle en privado al gerente o unirse a tu club de clientes. Incluye una página privada con tus resultados y un reporte mensual.</p>
+      <p>FiveTap instala placas y tarjetas NFC en tu local. Tus clientes las tocan con el celular y pueden dejar una reseña en Google, escribirle en privado al gerente o unirse a tu club de clientes. Incluye una página privada con tus resultados y un reporte mensual.</p>
 
       <h2>2. Planes y precios</h2>
       <ul>

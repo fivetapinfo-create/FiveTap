@@ -55,7 +55,7 @@ export default async function Trial({ searchParams }: Props) {
         <ol className="trial-steps">
           <li><b>Hoy</b> Registras tu tarjeta en PayPal y te dejamos tu placa NFC de prueba. <b>Cobro de hoy: $0.</b></li>
           <li><b>Día 7</b> Vemos juntos cuántos clientes fueron a dejarte su reseña.</li>
-          <li><b>Día 8</b> Se cobra tu plan solo e instalamos <b>FiveTap Business</b> (la app para dueños, gerentes y encargados) y el resto de tus placas, <b>personalizadas con tu logo</b>.</li>
+          <li><b>Día 8</b> Se cobra tu plan solo e instalamos <b>FiveTap Business</b> (la app para dueños, gerentes y encargados) y el resto de tus placas NFC.</li>
         </ol>
         <p className="muted">¿No te convenció? Cancelas cuando quieras desde tu cuenta de PayPal o con un mensaje, y no se te cobra nada.</p>
       </section>

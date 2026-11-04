@@ -156,7 +156,7 @@ function Sign({ forWho, name, role }: { forWho: string; name: string; role: stri
   );
 }
 
-/** The client service contract (v2.0), ready to review, print in two copies and sign. */
+/** The client service contract (v3.0), ready to review, print in two copies and sign. */
 export async function contractPdf(c: ContractInput, p: Provider, logo: Buffer | null) {
   const t = contractTerms(c);
   const clauses = contractClauses(c, p);
@@ -184,7 +184,7 @@ export async function contractPdf(c: ContractInput, p: Provider, logo: Buffer | 
     ...(annual
       ? ([["Primer pago del plan", longDate(t.firstCharge)], ["Aviso de no renovación", `A más tardar el ${longDate(t.renewalNoticeBy)}`]] as [string, string][])
       : ([["Siguiente pago", longDate(t.renewal)]] as [string, string][])),
-    ["Piezas", [c.plaques ? `${c.plaques} placas clásicas 12 × 12 cm (préstamo)` : null, c.waiter_cards ? `${c.waiter_cards} tarjetas para meseros (propiedad del cliente)` : null].filter(Boolean).join(" · ") || "—"],
+    ["Piezas", [c.plaques ? `${c.plaques} placas NFC (préstamo)` : null, c.waiter_cards ? `${c.waiter_cards} tarjetas NFC para meseros (propiedad del cliente)` : null].filter(Boolean).join(" · ") || "—"],
     ["Forma de pago", t.automatic ? "PayPal (cobro automático)" : `${c.payment_method} (pago en cada fecha, con recordatorio)`],
     ["Reposición por pérdida o rotura", `${money(REPLACEMENT_FEE)} por pieza`],
   ];

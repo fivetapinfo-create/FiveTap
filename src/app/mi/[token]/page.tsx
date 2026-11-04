@@ -230,7 +230,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         <section className="panel">
           <div className="panel-head"><h2>Cómo funciona</h2></div>
           <ol className="owner-how">
-            <li><b>El cliente toca la placa</b> o escanea el QR con su celular. No descarga nada.</li>
+            <li><b>El cliente toca la placa</b> con su celular. No descarga nada.</li>
             <li><b>Si quedó contento</b>, va directo a dejarte su reseña en Google.</li>
             <li><b>Si algo no le gustó</b>, te escribe un mensaje privado que te llega aquí, antes de que se convierta en una mala reseña.</li>
             <li><b>Cada fin de mes</b> te enviamos tu recuento de reseñas. Cualquier duda, toca <b>Ayuda</b>.</li>

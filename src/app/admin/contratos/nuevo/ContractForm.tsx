@@ -236,7 +236,7 @@ export function ContractForm({ today, error }: { today: string; error?: string }
       <div className="form-section">
         <h3>6. Piezas y pago</h3>
         <div className="grid-2">
-          <Stepper name="plaques" label="Placas clásicas (12 × 12 cm)" value={plaques} onChange={setPlaques} />
+          <Stepper name="plaques" label="Placas NFC" value={plaques} onChange={setPlaques} />
           <Stepper name="waiter_cards" label={`Tarjetas meseros (${money(WAITER_CARD_PRICE)} c/u)`} value={cards} onChange={setCards} />
         </div>
         <div className="field">

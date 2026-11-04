@@ -18,7 +18,7 @@ export default async function ContractPage({ params }: Props) {
     ["Contacto", [c.phone, c.email].filter(Boolean).join(" · ") || "—"],
     ["Plan", `${PLANS[c.plan].label} · ${money(t.plan.price)} / ${t.plan.every}`],
     ["FiveTap Business", t.business ? "Incluido" : "No incluido (las placas llevan directo a Google)"],
-    ["Piezas", `${c.plaques} placas clásicas · ${c.waiter_cards} tarjetas de meseros (${money(WAITER_CARD_PRICE)} c/u)`],
+    ["Piezas", `${c.plaques} placas NFC · ${c.waiter_cards} tarjetas NFC de meseros (${money(WAITER_CARD_PRICE)} c/u)`],
     ["Día de instalación", `${longDate(c.start_date)} · se paga ${money(t.payAtInstall)} por ${c.payment_method}`],
     ["Prueba gratis", t.trialMode === "done" ? `Ya la hizo: del ${longDate(t.trialStart!)} al ${longDate(t.trialEnds!)}` : t.trialMode === "starts" ? `Del ${longDate(c.start_date)} al ${longDate(t.trialEnds!)}` : "Sin prueba"],
     ["Primer cobro del plan", longDate(t.firstCharge)],

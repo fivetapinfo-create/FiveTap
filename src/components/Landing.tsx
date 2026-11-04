@@ -38,7 +38,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
                 Tus clientes felices no dejan reseñas. <span>Ahora sí.</span>
               </h1>
               <p className="hero-sub muted-d rise" style={i(2)}>
-                Una placa con tu marca {vertical.where}. Un toque con el celular y tu cliente deja su reseña en Google en
+                Placas NFC premium {vertical.where}. Un toque con el celular y tu cliente deja su reseña en Google en
                 segundos. Si algo salió mal, te escribe a ti, no a Google.
               </p>
               <div className="hero-cta rise" style={i(3)}>
@@ -92,12 +92,12 @@ export function Landing({ vertical }: { vertical: Vertical }) {
               <div className="step">
                 <span className="step-n">1</span>
                 <h3>Lo instalamos</h3>
-                <p>En 30 minutos dejamos placas con tu logo {vertical.where}, conectadas a tu perfil de Google.</p>
+                <p>En 30 minutos dejamos placas NFC premium {vertical.where}, programadas con tu perfil de Google.</p>
               </div>
               <div className="step">
                 <span className="step-n">2</span>
                 <h3>Tus {vertical.guests} tocan</h3>
-                <p>Acercan el celular o escanean el QR. iPhone y Android, sin descargar nada.</p>
+                <p>Acercan el celular a la placa y listo. iPhone y Android, sin descargar nada.</p>
               </div>
               <div className="step">
                 <span className="step-n">3</span>
@@ -115,7 +115,8 @@ export function Landing({ vertical }: { vertical: Vertical }) {
               <h2>Lo necesario para que te elijan en Google. Nada más.</h2>
             </div>
             <div className="features">
-              <Feature icon={<Tap />} title="Placas NFC + QR con tu marca" text={`Con tu logo, ${vertical.where}. Si algo cambia, no reimprimimos nada.`} />
+              <Feature icon={<Tap />} title="Placas NFC premium" text={`Diseño elegante ${vertical.where}, programadas para tu local. Si algo cambia, las reprogramamos al instante.`} />
+              <Feature icon={<Pin />} title="Edición con tu marca" text="¿Las quieres con tu logo y tus colores? Las fabricamos a medida para tu local y cambiamos las que tienes." />
               <Feature icon={<Bell />} title="Quejas privadas al instante" text="“Hablar con el gerente” te avisa por email mientras el cliente sigue en el local." />
               <Feature icon={<Reply />} title="Respondemos tus reseñas" text="Cada reseña nueva recibe respuesta con el tono de tu marca." />
               <Feature icon={<Chart />} title="Reporte mensual" text="Toques, visitas a Google y reseñas nuevas, explicados en un mensaje." />
@@ -211,7 +212,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
             <div className="pieces">
               <div className="piece">
                 <h3>Placa para mesa o mostrador</h3>
-                <p className="muted">Con tu logo y QR. Ideal si tus clientes pagan en caja o tienes pocas mesas.</p>
+                <p className="muted">Placa NFC premium para mesa o mostrador. Ideal si tus clientes pagan en caja o tienes pocas mesas.</p>
                 <div className="price-row">
                   <span className="price price-sm num">$35</span>
                   <span className="price-unit">/ mes por placa</span>
@@ -225,7 +226,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
               </div>
               <div className="piece">
                 <h3>Tarjeta para meseros</h3>
-                <p className="muted">Pequeña, con cordón y el nombre de cada mesero. La presentan al traer la cuenta.</p>
+                <p className="muted">Tarjeta NFC con cordón: cada mesero la lleva y la presenta al traer la cuenta.</p>
                 <div className="price-row">
                   <s className="price-was price-was-sm num">$35</s>
                   <span className="price price-sm num">$25</span>
@@ -248,7 +249,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
               <ol className="trial-steps">
                 <li><b>Día 1</b> Te dejamos una <b>placa NFC de prueba</b> gratis y anotamos tus estrellas y reseñas actuales en Google. Registras tu tarjeta: hoy no se cobra nada.</li>
                 <li><b>Día 7</b> Revisamos contigo cuántos clientes fueron a dejarte su reseña.</li>
-                <li><b>Día 8</b> Se cobra tu plan solo e instalamos <b>FiveTap Business</b> (la app para dueños, gerentes y encargados) y el resto de tus placas, <b>personalizadas con tu logo</b>. Si no te convenció, cancelas antes y no pagas nada.</li>
+                <li><b>Día 8</b> Se cobra tu plan solo e instalamos <b>FiveTap Business</b> (la app para dueños, gerentes y encargados) y el resto de tus placas NFC. Si no te convenció, cancelas antes y no pagas nada.</li>
               </ol>
               <div>
                 <p className="muted">Pagas con tarjeta, PayPal, Yappy o transferencia.</p>
@@ -301,7 +302,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
 }
 
 const INCLUDED = [
-  "Placas y tarjetas NFC + QR con tu marca (hasta 10)",
+  "Placas y tarjetas NFC premium para tu local (hasta 10)",
   "Alertas privadas de quejas al instante",
   "Tu página privada con resultados y ranking de meseros",
   "Club de clientes con WhatsApp y cumpleaños",
@@ -311,11 +312,12 @@ const INCLUDED = [
 ];
 
 const FAQ: [string, string][] = [
-  ["¿Qué pasa después de los 7 días?", "El día 8 se cobra tu plan solo ($99 al mes o $948 al año) e instalamos FiveTap Business (la app para dueños, gerentes y encargados) y el resto de tus placas, personalizadas con tu logo. La instalación cuesta $150 en el plan mensual y es gratis en el anual. Si no te convenció, cancelas antes del día 8 y no pagas nada: solo retiramos la placa de prueba."],
+  ["¿Qué pasa después de los 7 días?", "El día 8 se cobra tu plan solo ($99 al mes o $948 al año) e instalamos FiveTap Business (la app para dueños, gerentes y encargados) y el resto de tus placas NFC. La instalación cuesta $150 en el plan mensual y es gratis en el anual. Si no te convenció, cancelas antes del día 8 y no pagas nada: solo retiramos la placa de prueba."],
   ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. A los 7 días lo revisamos juntos. Además tienes tu página privada con los números al día y cada mes te enviamos el reporte."],
   ["Tengo pocas mesas, ¿me sirve?", "Sí. Una placa en el mostrador por $35 al mes, o la oferta exclusiva de 2 placas por $60 en un solo pago."],
   ["¿Google permite pedir reseñas?", "Sí. Lo que Google no permite es filtrar solo las buenas o dar descuentos a cambio. Por eso FiveTap le muestra el botón de Google a todos, siempre."],
-  ["¿Mis clientes tienen que descargar algo?", "No. Acercan el celular a la placa (iPhone y Android) o escanean el QR. Se abre una página con dos botones."],
+  ["¿Mis clientes tienen que descargar algo?", "No. Acercan el celular a la placa (iPhone y Android) y se abre una página con dos botones."],
+  ["¿Puedo tener las placas con mi logo?", "Sí. Con tu plan activo, fabricamos tus placas a medida con tu logo y tus colores, y cambiamos las de tu local. Se cotiza según el diseño y la cantidad."],
   ["¿Qué pasa si un cliente está molesto?", "Toca “Hablar con el gerente” y te escribe en privado. Te llega al instante para resolverlo mientras sigue en el local."],
   ["¿Cómo funciona el club de clientes?", "Tus clientes pueden dejar su WhatsApp y su cumpleaños para recibir tus promociones. Es opcional y con su permiso. Tú ves la lista y la descargas en Excel."],
   ["¿Puedo cancelar?", "Sí, cuando quieras. El plan mensual lo cancelas desde PayPal o con un mensaje, y no se vuelve a cobrar. El anual cubre 12 meses completos. Al cancelar, retiramos las placas."],
