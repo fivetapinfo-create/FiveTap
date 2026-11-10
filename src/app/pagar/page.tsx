@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
 import { AcceptedPayments, Amex, Bank, Mastercard, PayPal, Visa, Yappy } from "@/components/PaymentBadges";
+import { PayOnline } from "@/components/PayOnline";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Pagar — FiveTap", robots: { index: false } };
@@ -64,6 +65,17 @@ export default async function Pay({ searchParams }: Props) {
           ))}
         </ul>
       </section>
+
+      {env.PAYPAL_CLIENT_ID && (
+        <section className="pay-method pay-method-pick rise" style={{ "--i": 2 } as React.CSSProperties}>
+          <div className="pay-method-head">
+            <h3>Pagar en línea</h3>
+            <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
+          </div>
+          <p className="muted">Plan anual, placas o tarjetas, en un solo pago. Para el plan mensual, entra a <Link href="/empezar" style={{ textDecoration: "underline" }}>Empezar</Link>.</p>
+          <PayOnline clientId={env.PAYPAL_CLIENT_ID} presetVenue={business} />
+        </section>
+      )}
 
       <section className="pay-method rise" style={{ "--i": 2 } as React.CSSProperties}>
         <div className="pay-method-head">

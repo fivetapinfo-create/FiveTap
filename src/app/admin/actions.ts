@@ -246,6 +246,13 @@ export async function resetOwnerLink(f: FormData) {
   redirect(`${back}?ok=enlace#app`);
 }
 
+/** An online payment from /pagar is now recorded in its business: drop it from the Agenda. */
+export async function markWebPaymentHandled(f: FormData) {
+  const id = str(f, "id", 60);
+  if (/^[0-9a-f-]{36}$/i.test(id)) await db().from("web_payments").update({ handled: true }).eq("id", id);
+  revalidatePath("/admin/agenda");
+}
+
 export async function renameTag(f: FormData) {
   const id = str(f, "business_id", 60);
   const label = str(f, "label", 40);

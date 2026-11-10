@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { PayPalSubscribe, type SignupDetails } from "./PayPalSubscribe";
+import { Receipt } from "./Receipt";
 
 // Reads the ref, so PayPal's button (rendered once) always checks the latest values.
 const isComplete = (d: SignupDetails) => d.venue.trim().length > 1 && d.owner.trim().length > 1 && d.phone.replace(/\D/g, "").length >= 7;
@@ -15,6 +16,7 @@ export function Signup({ clientId, planId, fallbackUrl, presetVenue }: { clientI
   const [owner, setOwner] = useState("");
   const [phone, setPhone] = useState("");
   const [state, setState] = useState<"form" | "saving" | "done" | "error">("form");
+  const [order, setOrder] = useState<string | null>(null);
   const latest = useRef<SignupDetails>({ venue, owner, phone });
   latest.current = { venue, owner, phone };
   const complete = isComplete(latest.current);
@@ -26,9 +28,14 @@ export function Signup({ clientId, planId, fallbackUrl, presetVenue }: { clientI
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...latest.current, subscriptionId }),
     }).catch(() => null);
+    if (res?.ok && subscriptionId) setOrder(subscriptionId);
     setState(res?.ok ? "done" : "error");
   }
 
+  // Paid on PayPal: the receipt prints. Registered without paying: a short confirmation.
+  if (state === "done" && order) {
+    return <Receipt data={{ item: "Plan mensual", detail: "10 placas · FiveTap Business", amount: 129, per: "/ mes", venue: venue.trim(), order, paidWith: "PayPal" }} />;
+  }
   if (state === "done") {
     return (
       <div className="alert alert-ok" role="status">

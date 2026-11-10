@@ -8,7 +8,7 @@ import type { Business, Payment } from "./types";
 // collect, trials ending, annual renewals, reports, contracts to prepare and
 // unread complaints. Each task can carry a ready-to-send WhatsApp message.
 
-export type TaskKind = "cobro" | "recordatorio" | "prueba" | "renovacion" | "reporte" | "contrato" | "mensajes" | "instalacion" | "animo" | "cancelacion" | "registro";
+export type TaskKind = "cobro" | "recordatorio" | "prueba" | "renovacion" | "reporte" | "contrato" | "mensajes" | "instalacion" | "animo" | "cancelacion" | "registro" | "pagoweb";
 
 export type Task = {
   id: string;
@@ -23,6 +23,8 @@ export type Task = {
   due?: string;
   /** A page in the panel to act on the task (e.g. create the business from a sign-up). */
   link?: { href: string; label: string };
+  /** An online payment to mark as registered once it's recorded in the business. */
+  webPaymentId?: string;
   /** Notification for whoever pays, sent by the daily cron to their FiveTap app. */
   push?: { title: string; body: string; url: string };
 };
@@ -121,12 +123,13 @@ export function nextCharge(
 
 /** Every task from `from` to `to` (inclusive), sorted by date. Overdue charges are pulled to `from`. */
 export async function agenda(from: string, to: string): Promise<Task[]> {
-  const [bizRes, payRes, conRes, unreadRes, signupRes] = await Promise.all([
+  const [bizRes, payRes, conRes, unreadRes, signupRes, webRes] = await Promise.all([
     db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at"),
     db().from("payments").select("business_id, kind, method, paid_at, amount").order("paid_at"),
     db().from("contracts").select("venue_name, start_date"),
     db().from("feedback").select("id", { count: "exact", head: true }).is("read_at", null),
     db().from("signups").select("id, venue_name, owner_name, phone, paypal_subscription_id").is("business_id", null).order("created_at"),
+    db().from("web_payments").select("id, paypal_order_id, item, amount, venue_name, payer_name").eq("handled", false).order("created_at"),
   ]);
   for (const r of [bizRes, payRes, conRes]) if (r.error) throw new Error(r.error.message);
   const businesses = (bizRes.data ?? []) as BizRow[];
@@ -292,12 +295,24 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     });
   }
 
+  // One-time payments made online from /pagar, until marked as registered.
+  for (const w of (webRes.data ?? []) as { id: string; paypal_order_id: string; item: string; amount: number; venue_name: string; payer_name: string | null }[]) {
+    tasks.push({
+      id: `web-${w.id}`,
+      kind: "pagoweb",
+      date: from,
+      title: `Pago en línea: ${money(Number(w.amount))} · ${w.venue_name}`,
+      detail: `${w.item}${w.payer_name ? ` · pagó ${w.payer_name}` : ""} · pedido PayPal ${w.paypal_order_id}. Verifícalo en PayPal y regístralo en el negocio.`,
+      webPaymentId: w.id,
+    });
+  }
+
   const unread = unreadRes.count ?? 0;
   if (unread > 0) {
     tasks.push({ id: "mensajes", kind: "mensajes", date: from, title: `${unread} queja${unread === 1 ? "" : "s"} privada${unread === 1 ? "" : "s"} sin leer`, detail: "Revísalas y avísale al gerente si hace falta." });
   }
 
-  const order: Record<TaskKind, number> = { registro: 0, cancelacion: 0, cobro: 0, mensajes: 1, recordatorio: 2, prueba: 3, instalacion: 4, renovacion: 5, contrato: 6, reporte: 7, animo: 8 };
+  const order: Record<TaskKind, number> = { pagoweb: 0, registro: 0, cancelacion: 0, cobro: 0, mensajes: 1, recordatorio: 2, prueba: 3, instalacion: 4, renovacion: 5, contrato: 6, reporte: 7, animo: 8 };
   return tasks.sort((a, b) => a.date.localeCompare(b.date) || order[a.kind] - order[b.kind]);
 }
 

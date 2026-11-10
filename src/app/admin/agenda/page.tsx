@@ -4,6 +4,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { agenda, calendarToken, cheerList, cheerOfTheWeek, todayPanama, type Task, type TaskKind } from "@/lib/agenda";
 import { SITE_URL } from "@/lib/site";
 import { signOut } from "../entrar/actions";
+import { markWebPaymentHandled } from "../actions";
 
 const ICON: Record<TaskKind, string> = {
   cobro: "💵",
@@ -17,6 +18,7 @@ const ICON: Record<TaskKind, string> = {
   animo: "☀️",
   cancelacion: "⚠️",
   registro: "🆕",
+  pagoweb: "💳",
 };
 
 const DAYS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -38,7 +40,7 @@ function TaskRow({ t }: { t: Task }) {
           <p className="muted">{t.detail}</p>
         </div>
       </div>
-      {(t.whatsapp || t.businessId || t.link || t.kind === "contrato" || t.kind === "mensajes") && (
+      {(t.whatsapp || t.businessId || t.link || t.webPaymentId || t.kind === "contrato" || t.kind === "mensajes") && (
         <div className="row msg-actions">
           {t.whatsapp && (
             <a className="btn btn-dark btn-sm" href={t.whatsapp} target="_blank" rel="noopener noreferrer">
@@ -46,6 +48,15 @@ function TaskRow({ t }: { t: Task }) {
             </a>
           )}
           {t.link && <Link className="btn btn-dark btn-sm" href={t.link.href}>{t.link.label}</Link>}
+          {t.webPaymentId && (
+            <>
+              <Link className="btn btn-ghost btn-sm" href="/admin">Buscar el negocio</Link>
+              <form action={markWebPaymentHandled}>
+                <input type="hidden" name="id" value={t.webPaymentId} />
+                <button className="btn btn-dark btn-sm" type="submit">Ya lo registré</button>
+              </form>
+            </>
+          )}
           {t.kind === "contrato" && <Link className="btn btn-ghost btn-sm" href="/admin/contratos/nuevo">Hacer contrato</Link>}
           {t.kind === "mensajes" && <Link className="btn btn-ghost btn-sm" href="/admin/mensajes">Ver mensajes</Link>}
           {t.businessId && <Link className="btn btn-ghost btn-sm" href={`/admin/b/${t.businessId}`}>Abrir negocio</Link>}

@@ -325,3 +325,18 @@ create table if not exists signups (
 );
 create index if not exists signups_pending_idx on signups (created_at desc) where business_id is null;
 alter table signups enable row level security;
+
+-- One-time purchases paid online from /pagar (PayPal). The founder gets an alert and a
+-- task to register the payment in the right business, then marks it as handled.
+create table if not exists web_payments (
+  id               uuid primary key default gen_random_uuid(),
+  paypal_order_id  text not null unique,
+  item             text not null,
+  amount           numeric(10, 2) not null,
+  venue_name       text not null,
+  payer_name       text,
+  handled          boolean not null default false,
+  created_at       timestamptz not null default now()
+);
+create index if not exists web_payments_pending_idx on web_payments (created_at desc) where not handled;
+alter table web_payments enable row level security;
