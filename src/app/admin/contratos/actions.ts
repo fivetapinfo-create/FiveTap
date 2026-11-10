@@ -40,6 +40,7 @@ export async function createContract(f: FormData) {
     const plaques = int(f, "plaques");
     const waiter_cards = int(f, "waiter_cards");
     if (plaques + waiter_cards === 0) throw new Error("Indica al menos una placa o tarjeta.");
+    if (plan === "plaque" && plaques > 1) throw new Error("La mensualidad es para 1 placa. De 2 placas en adelante es pago único: no necesita contrato.");
 
     const { data, error } = await db()
       .from("contracts")

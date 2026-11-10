@@ -62,12 +62,11 @@ Sin email todo funciona igual: los mensajes aparecen en `/admin/mensajes` con
 un contador de no leídos.
 
 ### 5. Pagos (opcional)
-- **PayPal**: suscripciones (plan mensual $99 + $150 de instalación, anual
-  $948, placa $35/mes) y enlaces de pago único (2 placas $60, tarjeta de mesero
-  $25) → `PAYPAL_PLAN_MONTHLY_URL`, `PAYPAL_PLAN_ANNUAL_URL`,
-  `PAYPAL_PLAQUE_URL`, `PAYPAL_PACK_URL`, `PAYPAL_WAITER_URL`.
-- **Prueba gratis** (`/prueba`): planes de PayPal con 7 días gratis →
-  `PAYPAL_TRIAL_MONTHLY_URL`, `PAYPAL_TRIAL_ANNUAL_URL`. Sin ellos, el botón abre WhatsApp.
+- **PayPal**: plan mensual $129 con 7 días gratis → `PAYPAL_MONTHLY_TRIAL_URL`
+  (también es el botón de `/prueba`, junto con `PAYPAL_CLIENT_ID`); plan anual
+  $1,290 y su mitad $645 → `PAYPAL_ANNUAL_URL`, `PAYPAL_ANNUAL_HALF_URL`; 1 placa
+  $35/mes, 2 placas $60 y tarjeta de mesero $25 → `PAYPAL_PLAQUE_URL`,
+  `PAYPAL_PACK_URL`, `PAYPAL_WAITER_URL`. Sin enlace, cada botón abre WhatsApp.
 - **Yappy**: tu directorio → `YAPPY_HANDLE`.
 - **ACH**: `BANK_NAME`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_TYPE`, `BANK_ACCOUNT_NUMBER`.
 - Cada pago se registra en el panel del negocio. El primero lo pasa de *Prueba* a *Activo*.

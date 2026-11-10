@@ -638,3 +638,13 @@ p { margin: 0; text-wrap: pretty; }
 .reveal-eye svg { width: 20px; height: 20px; }
 .secret { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .secret-value { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border-radius: 10px; background: var(--paper); border: 1px solid var(--line); font-size: 13px; overflow-wrap: anywhere; }
+.annual-quote { display: grid; gap: 6px; padding: 14px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(212, 175, 55, 0.5); }
+.annual-quote p { color: rgba(255, 255, 255, 0.78); font-size: 14px; line-height: 1.5; }
+.annual-quote .annual-pay { color: rgba(255, 255, 255, 0.6); font-size: 13px; }
+.volume { list-style: none; margin: 4px 0; padding: 0; display: grid; }
+.volume li { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.volume li:first-child { border-top: 0; }
+.volume li b { font-size: 18px; text-align: right; }
+.volume li small { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+.signup { display: grid; gap: 12px; }
+.signup-locked { opacity: 0.45; pointer-events: none; }

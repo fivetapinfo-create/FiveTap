@@ -2,12 +2,13 @@ import type { Business } from "@/lib/types";
 import { VERTICALS } from "@/lib/verticals";
 
 /** The essentials of a business. Everything else has a sensible default. */
-export function EssentialFields({ b }: { b?: Business }) {
+export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partial<Business> }) {
+  const v = b ?? prefill;
   return (
     <div className="form-section">
       <label className="field">
         <span>1. Nombre del negocio</span>
-        <input className="input" name="name" required maxLength={80} defaultValue={b?.name} placeholder="La Terraza Casco Viejo" autoFocus={!b} />
+        <input className="input" name="name" required maxLength={80} defaultValue={v?.name} placeholder="La Terraza Casco Viejo" autoFocus={!b} />
       </label>
       <label className="field">
         <span>2. Logo {b ? "(subir para reemplazar)" : "(opcional)"}</span>
@@ -27,8 +28,8 @@ export function EssentialFields({ b }: { b?: Business }) {
       <div className="field">
         <span>4. Quién recibe las quejas privadas (dueño, gerente o supervisor)</span>
         <div className="grid-2">
-          <input className="input" name="manager_name" defaultValue={b?.manager_name ?? ""} placeholder="Nombre" autoComplete="off" aria-label="Nombre del gerente" />
-          <input className="input" type="tel" inputMode="tel" name="manager_phone" defaultValue={b?.manager_phone ?? ""} placeholder="WhatsApp: 6000-0000" autoComplete="off" aria-label="WhatsApp del gerente" />
+          <input className="input" name="manager_name" defaultValue={v?.manager_name ?? ""} placeholder="Nombre" autoComplete="off" aria-label="Nombre del gerente" />
+          <input className="input" type="tel" inputMode="tel" name="manager_phone" defaultValue={v?.manager_phone ?? ""} placeholder="WhatsApp: 6000-0000" autoComplete="off" aria-label="WhatsApp del gerente" />
         </div>
         <input className="input" type="email" name="manager_email" defaultValue={b?.manager_email ?? ""} placeholder="Correo: gerente@negocio.com" autoComplete="off" aria-label="Email del gerente" />
         <small>Al correo le llega cada queja al instante. Con su WhatsApp, desde tu panel se la reenvías con un toque.</small>
@@ -36,8 +37,8 @@ export function EssentialFields({ b }: { b?: Business }) {
       <div className="field">
         <span>5. Quién paga FiveTap (normalmente el dueño, el que firma el contrato)</span>
         <div className="grid-2">
-          <input className="input" name="billing_name" defaultValue={b?.billing_name ?? ""} placeholder="Nombre" autoComplete="off" aria-label="Nombre de quien paga" />
-          <input className="input" type="tel" inputMode="tel" name="billing_phone" defaultValue={b?.billing_phone ?? ""} placeholder="WhatsApp: 6000-0000" autoComplete="off" aria-label="WhatsApp de quien paga" />
+          <input className="input" name="billing_name" defaultValue={v?.billing_name ?? ""} placeholder="Nombre" autoComplete="off" aria-label="Nombre de quien paga" />
+          <input className="input" type="tel" inputMode="tel" name="billing_phone" defaultValue={v?.billing_phone ?? ""} placeholder="WhatsApp: 6000-0000" autoComplete="off" aria-label="WhatsApp de quien paga" />
         </div>
         <small>A este número van los recordatorios de pago y el saludo de los lunes. Si es la misma persona de las quejas, déjalo vacío.</small>
       </div>
@@ -71,15 +72,15 @@ export function OptionFields({ b }: { b?: Business }) {
         </label>
         <label className="field">
           <span>Instalación (USD)</span>
-          <input className="input" type="number" min={0} step="1" name="setup_fee" defaultValue={b?.setup_fee ?? 150} />
+          <input className="input" type="number" min={0} step="1" name="setup_fee" defaultValue={b?.setup_fee ?? 0} />
         </label>
         <label className="field">
           <span>Mensualidad (USD)</span>
-          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b?.monthly_fee ?? 99} />
+          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b?.monthly_fee ?? 129} />
         </label>
       </div>
       <small className="muted">
-        Mensual: instalación 150 y mensualidad 99. Anual: instalación 0 y mensualidad 79 (registra los $948 como “Plan anual”). Placa sola: instalación 0 y mensualidad 35. Pago único (2 por $60, tarjetas de mesero): “Directo a Google”, mensualidad 0.
+        Mensual: instalación 0 y mensualidad 129. Anual: instalación 0 y mensualidad 107.50 (registra los $1,290 como “Plan anual”, en uno o dos pagos). 1 placa mensual: mensualidad 35. Pago único (2 a 6 placas, tarjetas de mesero): “Directo a Google”, mensualidad 0.
       </small>
     </div>
   );

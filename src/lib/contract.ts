@@ -10,15 +10,19 @@ export const SECTORS = [
 export const SIGNER_ROLES = ["Dueño/a", "Gerente", "Supervisor/a", "Representante legal"] as const;
 export const PAY_METHODS = ["PayPal", "Yappy", "Transferencia", "Efectivo"] as const;
 
-export const SETUP_FEE = 150;
+/** Installation is included in every plan since November 2026 (it used to be $150). */
+export const SETUP_FEE = 0;
 export const WAITER_CARD_PRICE = 25;
+/** Waiter cards included in the annual plan. */
+export const ANNUAL_FREE_CARDS = 2;
 export const TRIAL_DAYS = 7;
 export const REPLACEMENT_FEE = 10;
 
 export const PLANS = {
-  monthly: { name: "Plan Mensual", label: "Mensualidad del plan + FiveTap Business", price: 99, every: "mes", setup: SETUP_FEE, months: 1, includedPlaques: 10, perPlaque: false },
-  annual: { name: "Plan Anual", label: "Plan anual + FiveTap Business", price: 948, every: "año", setup: 0, months: 12, includedPlaques: 10, perPlaque: false },
-  plaque: { name: "Plan Placa", label: "Mensualidad solo de placa", price: 35, every: "mes", setup: 0, months: 1, includedPlaques: 1, perPlaque: true },
+  monthly: { name: "Plan Mensual", label: "Plan mensual todo incluido + FiveTap Business", price: 129, every: "mes", setup: SETUP_FEE, months: 1, includedPlaques: 10, perPlaque: false },
+  // Annual: plaques branded with the venue's logo, quantity as quoted; 2 waiter cards included.
+  annual: { name: "Plan Anual", label: "Plan anual + placas con tu marca + FiveTap Business", price: 1290, every: "año", setup: 0, months: 12, includedPlaques: 0, perPlaque: false },
+  plaque: { name: "Plan Placa", label: "Mensualidad de 1 placa", price: 35, every: "mes", setup: 0, months: 1, includedPlaques: 1, perPlaque: false },
 } as const;
 export type PlanKey = keyof typeof PLANS;
 
@@ -105,7 +109,8 @@ export function contractTerms(c: ContractInput) {
   // After a trial already done (or with none), the plan starts and is charged on the contract date.
   const firstCharge = trialMode === "starts" ? addDays(c.start_date, TRIAL_DAYS) : c.start_date;
   const renewal = addMonths(firstCharge, plan.months);
-  const cards = c.waiter_cards * WAITER_CARD_PRICE;
+  const paidCards = c.plan === "annual" ? Math.max(0, c.waiter_cards - ANNUAL_FREE_CARDS) : c.waiter_cards;
+  const cards = paidCards * WAITER_CARD_PRICE;
   const dueAtInstall = plan.setup + cards;
   const address = [
     // "Plaza" + "Carolina" → "Plaza Carolina", but never "Plaza Plaza Carolina".
@@ -141,7 +146,6 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function contractClauses(c: ContractInput, _p: Provider): Clause[] {
   const t = contractTerms(c);
   const annual = c.plan === "annual";
-  const fullPlan = c.plan !== "plaque";
   const period = annual ? "año" : "mes";
   const pieces = [
     c.plaques > 0 ? plural(c.plaques, "placa NFC", "placas NFC") : null,
@@ -152,12 +156,10 @@ export function contractClauses(c: ContractInput, _p: Provider): Clause[] {
   const included = t.business
     ? [
         "placas NFC premium, programadas para llevar a cada cliente a la página de reseñas del local;",
-        "“Hablar con el gerente”: un canal privado para que el cliente que no quedó contento escriba al local antes de publicar nada;",
+        "“Hablar con el gerente”: un canal privado para que cualquier cliente escriba directamente al local;",
         "el club de clientes, donde cada persona, si lo desea, deja su WhatsApp y su cumpleaños para recibir promociones del local;",
         "FiveTap Business: la aplicación del local para el dueño, gerentes y encargados, con los resultados en tiempo real, las reseñas antes y después de FiveTap, el rendimiento de cada placa y mesero, los mensajes, el club y avisos al celular;",
-        fullPlan
-          ? "el reporte mensual de resultados, la respuesta a las reseñas de Google en 48 horas hábiles (cuando EL CLIENTE dé acceso a su perfil) y una revisión inicial del perfil de Google."
-          : "el reporte mensual de resultados.",
+        "el resumen diario y el reporte mensual de resultados, automáticos dentro de FiveTap Business."
       ]
     : [
         "placas NFC premium, programadas para llevar a cada cliente directo a la ventana de reseñas de Google del local;",
@@ -172,12 +174,18 @@ export function contractClauses(c: ContractInput, _p: Provider): Clause[] {
   const planName = c.plan === "plaque" ? `una mensualidad por placa${t.business ? " con FiveTap Business" : " (directo a Google)"}` : `el ${t.plan.name} con FiveTap Business`;
   const extras = [
     t.plan.setup ? `instalación de ${installs}: ${money(t.plan.setup)} (pago único)` : `instalación de ${installs}: incluida`,
-    c.waiter_cards > 0 ? `${plural(c.waiter_cards, "tarjeta", "tarjetas")} para meseros: ${money(t.cards)} (pago único, ${money(WAITER_CARD_PRICE)} c/u)` : null,
+    c.waiter_cards > 0
+      ? annual && t.cards === 0
+        ? `${plural(c.waiter_cards, "tarjeta", "tarjetas")} para meseros: incluidas`
+        : `${plural(c.waiter_cards, "tarjeta", "tarjetas")} para meseros: ${money(t.cards)} (pago único${annual ? `; ${ANNUAL_FREE_CARDS} incluidas` : `, ${money(WAITER_CARD_PRICE)} c/u`})`
+      : null,
   ].filter(Boolean).join("; ");
   const calendar =
     t.trialMode === "starts"
       ? `${t.dueAtInstall ? `${money(t.dueAtInstall)} el ${longDate(c.start_date)}, día de la instalación, y ` : ""}${money(t.plan.price)} el ${longDate(t.firstCharge)}, al terminar la prueba${annual ? "" : `; luego, cada ${period} en esa misma fecha`}`
-      : `${money(t.firstPeriodTotal)} el ${longDate(c.start_date)}, día de la instalación${annual ? "" : `; luego, ${money(t.plan.price)} cada ${period} en esa misma fecha`}`;
+      : annual
+        ? `${money(t.firstPeriodTotal)} el ${longDate(c.start_date)}, día de la instalación, en un solo pago o en dos partes iguales: la mitad por PayPal y la otra mitad en efectivo o Yappy ese mismo día`
+        : `${money(t.firstPeriodTotal)} el ${longDate(c.start_date)}, día de la instalación; luego, ${money(t.plan.price)} cada ${period} en esa misma fecha`;
 
   return [
     {
@@ -193,7 +201,7 @@ export function contractClauses(c: ContractInput, _p: Provider): Clause[] {
       body: [
         `EL CLIENTE contrata ${planName}: ${price}.${t.business ? ` Incluye todo lo anterior, sin costo por usuario.` : ""}`,
         `Además: ${extras}.`,
-        `Calendario: ${calendar}. ${t.automatic ? "Se cobra de forma automática por PayPal." : `Se paga por ${c.payment_method}; FiveTap recuerda cada fecha con tres (3) días de anticipación.`} No hay otros cargos: cualquier extra se cotiza y se acepta por escrito antes de cobrarse.`,
+        `Calendario: ${calendar}. ${annual ? "" : t.automatic ? "Se cobra de forma automática por PayPal. " : `Se paga por ${c.payment_method}; FiveTap recuerda cada fecha con tres (3) días de anticipación. `}No hay otros cargos: cualquier extra se cotiza y se acepta por escrito antes de cobrarse.`,
       ],
     },
     ...(t.trialMode === "starts"
@@ -214,9 +222,11 @@ export function contractClauses(c: ContractInput, _p: Provider): Clause[] {
     {
       title: "Placas y soporte",
       body: [
-        `El ${longDate(c.start_date)} FiveTap instala y deja funcionando ${pieces || "las piezas acordadas"}${t.business ? ", e instala FiveTap Business en el celular del dueño y de las personas que él indique" : ""}. El plan cubre hasta ${plural(t.plan.includedPlaques, "pieza", "piezas")}.`,
+        `El ${longDate(c.start_date)} FiveTap instala y deja funcionando ${pieces || "las piezas acordadas"}${annual ? ", fabricadas con la marca del local según la cotización aceptada" : ""}${t.business ? ", e instala FiveTap Business en el celular del dueño y de las personas que él indique" : ""}.${t.plan.includedPlaques ? ` El plan cubre hasta ${plural(t.plan.includedPlaques, "pieza", "piezas")}.` : ""}`,
         `Las placas del plan son de FiveTap y se entregan en préstamo; al terminar el servicio se devuelven en los quince (15) días siguientes. ${c.waiter_cards > 0 ? "Las tarjetas para meseros pagadas por EL CLIENTE son suyas. " : ""}FiveTap cambia gratis las piezas gastadas por el uso; una pieza perdida o rota por mal uso cuesta ${money(REPLACEMENT_FEE)}.`,
-        `Edición con la marca del local (opcional): FiveTap puede fabricar las placas a medida con el logo y los colores de EL CLIENTE y reemplazar las instaladas. Se cotiza aparte, por escrito.`,
+        annual
+          ? `Las placas con la marca del local se fabrican a medida para este plan. Si EL CLIENTE quiere más, se cotizan aparte, por escrito.`
+          : `Edición con la marca del local (opcional): FiveTap puede fabricar las placas a medida con el logo y los colores de EL CLIENTE y reemplazar las instaladas. Se cotiza aparte, por escrito.`,
         `Soporte por WhatsApp en días hábiles, con respuesta a más tardar el siguiente día hábil.`,
       ],
     },

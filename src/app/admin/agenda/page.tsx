@@ -16,6 +16,7 @@ const ICON: Record<TaskKind, string> = {
   instalacion: "🔧",
   animo: "☀️",
   cancelacion: "⚠️",
+  registro: "🆕",
 };
 
 const DAYS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -37,13 +38,14 @@ function TaskRow({ t }: { t: Task }) {
           <p className="muted">{t.detail}</p>
         </div>
       </div>
-      {(t.whatsapp || t.businessId || t.kind === "contrato" || t.kind === "mensajes") && (
+      {(t.whatsapp || t.businessId || t.link || t.kind === "contrato" || t.kind === "mensajes") && (
         <div className="row msg-actions">
           {t.whatsapp && (
             <a className="btn btn-dark btn-sm" href={t.whatsapp} target="_blank" rel="noopener noreferrer">
               Enviar WhatsApp con el mensaje listo
             </a>
           )}
+          {t.link && <Link className="btn btn-dark btn-sm" href={t.link.href}>{t.link.label}</Link>}
           {t.kind === "contrato" && <Link className="btn btn-ghost btn-sm" href="/admin/contratos/nuevo">Hacer contrato</Link>}
           {t.kind === "mensajes" && <Link className="btn btn-ghost btn-sm" href="/admin/mensajes">Ver mensajes</Link>}
           {t.businessId && <Link className="btn btn-ghost btn-sm" href={`/admin/b/${t.businessId}`}>Abrir negocio</Link>}

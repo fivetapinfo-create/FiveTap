@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 
+// Basic hardening for every page: no MIME sniffing, no framing by other sites,
+// minimal referrer, and no camera/mic/location unless a page asks for them.
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+];
+
 const config: NextConfig = {
   poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   eslint: { ignoreDuringBuilds: true },
   experimental: {
     // Going back to a section seen in the last 30 s is instant (actions still refresh it).

@@ -310,3 +310,18 @@ alter table contracts add column if not exists trial_mode text not null default 
 alter table contracts drop constraint if exists contracts_trial_mode_check;
 alter table contracts add constraint contracts_trial_mode_check check (trial_mode in ('done', 'starts', 'none'));
 alter table contracts add column if not exists trial_start date;
+
+-- Self sign-ups from /prueba: the venue registers and starts the trial on PayPal by
+-- itself; the founder only creates the business (prefilled) and installs.
+create table if not exists signups (
+  id                     uuid primary key default gen_random_uuid(),
+  venue_name             text not null,
+  owner_name             text not null,
+  phone                  text not null,
+  plan                   text not null default 'monthly',
+  paypal_subscription_id text unique,
+  business_id            uuid references businesses (id) on delete set null,
+  created_at             timestamptz not null default now()
+);
+create index if not exists signups_pending_idx on signups (created_at desc) where business_id is null;
+alter table signups enable row level security;

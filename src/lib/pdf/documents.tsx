@@ -7,6 +7,7 @@ import {
   type Provider,
   PLANS,
   REPLACEMENT_FEE,
+  ANNUAL_FREE_CARDS,
   WAITER_CARD_PRICE,
   contractClauses,
   contractTerms,
@@ -170,7 +171,7 @@ export async function contractPdf(c: ContractInput, p: Provider, logo: Buffer | 
     [c.plan === "plaque" ? `Mensualidad por placa (${Math.max(1, c.plaques)} × ${money(PLANS.plaque.price)})${t.business ? " · con FiveTap Business" : ""}` : `${t.plan.name} · incluye FiveTap Business`, annual ? `12 meses, del ${longDate(t.firstCharge)} al ${longDate(t.lastDay)}` : `Cada ${period}, desde el ${longDate(t.firstCharge)}`, money(t.plan.price)],
     [t.business ? "Instalación: placas y FiveTap Business" : "Instalación de las placas", t.plan.setup ? `Pago único, ${longDate(c.start_date)}` : "Incluida en el plan", t.plan.setup ? money(t.plan.setup) : "$0"],
     ...(c.waiter_cards > 0
-      ? ([["Tarjetas para meseros", `${c.waiter_cards} × ${money(WAITER_CARD_PRICE)} · pago único, ${longDate(c.start_date)}`, money(t.cards)]] as [string, string, string][])
+      ? ([["Tarjetas para meseros", annual && !t.cards ? `${c.waiter_cards} incluidas en el plan anual` : `${c.waiter_cards} × ${money(WAITER_CARD_PRICE)}${annual ? ` (${ANNUAL_FREE_CARDS} incluidas)` : ""} · pago único, ${longDate(c.start_date)}`, money(t.cards)]] as [string, string, string][])
       : []),
   ];
 

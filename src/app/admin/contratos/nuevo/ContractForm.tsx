@@ -13,6 +13,7 @@ import {
   TRIAL_MODES,
   type TrialMode,
   VENUE_KINDS,
+  ANNUAL_FREE_CARDS,
   WAITER_CARD_PRICE,
   longDate,
   money,
@@ -81,9 +82,9 @@ async function toJpeg(file: File): Promise<string> {
 }
 
 const PLAN_NOTE: Record<PlanKey, string> = {
-  monthly: `${money(PLANS.monthly.price)} al mes · instalación ${money(PLANS.monthly.setup)}`,
-  annual: `${money(PLANS.annual.price)} al año · instalación gratis`,
-  plaque: `${money(PLANS.plaque.price)} al mes por cada placa`,
+  monthly: `${money(PLANS.monthly.price)} al mes · 10 placas, instalación incluida`,
+  annual: `${money(PLANS.annual.price)} al año · placas con su marca (cantidad cotizada) · 2 tarjetas de meseros incluidas`,
+  plaque: `${money(PLANS.plaque.price)} al mes · 1 placa (de 2 en adelante es pago único)`,
 };
 
 const shift = (iso: string, days: number) => new Date(Date.parse(`${iso}T12:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
@@ -105,7 +106,7 @@ export function ContractForm({ today, error }: { today: string; error?: string }
 
   const withBusiness = plan !== "plaque" || business;
   const fee = PLANS[plan].perPlaque ? PLANS[plan].price * Math.max(1, plaques) : PLANS[plan].price;
-  const setup = PLANS[plan].setup + cards * WAITER_CARD_PRICE;
+  const setup = PLANS[plan].setup + (plan === "annual" ? Math.max(0, cards - ANNUAL_FREE_CARDS) : cards) * WAITER_CARD_PRICE;
   // After a trial already done (or none), the first period is paid on the installation day.
   const total = useMemo(() => setup + (trial === "starts" ? 0 : fee), [setup, trial, fee]);
 
@@ -236,7 +237,7 @@ export function ContractForm({ today, error }: { today: string; error?: string }
       <div className="form-section">
         <h3>6. Piezas y pago</h3>
         <div className="grid-2">
-          <Stepper name="plaques" label="Placas NFC" value={plaques} onChange={setPlaques} />
+          <Stepper name="plaques" label={plan === "annual" ? "Placas con su marca (cotizadas)" : "Placas NFC"} value={plaques} onChange={(n) => setPlaques(plan === "plaque" ? Math.min(1, n) : n)} />
           <Stepper name="waiter_cards" label={`Tarjetas meseros (${money(WAITER_CARD_PRICE)} c/u)`} value={cards} onChange={setCards} />
         </div>
         <div className="field">

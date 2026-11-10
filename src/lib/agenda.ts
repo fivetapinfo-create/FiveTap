@@ -8,7 +8,7 @@ import type { Business, Payment } from "./types";
 // collect, trials ending, annual renewals, reports, contracts to prepare and
 // unread complaints. Each task can carry a ready-to-send WhatsApp message.
 
-export type TaskKind = "cobro" | "recordatorio" | "prueba" | "renovacion" | "reporte" | "contrato" | "mensajes" | "instalacion" | "animo" | "cancelacion";
+export type TaskKind = "cobro" | "recordatorio" | "prueba" | "renovacion" | "reporte" | "contrato" | "mensajes" | "instalacion" | "animo" | "cancelacion" | "registro";
 
 export type Task = {
   id: string;
@@ -21,6 +21,8 @@ export type Task = {
   whatsapp?: string;
   /** Day the payment falls due, for charges and reminders. */
   due?: string;
+  /** A page in the panel to act on the task (e.g. create the business from a sign-up). */
+  link?: { href: string; label: string };
   /** Notification for whoever pays, sent by the daily cron to their FiveTap app. */
   push?: { title: string; body: string; url: string };
 };
@@ -105,7 +107,13 @@ export function nextCharge(
   const annual = sorted.findLast((p) => p.kind === "annual");
   const monthly = sorted.findLast((p) => p.kind === "monthly");
   const auto = sorted.at(-1)?.method === "paypal" || sorted.at(-1)?.method === "card";
-  if (annual) return { due: addMonths(localDate(annual.paid_at), 12), amount: Number(annual.amount), label: "renovación anual", auto, kind: "annual" };
+  if (annual) {
+    // The annual plan can be paid in two halves (online + cash): payments within 60 days
+    // of the latest one belong to the same year, which starts with the first of them.
+    const cycle = sorted.filter((p) => p.kind === "annual" && Date.parse(annual.paid_at) - Date.parse(p.paid_at) <= 60 * DAY);
+    const amount = cycle.reduce((sum, p) => sum + Number(p.amount), 0);
+    return { due: addMonths(localDate(cycle[0]!.paid_at), 12), amount, label: "renovación anual", auto: false, kind: "annual" };
+  }
   if (monthly) return { due: addMonths(localDate(monthly.paid_at), 1), amount: fee, label: "mensualidad", auto, kind: "monthly" };
   if (b.trial_ends_at) return { due: localDate(b.trial_ends_at), amount: fee, label: "mensualidad", auto, kind: "trial" };
   return null;
@@ -113,11 +121,12 @@ export function nextCharge(
 
 /** Every task from `from` to `to` (inclusive), sorted by date. Overdue charges are pulled to `from`. */
 export async function agenda(from: string, to: string): Promise<Task[]> {
-  const [bizRes, payRes, conRes, unreadRes] = await Promise.all([
+  const [bizRes, payRes, conRes, unreadRes, signupRes] = await Promise.all([
     db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at"),
     db().from("payments").select("business_id, kind, method, paid_at, amount").order("paid_at"),
     db().from("contracts").select("venue_name, start_date"),
     db().from("feedback").select("id", { count: "exact", head: true }).is("read_at", null),
+    db().from("signups").select("id, venue_name, owner_name, phone, paypal_subscription_id").is("business_id", null).order("created_at"),
   ]);
   for (const r of [bizRes, payRes, conRes]) if (r.error) throw new Error(r.error.message);
   const businesses = (bizRes.data ?? []) as BizRow[];
@@ -257,12 +266,25 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     }
   }
 
+  // Venues that signed up by themselves on /prueba and still have no business here.
+  for (const r of (signupRes.data ?? []) as { id: string; venue_name: string; owner_name: string; phone: string; paypal_subscription_id: string | null }[]) {
+    tasks.push({
+      id: `signup-${r.id}`,
+      kind: "registro",
+      date: from,
+      title: `Nuevo registro: ${r.venue_name}`,
+      detail: `${r.owner_name} · +${r.phone}. ${r.paypal_subscription_id ? "Registró su tarjeta en PayPal (prueba de 7 días)." : "Todavía sin tarjeta."} Crea el negocio y llévale su placa de prueba.`,
+      whatsapp: wa(r.phone, `Hola ${r.owner_name.split(" ")[0]} 👋 Te escribe FiveTap. Recibimos tu registro de ${r.venue_name}. ¿Qué día y a qué hora te queda bien para llevarte tu placa NFC de prueba?`),
+      link: { href: `/admin/new?signup=${r.id}`, label: "Crear negocio" },
+    });
+  }
+
   const unread = unreadRes.count ?? 0;
   if (unread > 0) {
     tasks.push({ id: "mensajes", kind: "mensajes", date: from, title: `${unread} queja${unread === 1 ? "" : "s"} privada${unread === 1 ? "" : "s"} sin leer`, detail: "Revísalas y avísale al gerente si hace falta." });
   }
 
-  const order: Record<TaskKind, number> = { cancelacion: 0, cobro: 0, mensajes: 1, recordatorio: 2, prueba: 3, instalacion: 4, renovacion: 5, contrato: 6, reporte: 7, animo: 8 };
+  const order: Record<TaskKind, number> = { registro: 0, cancelacion: 0, cobro: 0, mensajes: 1, recordatorio: 2, prueba: 3, instalacion: 4, renovacion: 5, contrato: 6, reporte: 7, animo: 8 };
   return tasks.sort((a, b) => a.date.localeCompare(b.date) || order[a.kind] - order[b.kind]);
 }
 

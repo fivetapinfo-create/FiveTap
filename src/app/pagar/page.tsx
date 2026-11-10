@@ -13,11 +13,14 @@ export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ n?: string }> };
 
 const PLANS = [
-  { name: "Plan mensual", note: "Cada mes · la instalación de placas y FiveTap Business ($150) se paga el día que instalamos", price: "$99" },
-  { name: "Plan anual", note: "Al año · instalación incluida", price: "$948" },
-  { name: "Placa para mesa o mostrador", note: "Cada mes, por placa", price: "$35" },
-  { name: "Oferta: 2 placas", note: "Pago único, directo a Google", price: "$60" },
-  { name: "Tarjeta para meseros", note: "Pago único, por tarjeta", price: "$25" },
+  { name: "Plan mensual", note: "Cada mes · 10 placas, instalación y FiveTap Business incluidos", price: "$129" },
+  { name: "Plan anual", note: "Un pago, o la mitad en línea ($645) y la mitad en efectivo el día de la instalación", price: "$1,290" },
+  { name: "1 placa", note: "Cada mes · con FiveTap Business", price: "$35" },
+  { name: "2 placas", note: "Pago único, directo a Google", price: "$60" },
+  { name: "3 placas", note: "Pago único, directo a Google", price: "$85" },
+  { name: "4 placas", note: "Pago único · $25 c/u", price: "$100" },
+  { name: "6 placas", note: "Pago único · $22 c/u", price: "$132" },
+  { name: "Tarjetas para meseros", note: "1 por $25 · 4 por $90 · 6 por $120 · 10 por $180", price: "desde $25" },
 ];
 
 export default async function Pay({ searchParams }: Props) {
@@ -28,14 +31,15 @@ export default async function Pay({ searchParams }: Props) {
   const proof = salesWhatsAppUrl(`Hola, ya pagué FiveTap${forWho}. Te envío el comprobante.`);
   const askCardLink = salesWhatsAppUrl(`Hola, quiero pagar FiveTap${forWho} con tarjeta. ¿Me envías el enlace?`);
   const cardLinks = [
-    { url: env.PAYPAL_PLAN_MONTHLY_URL, label: "Plan mensual · $99 al mes", dark: true },
-    { url: env.PAYPAL_PLAN_ANNUAL_URL, label: "Plan anual · $948 al año", dark: false },
-    { url: env.PAYPAL_PLAQUE_URL, label: "Placa · $35 al mes", dark: false },
-    { url: env.PAYPAL_PACK_URL, label: "Oferta 2 placas · $60 pago único", dark: false },
+    { url: env.PAYPAL_MONTHLY_TRIAL_URL, label: "Plan mensual · $129 al mes", dark: true },
+    { url: env.PAYPAL_ANNUAL_URL, label: "Plan anual · $1,290", dark: false },
+    { url: env.PAYPAL_ANNUAL_HALF_URL, label: "Mitad del plan anual · $645", dark: false },
+    { url: env.PAYPAL_PLAQUE_URL, label: "1 placa · $35 al mes", dark: false },
+    { url: env.PAYPAL_PACK_URL, label: "2 placas · $60 pago único", dark: false },
     { url: env.PAYPAL_WAITER_URL, label: "Tarjeta para meseros · $25", dark: false },
     { url: env.CARD_PAYMENT_URL, label: "Pagar con tarjeta", dark: false },
   ].filter((l) => l.url);
-  const recurring = env.PAYPAL_PLAN_MONTHLY_URL || env.PAYPAL_PLAN_ANNUAL_URL || env.PAYPAL_PLAQUE_URL;
+  const recurring = env.PAYPAL_MONTHLY_TRIAL_URL || env.PAYPAL_PLAQUE_URL;
   const yappy = env.YAPPY_HANDLE;
   const bank = env.BANK_NAME && env.BANK_ACCOUNT_NUMBER;
 
@@ -68,7 +72,7 @@ export default async function Pay({ searchParams }: Props) {
         </div>
         <p className="muted">
           Visa, Mastercard, American Express o PayPal.
-          {recurring && " Los planes se cobran solos cada mes o cada año. Cancelas cuando quieras."}
+          {recurring && " Las mensualidades se cobran solas cada mes. Cancelas cuando quieras."}
         </p>
         {cardLinks.length > 0 ? (
           <div className="pay-buttons">

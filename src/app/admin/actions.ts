@@ -88,8 +88,8 @@ export async function createBusiness(f: FormData) {
         manager_phone: phone(opt(f, "manager_phone", 30)),
         billing_name: opt(f, "billing_name", 80),
         billing_phone: phone(opt(f, "billing_phone", 30), "de quien paga"),
-        setup_fee: num(f, "setup_fee", 150),
-        monthly_fee: num(f, "monthly_fee", 99),
+        setup_fee: num(f, "setup_fee", 0),
+        monthly_fee: num(f, "monthly_fee", 129),
         mode: str(f, "mode", 10) === "google" ? "google" : "full",
         status: "trial",
         trial_ends_at: new Date(Date.now() + trialDays * 864e5).toISOString().slice(0, 10),
@@ -99,6 +99,9 @@ export async function createBusiness(f: FormData) {
     if (error) throw new Error(error.message);
     id = data.id;
     await createTags(id, spotLabel, spots, 1);
+    // Came from a self sign-up on /prueba: mark it as handled.
+    const signup = str(f, "signup_id", 60);
+    if (/^[0-9a-f-]{36}$/i.test(signup)) await db().from("signups").update({ business_id: id }).eq("id", signup);
   } catch (e) {
     fail("/admin/new", e);
   }
@@ -121,8 +124,8 @@ export async function updateBusiness(f: FormData) {
       billing_name: opt(f, "billing_name", 80),
       billing_phone: phone(opt(f, "billing_phone", 30), "de quien paga"),
       status: str(f, "status", 20),
-      setup_fee: num(f, "setup_fee", 150),
-      monthly_fee: num(f, "monthly_fee", 99),
+      setup_fee: num(f, "setup_fee", 0),
+      monthly_fee: num(f, "monthly_fee", 129),
       mode: str(f, "mode", 10) === "google" ? "google" : "full",
       trial_ends_at: opt(f, "trial_ends_at", 10),
       notes: opt(f, "notes", 2000),
