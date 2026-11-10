@@ -77,7 +77,7 @@ export function PayPalSubscribe({
       <div ref={box} />
       {state === "loading" && <p className="muted">Cargando pago seguro…</p>}
       {state === "failed" && (
-        <a className="btn btn-dark" href={fallbackUrl} target="_blank" rel="noreferrer">Empezar prueba gratis · registrar tarjeta</a>
+        <a className="btn btn-dark" href={fallbackUrl} target="_blank" rel="noreferrer">Suscribirme con PayPal</a>
       )}
     </div>
   );

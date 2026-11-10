@@ -31,7 +31,7 @@ export default async function Pay({ searchParams }: Props) {
   const proof = salesWhatsAppUrl(`Hola, ya pagué FiveTap${forWho}. Te envío el comprobante.`);
   const askCardLink = salesWhatsAppUrl(`Hola, quiero pagar FiveTap${forWho} con tarjeta. ¿Me envías el enlace?`);
   const cardLinks = [
-    { url: env.PAYPAL_MONTHLY_TRIAL_URL, label: "Plan mensual · $129 al mes", dark: true },
+    { url: env.PAYPAL_MONTHLY_URL, label: "Plan mensual · $129 al mes", dark: true },
     { url: env.PAYPAL_ANNUAL_URL, label: "Plan anual · $1,290", dark: false },
     { url: env.PAYPAL_ANNUAL_HALF_URL, label: "Mitad del plan anual · $645", dark: false },
     { url: env.PAYPAL_PLAQUE_URL, label: "1 placa · $35 al mes", dark: false },
@@ -39,7 +39,7 @@ export default async function Pay({ searchParams }: Props) {
     { url: env.PAYPAL_WAITER_URL, label: "Tarjeta para meseros · $25", dark: false },
     { url: env.CARD_PAYMENT_URL, label: "Pagar con tarjeta", dark: false },
   ].filter((l) => l.url);
-  const recurring = env.PAYPAL_MONTHLY_TRIAL_URL || env.PAYPAL_PLAQUE_URL;
+  const recurring = env.PAYPAL_MONTHLY_URL || env.PAYPAL_PLAQUE_URL;
   const yappy = env.YAPPY_HANDLE;
   const bank = env.BANK_NAME && env.BANK_ACCOUNT_NUMBER;
 

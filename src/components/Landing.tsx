@@ -11,7 +11,7 @@ const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
 
 export function Landing({ vertical }: { vertical: Vertical }) {
   const kind = vertical.key === "home" ? "negocio" : vertical.label.toLowerCase();
-  const trial = salesWhatsAppUrl(`Hola, quiero la prueba gratis de FiveTap para mi ${kind}.`);
+  const talk = salesWhatsAppUrl(`Hola, quiero FiveTap para mi ${kind}.`);
   const askPlaque = salesWhatsAppUrl(`Hola, me interesan las placas FiveTap para mi ${kind}.`);
   const askWaiter = salesWhatsAppUrl(`Hola, me interesan las tarjetas FiveTap para meseros.`);
   const quoteAnnual = salesWhatsAppUrl(`Hola, quiero cotizar el plan anual de FiveTap con placas personalizadas para mi ${kind}. Tengo ___ mesas.`);
@@ -25,7 +25,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
           <nav className="nav-links">
             <a href="#como-funciona" className="hide-sm">Cómo funciona</a>
             <a href="#precio" className="hide-sm">Precio</a>
-            <a className="btn btn-light btn-sm" href="/prueba">Prueba gratis</a>
+            <a className="btn btn-light btn-sm" href="/empezar">Empezar</a>
           </nav>
         </div>
       </header>
@@ -43,7 +43,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
                 segundos. Y si algo salió mal, también puede escribirte en privado para que lo resuelvas a tiempo.
               </p>
               <div className="hero-cta rise" style={i(3)}>
-                <a className="btn btn-light" href="/prueba">Prueba gratis 7 días</a>
+                <a className="btn btn-light" href="/empezar">Empezar ahora</a>
                 <Link className="btn btn-ghost" href={`/demo?n=${encodeURIComponent(demoName)}`}>Ver la demo</Link>
               </div>
               <p className="hero-note muted-d rise" style={i(4)}>Sin permanencia · Sin descargar nada · Lo instalamos nosotros</p>
@@ -176,8 +176,8 @@ export function Landing({ vertical }: { vertical: Vertical }) {
                     <li key={t}><Check />{t}</li>
                   ))}
                 </ul>
-                <p className="trial-includes"><Check /><span>Prueba gratis 7 días · <b>incluye placa NFC de prueba</b></span></p>
-                <a className="btn btn-dark" href="/prueba">Empezar prueba gratis</a>
+                <p className="trial-includes"><Check /><span><b>Garantía de 30 días</b> · si no sumas reseñas, te devolvemos tu dinero</span></p>
+                <a className="btn btn-dark" href="/empezar">Empezar ahora</a>
               </div>
 
               <div className="plan plan-dark">
@@ -241,12 +241,12 @@ export function Landing({ vertical }: { vertical: Vertical }) {
             <div className="trial">
               <div className="trial-head">
                 <Shield style={{ width: 24, height: 24 }} />
-                <h3>Plan mensual: pruébalo 7 días. Sin riesgo.</h3>
+                <h3>Garantía de 30 días. Sin riesgo.</h3>
               </div>
               <ol className="trial-steps">
-                <li><b>Día 1</b> Te dejamos una <b>placa NFC de prueba</b> gratis y anotamos tus estrellas y reseñas actuales en Google. Registras tu tarjeta: hoy no se cobra nada.</li>
-                <li><b>Día 7</b> En tu app ves cuántos clientes fueron a dejarte su reseña.</li>
-                <li><b>Día 8</b> Se cobran tus $129 y te instalamos el resto de tus placas y <b>FiveTap Business</b>, sin costo de instalación. Si no te convenció, cancelas antes y no pagas nada.</li>
+                <li><b>Día 1</b> Instalamos tus 10 placas NFC y <b>FiveTap Business</b>, y anotamos tus estrellas y reseñas actuales en Google.</li>
+                <li><b>Día 1 al 30</b> En tu app ves en tiempo real cuántos clientes van a dejarte su reseña.</li>
+                <li><b>Día 30</b> Comparamos tus reseñas con las del primer día. Si en tu primer mes no sumaste reseñas nuevas, te devolvemos tus $129 y retiramos las placas.</li>
               </ol>
               <div>
                 <p className="muted">Pagas con tarjeta, PayPal, Yappy o transferencia.</p>
@@ -277,8 +277,8 @@ export function Landing({ vertical }: { vertical: Vertical }) {
           <div className="container">
             <LogoMark size={44} />
             <h2>Empieza a recibir reseñas esta semana.</h2>
-            <p className="muted-d">Te lo instalamos y lo pruebas 7 días. Si no funciona, no pagas la mensualidad.</p>
-            <a className="btn btn-light" href={trial}>Escríbenos por WhatsApp</a>
+            <p className="muted-d">Te lo instalamos en una visita, con garantía de 30 días: si no sumas reseñas, te devolvemos tu dinero.</p>
+            <a className="btn btn-light" href={talk}>Escríbenos por WhatsApp</a>
           </div>
         </section>
       </main>
@@ -331,8 +331,8 @@ const WAITER_PRICES: [string, string, string][] = [
 ];
 
 const FAQ: [string, string][] = [
-  ["¿Qué pasa después de los 7 días?", "Si te convenció, el día 8 se cobran tus $129 del plan mensual y te instalamos el resto de tus placas y FiveTap Business, sin costo de instalación. Si no, cancelas antes del día 8 y no pagas nada: solo retiramos la placa de prueba."],
-  ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. A los 7 días lo revisamos juntos. Además tienes tu página privada con los números al día y cada mes te enviamos el reporte."],
+  ["¿Y si no me funciona?", "Tienes garantía de 30 días. El día de la instalación anotamos tus reseñas en Google; si en tu primer mes no sumas reseñas nuevas, te devolvemos tus $129 y retiramos las placas. Aplica al plan mensual."],
+  ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. Desde ese día, en tu app FiveTap Business ves en tiempo real los toques y las visitas a tu página de reseñas, y cada mes te llega tu reporte."],
   ["Tengo pocas mesas, ¿me sirve?", "Sí. 1 placa por $35 al mes con FiveTap Business, o placas de pago único: 2 por $60, 3 por $85, 4 por $100 y 6 por $132."],
   ["¿Cómo funciona el plan anual?", "Cuesta $1,290 al año (2 meses gratis) e incluye placas personalizadas con la marca de tu local: nos dices cuántas quieres y te cotizamos. Lo pagas en un solo pago, o la mitad en línea y la mitad en efectivo el día de la instalación."],
   ["¿Google permite pedir reseñas?", "Sí. Lo que Google no permite es filtrar solo las buenas o dar descuentos a cambio. Por eso FiveTap le muestra el botón de Google a todos, siempre."],

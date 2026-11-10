@@ -240,6 +240,9 @@ export function contractClauses(c: ContractInput, _p: Provider): Clause[] {
         : [
             `El plan se renueva cada mes y no tiene permanencia. EL CLIENTE lo cancela cuando quiera, desde PayPal, desde su app o con un mensaje: no se vuelve a cobrar y el servicio sigue hasta el final del mes ya pagado, que no se reembolsa.`,
             `Mientras el plan siga activo sin interrupción, el precio no sube.`,
+            ...(c.plan === "monthly"
+              ? [`Garantía de 30 días: el día de la instalación se anota cuántas reseñas tiene el local en Google. Si en los primeros 30 días no suma reseñas nuevas, FiveTap devuelve la primera mensualidad y retira las placas, siempre que EL CLIENTE lo pida a más tardar el día 35.`]
+              : []),
           ],
     },
     {

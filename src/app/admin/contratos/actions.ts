@@ -33,7 +33,7 @@ export async function createContract(f: FormData) {
     if (!(plan in PLANS)) throw new Error("Elige un plan.");
     const start = str(f, "start_date", 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) throw new Error("Falta la fecha de inicio.");
-    const trial_mode = oneOf(str(f, "trial_mode", 10), ["done", "starts", "none"] as const, "done");
+    const trial_mode = oneOf(str(f, "trial_mode", 10), ["done", "starts", "none"] as const, "none");
     const trialStart = str(f, "trial_start", 10);
     if (trial_mode === "done" && !/^\d{4}-\d{2}-\d{2}$/.test(trialStart)) throw new Error("Indica cuándo empezó la prueba gratis.");
     if (trial_mode === "done" && trialStart >= start) throw new Error("La prueba gratis tiene que haber empezado antes de la fecha de inicio del plan.");

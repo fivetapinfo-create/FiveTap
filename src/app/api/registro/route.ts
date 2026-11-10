@@ -4,8 +4,8 @@ import { db } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-// The /prueba page registers the venue by itself: before paying it leaves its name
-// and WhatsApp, and after PayPal approves the trial it sends the subscription id.
+// The /empezar page registers the venue by itself: before paying it leaves its name
+// and WhatsApp, and after PayPal approves the subscription it sends its id.
 // The founder gets a notification and a task in the Agenda to create the business.
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { subscriptionId?: string; venue?: string; owner?: string; phone?: string } | null;
@@ -32,8 +32,8 @@ export async function POST(req: Request) {
   await sendPush(
     { role: "founder" },
     {
-      title: subscription ? `🎉 Nueva prueba gratis · ${venue}` : `Nuevo registro · ${venue}`,
-      body: `${owner} · +${phone}. ${subscription ? "Registró su tarjeta en PayPal (plan mensual)." : "Aún sin tarjeta."} Crea el negocio y lleva su placa de prueba.`,
+      title: subscription ? `🎉 Nuevo cliente · ${venue}` : `Nuevo registro · ${venue}`,
+      body: `${owner} · +${phone}. ${subscription ? "Se suscribió por PayPal: $129 al mes." : "Aún sin pagar."} Crea el negocio y coordina la instalación.`,
       url: "/admin/agenda",
     },
   );

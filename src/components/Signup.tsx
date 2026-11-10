@@ -7,10 +7,10 @@ import { PayPalSubscribe, type SignupDetails } from "./PayPalSubscribe";
 const isComplete = (d: SignupDetails) => d.venue.trim().length > 1 && d.owner.trim().length > 1 && d.phone.replace(/\D/g, "").length >= 7;
 
 /**
- * Free-trial sign-up: the venue leaves its name and WhatsApp, then registers its card
- * on PayPal (nothing charged today). FiveTap saves the sign-up and notifies the founder.
+ * Self sign-up: the venue leaves its name and WhatsApp, then subscribes on PayPal.
+ * FiveTap saves the sign-up and notifies the founder, who only has to install.
  */
-export function TrialSignup({ clientId, planId, fallbackUrl, presetVenue }: { clientId?: string; planId?: string | null; fallbackUrl: string; presetVenue?: string }) {
+export function Signup({ clientId, planId, fallbackUrl, presetVenue }: { clientId?: string; planId?: string | null; fallbackUrl: string; presetVenue?: string }) {
   const [venue, setVenue] = useState(presetVenue ?? "");
   const [owner, setOwner] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,7 +21,7 @@ export function TrialSignup({ clientId, planId, fallbackUrl, presetVenue }: { cl
 
   async function save(subscriptionId?: string) {
     setState("saving");
-    const res = await fetch("/api/prueba", {
+    const res = await fetch("/api/registro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...latest.current, subscriptionId }),
@@ -32,7 +32,7 @@ export function TrialSignup({ clientId, planId, fallbackUrl, presetVenue }: { cl
   if (state === "done") {
     return (
       <div className="alert alert-ok" role="status">
-        <b>¡Listo, {venue}! Tu prueba de 7 días quedó registrada.</b> Hoy no se te cobró nada. Te escribimos por WhatsApp para llevarte tu placa NFC de prueba.
+        <b>¡Listo, {venue}! Tu plan quedó registrado.</b> Te escribimos por WhatsApp para coordinar el día de tu instalación.
       </div>
     );
   }
@@ -53,13 +53,13 @@ export function TrialSignup({ clientId, planId, fallbackUrl, presetVenue }: { cl
           <input className="input" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} placeholder="6000-0000" autoComplete="tel" required />
         </label>
       </div>
-      {!complete && <small className="muted">Completa tus datos para registrar tu tarjeta.</small>}
+      {!complete && <small className="muted">Completa tus datos para continuar con el pago.</small>}
       <div className={complete ? undefined : "signup-locked"} aria-disabled={!complete}>
         {clientId && planId ? (
           <PayPalSubscribe clientId={clientId} planId={planId} fallbackUrl={fallbackUrl} details={() => (isComplete(latest.current) ? latest.current : null)} onApproved={save} />
         ) : (
           <button type="button" className="btn btn-dark btn-block" disabled={!complete || state === "saving"} onClick={() => save()}>
-            {state === "saving" ? "Guardando…" : "Registrarme y pedir mi placa de prueba"}
+            {state === "saving" ? "Guardando…" : "Registrarme y coordinar mi instalación"}
           </button>
         )}
       </div>

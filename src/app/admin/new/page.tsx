@@ -9,7 +9,7 @@ type Props = { searchParams: Promise<{ error?: string; signup?: string }> };
 
 export default async function NewBusiness({ searchParams }: Props) {
   const { error, signup: signupId } = await searchParams;
-  // Prefilled from a self sign-up on /prueba.
+  // Prefilled from a self sign-up on /empezar.
   const signup = signupId && /^[0-9a-f-]{36}$/i.test(signupId)
     ? ((await db().from("signups").select("id, venue_name, owner_name, phone").eq("id", signupId).maybeSingle()).data as { id: string; venue_name: string; owner_name: string; phone: string } | null)
     : null;
@@ -26,7 +26,7 @@ export default async function NewBusiness({ searchParams }: Props) {
         </div>
       </div>
       <Flash error={error} />
-      {signup && <p className="alert alert-ok">Datos de {signup.venue_name}, que se registró solo desde la prueba gratis. Solo falta el enlace de Google.</p>}
+      {signup && <p className="alert alert-ok">Datos de {signup.venue_name}, que se registró solo desde la web. Solo falta el enlace de Google.</p>}
       <form action={createBusiness} className="panel">
         {signup && <input type="hidden" name="signup_id" value={signup.id} />}
         <EssentialFields prefill={prefill} />

@@ -73,7 +73,6 @@ export async function createBusiness(f: FormData) {
   try {
     const slug = `${slugify(name)}-${newCode(4)}`;
     const logo_url = await uploadLogo(f.get("logo"), slug);
-    const trialDays = 7;
     const { data, error } = await db()
       .from("businesses")
       .insert({
@@ -91,15 +90,16 @@ export async function createBusiness(f: FormData) {
         setup_fee: num(f, "setup_fee", 0),
         monthly_fee: num(f, "monthly_fee", 129),
         mode: str(f, "mode", 10) === "google" ? "google" : "full",
-        status: "trial",
-        trial_ends_at: new Date(Date.now() + trialDays * 864e5).toISOString().slice(0, 10),
+        // No free trial: the plan starts on installation day (30-day guarantee instead).
+        status: "active",
+        trial_ends_at: null,
       })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
     id = data.id;
     await createTags(id, spotLabel, spots, 1);
-    // Came from a self sign-up on /prueba: mark it as handled.
+    // Came from a self sign-up on /empezar: mark it as handled.
     const signup = str(f, "signup_id", 60);
     if (/^[0-9a-f-]{36}$/i.test(signup)) await db().from("signups").update({ business_id: id }).eq("id", signup);
   } catch (e) {

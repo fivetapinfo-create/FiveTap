@@ -156,6 +156,19 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
       });
     }
 
+    // 30-day guarantee: on day 30, take today's Google review count to compare with day 1.
+    const day30 = addDays(localDate(b.created_at), 30);
+    if (b.mode === "full" && fee > 0 && inRange(day30) && !pays.some((p) => p.kind === "annual")) {
+      tasks.push({
+        id: `garantia-${b.id}`,
+        kind: "prueba",
+        date: day30,
+        title: `Día 30 de garantía: ${b.name}`,
+        detail: "Anota hoy sus reseñas de Google en la ficha (Reseñas en Google · antes y después) y compáralas con las del día de la instalación.",
+        businessId: b.id,
+      });
+    }
+
     const charge = nextCharge(b, pays);
     // Asked to cancel from their app: no more reminders, just the follow-up until marked canceled.
     if (b.cancel_requested_at) {
@@ -266,15 +279,15 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     }
   }
 
-  // Venues that signed up by themselves on /prueba and still have no business here.
+  // Venues that signed up by themselves on /empezar and still have no business here.
   for (const r of (signupRes.data ?? []) as { id: string; venue_name: string; owner_name: string; phone: string; paypal_subscription_id: string | null }[]) {
     tasks.push({
       id: `signup-${r.id}`,
       kind: "registro",
       date: from,
       title: `Nuevo registro: ${r.venue_name}`,
-      detail: `${r.owner_name} · +${r.phone}. ${r.paypal_subscription_id ? "Registró su tarjeta en PayPal (prueba de 7 días)." : "Todavía sin tarjeta."} Crea el negocio y llévale su placa de prueba.`,
-      whatsapp: wa(r.phone, `Hola ${r.owner_name.split(" ")[0]} 👋 Te escribe FiveTap. Recibimos tu registro de ${r.venue_name}. ¿Qué día y a qué hora te queda bien para llevarte tu placa NFC de prueba?`),
+      detail: `${r.owner_name} · +${r.phone}. ${r.paypal_subscription_id ? "Se suscribió por PayPal ($129 al mes)." : "Todavía sin pagar."} Crea el negocio y coordina la instalación.`,
+      whatsapp: wa(r.phone, `Hola ${r.owner_name.split(" ")[0]} 👋 Te escribe FiveTap. Recibimos tu registro de ${r.venue_name}. ¿Qué día y a qué hora te queda bien para instalar tus placas y FiveTap Business?`),
       link: { href: `/admin/new?signup=${r.id}`, label: "Crear negocio" },
     });
   }

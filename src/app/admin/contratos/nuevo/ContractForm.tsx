@@ -9,13 +9,9 @@ import {
   type PlanKey,
   SECTORS,
   SIGNER_ROLES,
-  TRIAL_DAYS,
-  TRIAL_MODES,
-  type TrialMode,
   VENUE_KINDS,
   ANNUAL_FREE_CARDS,
   WAITER_CARD_PRICE,
-  longDate,
   money,
 } from "@/lib/contract";
 import { createContract } from "../actions";
@@ -87,7 +83,6 @@ const PLAN_NOTE: Record<PlanKey, string> = {
   plaque: `${money(PLANS.plaque.price)} al mes · 1 placa (de 2 en adelante es pago único)`,
 };
 
-const shift = (iso: string, days: number) => new Date(Date.parse(`${iso}T12:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
 export function ContractForm({ today, error }: { today: string; error?: string }) {
   const [kind, setKind] = useState<string>("Restaurante");
@@ -100,15 +95,13 @@ export function ContractForm({ today, error }: { today: string; error?: string }
   const [cards, setCards] = useState(0);
   const [logo, setLogo] = useState("");
   const [business, setBusiness] = useState(true);
-  const [trial, setTrial] = useState<TrialMode>("done");
   const [start, setStart] = useState(today);
-  const [trialStart, setTrialStart] = useState(shift(today, -TRIAL_DAYS));
 
   const withBusiness = plan !== "plaque" || business;
   const fee = PLANS[plan].perPlaque ? PLANS[plan].price * Math.max(1, plaques) : PLANS[plan].price;
   const setup = PLANS[plan].setup + (plan === "annual" ? Math.max(0, cards - ANNUAL_FREE_CARDS) : cards) * WAITER_CARD_PRICE;
-  // After a trial already done (or none), the first period is paid on the installation day.
-  const total = useMemo(() => setup + (trial === "starts" ? 0 : fee), [setup, trial, fee]);
+  // No free trial: the first period is paid on the installation day (30-day guarantee instead).
+  const total = useMemo(() => setup + fee, [setup, fee]);
 
   return (
     <form action={createContract} className="panel contract-form">
@@ -220,22 +213,10 @@ export function ContractForm({ today, error }: { today: string; error?: string }
         )}
       </div>
 
-      <div className="form-section">
-        <h3>5. Prueba gratis</h3>
-        <Chips name="trial_mode_label" options={Object.values(TRIAL_MODES)} value={TRIAL_MODES[trial]} onChange={(v) => setTrial((Object.keys(TRIAL_MODES) as TrialMode[]).find((k) => TRIAL_MODES[k] === v) ?? "done")} />
-        <input type="hidden" name="trial_mode" value={trial} />
-        {trial === "done" && (
-          <label className="field" style={{ maxWidth: 240 }}>
-            <span>La prueba empezó el</span>
-            <input className="input" type="date" name="trial_start" value={trialStart} max={shift(start, -1)} onChange={(e) => setTrialStart(e.target.value)} required />
-            <small className="muted">Terminó el {longDate(shift(trialStart, TRIAL_DAYS - 1))}. El plan empieza el día de la instalación.</small>
-          </label>
-        )}
-        {trial === "starts" && <small className="muted">7 días sin cobro desde la fecha de inicio. El plan se cobra el día 8.</small>}
-      </div>
+      <input type="hidden" name="trial_mode" value="none" />
 
       <div className="form-section">
-        <h3>6. Piezas y pago</h3>
+        <h3>5. Piezas y pago</h3>
         <div className="grid-2">
           <Stepper name="plaques" label={plan === "annual" ? "Placas con su marca (cotizadas)" : "Placas NFC"} value={plaques} onChange={(n) => setPlaques(plan === "plaque" ? Math.min(1, n) : n)} />
           <Stepper name="waiter_cards" label={`Tarjetas meseros (${money(WAITER_CARD_PRICE)} c/u)`} value={cards} onChange={setCards} />
@@ -252,7 +233,7 @@ export function ContractForm({ today, error }: { today: string; error?: string }
           <div><span>Mensualidad</span><b>{PLANS[plan].label}</b></div>
           <div><span>Precio</span><b className="num">{money(fee)} / {PLANS[plan].every}{PLANS[plan].perPlaque ? ` (${Math.max(1, plaques)} × ${money(PLANS[plan].price)})` : ""}</b></div>
           <div><span>FiveTap Business</span><b>{withBusiness ? "Incluido" : "No incluido"}</b></div>
-          <div><span>Prueba gratis</span><b>{TRIAL_MODES[trial]}</b></div>
+          <div><span>Garantía</span><b>{plan === "monthly" ? "30 días" : "—"}</b></div>
           <div><span>Se paga el día de la instalación</span><b className="num">{money(total)}</b></div>
           <div><span>Después</span><b className="num">{money(fee)} cada {PLANS[plan].every}</b></div>
         </div>

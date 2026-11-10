@@ -62,8 +62,8 @@ Sin email todo funciona igual: los mensajes aparecen en `/admin/mensajes` con
 un contador de no leídos.
 
 ### 5. Pagos (opcional)
-- **PayPal**: plan mensual $129 con 7 días gratis → `PAYPAL_MONTHLY_TRIAL_URL`
-  (también es el botón de `/prueba`, junto con `PAYPAL_CLIENT_ID`); plan anual
+- **PayPal**: plan mensual $129 → `PAYPAL_MONTHLY_URL`
+  (también es el botón de `/empezar`, junto con `PAYPAL_CLIENT_ID`); plan anual
   $1,290 y su mitad $645 → `PAYPAL_ANNUAL_URL`, `PAYPAL_ANNUAL_HALF_URL`; 1 placa
   $35/mes, 2 placas $60 y tarjeta de mesero $25 → `PAYPAL_PLAQUE_URL`,
   `PAYPAL_PACK_URL`, `PAYPAL_WAITER_URL`. Sin enlace, cada botón abre WhatsApp.
