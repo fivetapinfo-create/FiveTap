@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { db } from "./supabase";
 import { SITE_URL } from "./site";
-import { tierByFee } from "./plans";
+import { planByKey, tierByFee } from "./plans";
 import type { Business, Payment } from "./types";
 
 // The founder's to-do list, computed from the data every time: payments to
@@ -211,7 +211,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     db().from("payments").select("business_id, kind, method, paid_at, amount").order("paid_at"),
     db().from("contracts").select("venue_name, start_date"),
     db().from("feedback").select("id", { count: "exact", head: true }).is("read_at", null),
-    db().from("signups").select("id, venue_name, owner_name, phone, paypal_subscription_id").is("business_id", null).order("created_at"),
+    db().from("signups").select("id, venue_name, owner_name, phone, plan, paypal_subscription_id").is("business_id", null).order("created_at"),
     db().from("web_payments").select("id, paypal_order_id, item, amount, venue_name, payer_name").eq("handled", false).order("created_at"),
     db().from("tags").select("business_id").eq("active", true),
   ]);
@@ -369,13 +369,14 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
   }
 
   // Venues that signed up by themselves on /empezar and still have no business here.
-  for (const r of (signupRes.data ?? []) as { id: string; venue_name: string; owner_name: string; phone: string; paypal_subscription_id: string | null }[]) {
+  for (const r of (signupRes.data ?? []) as { id: string; venue_name: string; owner_name: string; phone: string; plan: string; paypal_subscription_id: string | null }[]) {
+    const chosen = planByKey(r.plan) ?? planByKey("esencial")!;
     tasks.push({
       id: `signup-${r.id}`,
       kind: "registro",
       date: from,
       title: `Nuevo registro: ${r.venue_name}`,
-      detail: `${r.owner_name} · +${r.phone}. ${r.paypal_subscription_id ? "Se suscribió por PayPal ($129 al mes)." : "Todavía sin pagar."} Crea el negocio y coordina la instalación.`,
+      detail: `${r.owner_name} · +${r.phone}. ${chosen.title} · ${money(chosen.monthly)} al mes. ${r.paypal_subscription_id ? "Se suscribió por PayPal: registra el primer pago al crear el negocio." : "Todavía sin pagar."} Crea el negocio y coordina la instalación.`,
       whatsapp: wa(r.phone, `Hola ${r.owner_name.split(" ")[0]} 👋 Te escribe FiveTap. Recibimos tu registro de ${r.venue_name}. ¿Qué día y a qué hora te queda bien para instalar tus placas y FiveTap Business?`),
       link: { href: `/admin/new?signup=${r.id}`, label: "Crear negocio" },
     });

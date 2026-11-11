@@ -48,7 +48,7 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
 }
 
 /** Defaults that rarely change: type, color, plan. */
-export function OptionFields({ b }: { b?: Business }) {
+export function OptionFields({ b, fee }: { b?: Business; fee?: number }) {
   return (
     <div className="form-section">
       <div className="grid-2">
@@ -78,7 +78,7 @@ export function OptionFields({ b }: { b?: Business }) {
         </label>
         <label className="field">
           <span>Mensualidad (USD)</span>
-          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b?.monthly_fee ?? 129} />
+          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b?.monthly_fee ?? fee ?? 129} />
         </label>
       </div>
       <small className="muted">

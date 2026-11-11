@@ -81,19 +81,14 @@ export default async function Pay({ searchParams }: Props) {
         </section>
       )}
 
-      {(env.PAYPAL_PLAQUES_LINK || env.PAYPAL_WAITERS_LINK) && (
-        <section className="pay-method rise" style={{ "--i": 2 } as React.CSSProperties}>
-          <div className="pay-method-head">
-            <h3>Pagar tu mensualidad</h3>
-            <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
-          </div>
-          <p className="muted">Elige tu plan en PayPal y paga el mes con tarjeta o PayPal. Escribe el nombre de tu negocio en la nota.</p>
-          <div className="pay-buttons">
-            {env.PAYPAL_PLAQUES_LINK && <a className="btn btn-dark" href={env.PAYPAL_PLAQUES_LINK} target="_blank" rel="noreferrer">Mensualidad de placas</a>}
-            {env.PAYPAL_WAITERS_LINK && <a className="btn btn-ghost" href={env.PAYPAL_WAITERS_LINK} target="_blank" rel="noreferrer">Mensualidad de tarjetas de meseros</a>}
-          </div>
-        </section>
-      )}
+      <section className="pay-method rise" style={{ "--i": 2 } as React.CSSProperties}>
+        <div className="pay-method-head">
+          <h3>Suscribirte con tarjeta o PayPal</h3>
+          <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
+        </div>
+        <p className="muted">Elige tu plan de placas o de tarjetas para meseros y se cobra solo cada mes. Cancelas cuando quieras.</p>
+        <a className="btn btn-dark" href={`/empezar${business ? `?n=${encodeURIComponent(business)}` : ""}`}>Elegir mi plan</a>
+      </section>
 
       <section className="pay-method rise" style={{ "--i": 2 } as React.CSSProperties}>
         <div className="pay-method-head">

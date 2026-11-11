@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
+import { planByKey } from "@/lib/plans";
 import { db } from "@/lib/supabase";
 import { createBusiness } from "../actions";
 import { EssentialFields, OptionFields } from "../BusinessFields";
@@ -11,9 +12,11 @@ export default async function NewBusiness({ searchParams }: Props) {
   const { error, signup: signupId } = await searchParams;
   // Prefilled from a self sign-up on /empezar.
   const signup = signupId && /^[0-9a-f-]{36}$/i.test(signupId)
-    ? ((await db().from("signups").select("id, venue_name, owner_name, phone").eq("id", signupId).maybeSingle()).data as { id: string; venue_name: string; owner_name: string; phone: string } | null)
+    ? ((await db().from("signups").select("id, venue_name, owner_name, phone, plan").eq("id", signupId).maybeSingle()).data as { id: string; venue_name: string; owner_name: string; phone: string; plan: string } | null)
     : null;
   const prefill = signup ? { name: signup.venue_name, manager_name: signup.owner_name, manager_phone: signup.phone, billing_name: signup.owner_name, billing_phone: signup.phone } : undefined;
+  // The plan chosen on /empezar sets the price and, for plaques, how many to create.
+  const chosen = signup ? planByKey(signup.plan) : null;
   return (
     <main className="container admin-main" style={{ maxWidth: 680 }}>
       <div>
@@ -26,22 +29,22 @@ export default async function NewBusiness({ searchParams }: Props) {
         </div>
       </div>
       <Flash error={error} />
-      {signup && <p className="alert alert-ok">Datos de {signup.venue_name}, que se registró solo desde la web. Solo falta el enlace de Google.</p>}
+      {signup && <p className="alert alert-ok">Datos de {signup.venue_name}, que se registró solo desde la web{chosen ? ` con el plan ${chosen.title} ($${chosen.monthly} al mes)` : ""}. Solo falta el enlace de Google.</p>}
       <form action={createBusiness} className="panel">
         {signup && <input type="hidden" name="signup_id" value={signup.id} />}
         <EssentialFields prefill={prefill} />
         <details className="more">
           <summary>Más opciones (tipo, color, cantidad de placas, precio)</summary>
-          <OptionFields />
+          <OptionFields fee={chosen?.monthly} />
           <div className="form-section">
             <div className="grid-2">
               <label className="field">
                 <span>Cantidad de placas</span>
-                <input className="input" type="number" name="spots" min={1} max={80} defaultValue={10} />
+                <input className="input" type="number" name="spots" min={1} max={80} defaultValue={chosen?.qty ?? 10} />
               </label>
               <label className="field">
                 <span>Nombre de cada placa</span>
-                <input className="input" name="spot_label" placeholder="Mesa, Barra, Caja…" />
+                <input className="input" name="spot_label" placeholder="Mesa, Barra, Caja…" defaultValue={chosen?.line === "meseros" ? "Mesero" : undefined} />
                 <small>Se numeran solas: Mesa 1, Mesa 2…</small>
               </label>
             </div>

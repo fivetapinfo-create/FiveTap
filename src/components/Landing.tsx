@@ -229,7 +229,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
                   ))}
                   <li><span>Más de {QUOTE_ABOVE} placas o cadenas</span><b className="num">Cotizar</b><small>te enviamos tu propuesta por sucursal</small></li>
                 </ul>
-                <a className="btn btn-dark" href={askPlaque}>Pedir mis placas</a>
+                <div className="row"><a className="btn btn-dark" href="/empezar?plan=esencial#pagar">Suscribirme</a><a className="btn btn-ghost" href={askPlaque}>Hablar por WhatsApp</a></div>
               </div>
               <div className="piece">
                 <h3>Tarjetas para meseros</h3>
@@ -245,7 +245,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
                     </li>
                   ))}
                 </ul>
-                <a className="btn btn-ghost" href={askWaiter}>Pedir tarjetas</a>
+                <div className="row"><a className="btn btn-dark" href="/empezar?plan=mesero-1#pagar">Suscribirme</a><a className="btn btn-ghost" href={askWaiter}>Hablar por WhatsApp</a></div>
               </div>
             </div>
             <p className="muted pieces-note">

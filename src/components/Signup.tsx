@@ -11,7 +11,9 @@ const isComplete = (d: SignupDetails) => d.venue.trim().length > 1 && d.owner.tr
  * Self sign-up: the venue leaves its name and WhatsApp, then subscribes on PayPal.
  * FiveTap saves the sign-up and notifies the founder, who only has to install.
  */
-export function Signup({ clientId, planId, fallbackUrl, presetVenue }: { clientId?: string; planId?: string | null; fallbackUrl: string; presetVenue?: string }) {
+export type SignupPlan = { key: string; title: string; detail: string; monthly: number };
+
+export function Signup({ clientId, planId, fallbackUrl, presetVenue, plan }: { clientId?: string; planId?: string | null; fallbackUrl: string; presetVenue?: string; plan: SignupPlan }) {
   const [venue, setVenue] = useState(presetVenue ?? "");
   const [owner, setOwner] = useState("");
   const [phone, setPhone] = useState("");
@@ -26,7 +28,7 @@ export function Signup({ clientId, planId, fallbackUrl, presetVenue }: { clientI
     const res = await fetch("/api/registro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...latest.current, subscriptionId }),
+      body: JSON.stringify({ ...latest.current, subscriptionId, plan: plan.key }),
     }).catch(() => null);
     if (res?.ok && subscriptionId) setOrder(subscriptionId);
     setState(res?.ok ? "done" : "error");
@@ -34,7 +36,7 @@ export function Signup({ clientId, planId, fallbackUrl, presetVenue }: { clientI
 
   // Paid on PayPal: the receipt prints. Registered without paying: a short confirmation.
   if (state === "done" && order) {
-    return <Receipt data={{ item: "Plan mensual", detail: "10 placas · FiveTap Business", amount: 129, per: "/ mes", venue: venue.trim(), order, paidWith: "PayPal" }} />;
+    return <Receipt data={{ item: plan.title, detail: plan.detail, amount: plan.monthly, per: "/ mes", venue: venue.trim(), order, paidWith: "PayPal" }} />;
   }
   if (state === "done") {
     return (

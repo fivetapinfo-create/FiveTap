@@ -3,26 +3,28 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Amex, Mastercard, PayPal, Visa } from "@/components/PaymentBadges";
 import { Signup } from "@/components/Signup";
+import { TIERS, WAITER_TIERS, annualPrice, planByKey } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Empieza con FiveTap",
-  description: "Plan mensual de FiveTap: 10 placas NFC, instalación y FiveTap Business por $129 al mes. Cancelas cuando quieras.",
+  description: "Elige tu plan de FiveTap: placas NFC instaladas o tarjetas para meseros, con FiveTap Business. Pago mensual con tarjeta o PayPal. Cancelas cuando quieras.",
 };
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ n?: string }> };
+type Props = { searchParams: Promise<{ n?: string; plan?: string }> };
 
-/** "…/subscribe?plan_id=P-XXXX" → "P-XXXX". */
-const planOf = (url?: string) => (url ? /plan_id=(P-[A-Z0-9]+)/.exec(url)?.[1] ?? null : null);
+const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 
-// Sign-up for the monthly plan: the venue registers itself and subscribes on PayPal.
-// The founder gets an alert and a task to create the business and install.
+// Sign-up for any monthly plan: the venue picks it, registers and subscribes on PayPal
+// (charged by itself every month). The founder gets an alert and a task to install.
 export default async function Start({ searchParams }: Props) {
-  const { n } = await searchParams;
+  const { n, plan: key } = await searchParams;
   const business = n?.slice(0, 80);
-  const url = process.env.PAYPAL_MONTHLY_URL;
-  const fallback = url || salesWhatsAppUrl(`Hola, quiero empezar con FiveTap${business ? ` para ${business}` : ""}.`);
+  const plan = planByKey(key) ?? planByKey("esencial")!;
+  const href = (k: string) => `/empezar?plan=${k}${business ? `&n=${encodeURIComponent(business)}` : ""}`;
+  const ask = salesWhatsAppUrl(`Hola, quiero el plan ${plan.title} de FiveTap ($${plan.monthly} al mes)${business ? ` para ${business}` : ""}.`);
+  const installs = plan.line === "placas" ? `tus ${plan.qty === 1 ? "placa" : `${plan.qty} placas`} NFC` : `tus ${plan.name} para meseros`;
 
   return (
     <main className="pay">
@@ -30,38 +32,66 @@ export default async function Start({ searchParams }: Props) {
 
       <header className="rise">
         <h1 className="pay-title">Empieza con FiveTap</h1>
-        <p className="muted">{business ? `${business} · ` : ""}Todo incluido por <b>$129 al mes</b>, sin costo de instalación.</p>
+        <p className="muted">{business ? `${business} · ` : ""}Elige tu plan. Se paga cada mes con tarjeta o PayPal, sin costo de instalación.</p>
       </header>
 
       <section className="pay-method rise" style={{ "--i": 1 } as React.CSSProperties}>
-        <h3>Cómo funciona</h3>
-        <ol className="trial-steps">
-          <li><b>Hoy</b> Te registras y activas tu plan. Te escribimos para elegir el día de la instalación.</li>
-          <li><b>Día de la instalación</b> Dejamos tus 10 placas NFC y FiveTap Business en tu celular. Anotamos tus reseñas actuales en Google.</li>
-          <li><b>Desde ese día</b> Ves en tu app cuántos clientes van a dejarte su reseña, y cada mes te llega tu reporte.</li>
-        </ol>
-        <p className="muted">Sin permanencia: cancelas cuando quieras, desde tu app, desde PayPal o con un mensaje.</p>
+        <h3>Placas para mesas y mostrador</h3>
+        <div className="plan-pick">
+          {TIERS.map((t) => (
+            <Link key={t.key} href={href(t.key)} className={`plan-chip${t.key === plan.key ? " on" : ""}`} aria-current={t.key === plan.key ? "true" : undefined}>
+              <b>{t.name}</b>
+              <span>{t.qty === 1 ? "1 placa" : `hasta ${t.qty}`} · {usd(t.monthly)}/mes</span>
+            </Link>
+          ))}
+        </div>
+        <h3 style={{ marginTop: 8 }}>Tarjetas para meseros</h3>
+        <div className="plan-pick">
+          {WAITER_TIERS.map((t) => (
+            <Link key={t.key} href={href(t.key)} className={`plan-chip${t.key === plan.key ? " on" : ""}`} aria-current={t.key === plan.key ? "true" : undefined}>
+              <b>{t.name}</b>
+              <span>{usd(t.monthly)}/mes</span>
+            </Link>
+          ))}
+        </div>
+        <p className="muted">¿Quieres placas y tarjetas? Suscríbete a un plan y escríbenos para sumar el otro.</p>
       </section>
 
-      <section className="pay-method pay-method-pick rise" style={{ "--i": 2 } as React.CSSProperties}>
+      <section className="pay-method pay-method-pick rise" id="pagar" style={{ "--i": 2 } as React.CSSProperties}>
         <div className="pay-method-head">
-          <h3>Plan mensual</h3>
-          <span className="trial-price"><b className="num">$129</b> / mes</span>
+          <h3>{plan.title}</h3>
+          <span className="trial-price"><b className="num">{usd(plan.monthly)}</b> / mes</span>
         </div>
-        <p className="muted">10 placas NFC premium, instalación y FiveTap Business incluidos. Sin permanencia: cancelas cuando quieras.</p>
-        <Signup clientId={process.env.PAYPAL_CLIENT_ID} planId={planOf(url)} fallbackUrl={fallback} presetVenue={business} />
+        <p className="muted">{plan.detail}. Instalación incluida. Sin permanencia: cancelas cuando quieras. Anual: {usd(annualPrice(plan))} (2 meses gratis).</p>
+        {plan.paypalPlan ? (
+          <Signup key={plan.key} clientId={process.env.PAYPAL_CLIENT_ID} planId={plan.paypalPlan} fallbackUrl={`https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=${plan.paypalPlan}`} presetVenue={business} plan={plan} />
+        ) : (
+          <>
+            <p className="muted">Este plan todavía no se puede pagar en línea. Escríbenos y te lo activamos hoy por Yappy o transferencia.</p>
+            <a className="btn btn-dark" href={ask}>Pedir este plan por WhatsApp</a>
+          </>
+        )}
       </section>
 
       <section className="pay-method rise" style={{ "--i": 3 } as React.CSSProperties}>
-        <div className="pay-method-head">
-          <h3>Plan anual</h3>
-          <span className="trial-price"><b className="num">$1,290</b> / año</span>
-        </div>
-        <p className="muted">Incluye placas personalizadas con la marca de tu local. Dinos cuántas quieres y te enviamos tu propuesta.</p>
-        <a className="btn btn-ghost" href={salesWhatsAppUrl(`Hola, quiero cotizar el plan anual de FiveTap${business ? ` para ${business}` : ""}. Tengo ___ mesas.`)}>Cotizar plan anual</a>
+        <h3>Cómo funciona</h3>
+        <ol className="trial-steps">
+          <li><b>Hoy</b> Te registras y activas tu plan. Te escribimos para elegir el día de la instalación.</li>
+          <li><b>Día de la instalación</b> Dejamos {installs} y FiveTap Business en tu celular. Anotamos tus reseñas actuales en Google.</li>
+          <li><b>Desde ese día</b> Ves en tu app cuántos clientes van a dejarte su reseña, y cada mes te llega tu reporte.</li>
+        </ol>
       </section>
 
-      <div className="rise" style={{ "--i": 4 } as React.CSSProperties}>
+      <section className="pay-method rise" style={{ "--i": 4 } as React.CSSProperties}>
+        <div className="pay-method-head">
+          <h3>Plan anual</h3>
+          <span className="trial-price"><b className="num">{usd(annualPrice(plan))}</b> / año</span>
+        </div>
+        <p className="muted">Pagas 10 meses y usas 12. En un solo pago, o la mitad en línea y la mitad en efectivo el día de la instalación.</p>
+        <a className="btn btn-ghost" href={salesWhatsAppUrl(`Hola, quiero el plan anual ${plan.title} de FiveTap${business ? ` para ${business}` : ""}.`)}>Pedir plan anual</a>
+      </section>
+
+      <div className="rise" style={{ "--i": 5 } as React.CSSProperties}>
         <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
         <p className="muted pay-foot">Pago seguro con PayPal. Puedes usar tu tarjeta Visa, Mastercard o American Express.</p>
       </div>

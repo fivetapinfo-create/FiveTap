@@ -1,4 +1,5 @@
 import { normalizePhone } from "@/lib/phone";
+import { planByKey } from "@/lib/plans";
 import { sendPush } from "@/lib/push";
 import { db } from "@/lib/supabase";
 
@@ -8,7 +9,8 @@ export const dynamic = "force-dynamic";
 // and WhatsApp, and after PayPal approves the subscription it sends its id.
 // The founder gets a notification and a task in the Agenda to create the business.
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => null)) as { subscriptionId?: string; venue?: string; owner?: string; phone?: string } | null;
+  const body = (await req.json().catch(() => null)) as { subscriptionId?: string; venue?: string; owner?: string; phone?: string; plan?: string } | null;
+  const plan = planByKey(body?.plan) ?? planByKey("esencial")!;
   const venue = String(body?.venue ?? "").trim().slice(0, 80);
   const owner = String(body?.owner ?? "").trim().slice(0, 80);
   const phone = normalizePhone(String(body?.phone ?? ""));
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
   if ((count ?? 0) > 0 && !subscription) return Response.json({ ok: true });
 
   const { error } = await db().from("signups").upsert(
-    { venue_name: venue, owner_name: owner, phone, plan: "monthly", paypal_subscription_id: subscription },
+    { venue_name: venue, owner_name: owner, phone, plan: plan.key, paypal_subscription_id: subscription },
     { onConflict: "paypal_subscription_id", ignoreDuplicates: true },
   );
   if (error) {
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
     { role: "founder" },
     {
       title: subscription ? `🎉 Nuevo cliente · ${venue}` : `Nuevo registro · ${venue}`,
-      body: `${owner} · +${phone}. ${subscription ? "Se suscribió por PayPal: $129 al mes." : "Aún sin pagar."} Crea el negocio y coordina la instalación.`,
+      body: `${owner} · +${phone}. ${plan.title}: $${plan.monthly} al mes. ${subscription ? "Se suscribió por PayPal." : "Aún sin pagar."} Crea el negocio y coordina la instalación.`,
       url: "/admin/agenda",
     },
   );

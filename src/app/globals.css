@@ -718,3 +718,9 @@ p { margin: 0; text-wrap: pretty; }
 .receipt-rows dt { color: var(--muted); }
 .receipt-rows dd { margin: 0; font-weight: 600; text-align: right; }
 .receipt-note { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.plan-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.plan-chip { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); font-size: 14px; }
+.plan-chip span { color: var(--muted); font-size: 13px; }
+.plan-chip.on { border-color: #0a0a0a; box-shadow: inset 0 0 0 1px #0a0a0a; }
+.piece > .row { margin-top: auto; }
+.piece > .row .btn { margin-top: 0; }
