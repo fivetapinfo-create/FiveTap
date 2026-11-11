@@ -136,6 +136,14 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           <small className="owner-hero-note">Cada fin de mes te enviamos el recuento de las reseñas que conseguiste con FiveTap.</small>
         </section>
 
+        <Link className="report-card" href={`/mi/${token}/reporte`}>
+          <div>
+            <b>📊 Tu reporte de {prev!.label}</b>
+            <span>Todo el mes en un vistazo: reseñas, toques, mensajes y tu acumulado.</span>
+          </div>
+          <span aria-hidden>→</span>
+        </Link>
+
         <div className="kpis">
           {kpis.map((k) => (
             <div key={k.name} className="kpi">

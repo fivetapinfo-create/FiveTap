@@ -1,5 +1,6 @@
 import { agenda, cheerOfTheWeek, todayPanama } from "@/lib/agenda";
 import { sendPushOnce } from "@/lib/push";
+import { successLine } from "@/lib/report-copy";
 import { db } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -71,16 +72,17 @@ export async function GET(req: Request) {
   if (today.endsWith("-01")) {
     const [y, m] = today.split("-").map(Number);
     const prevMonth = new Date(Date.UTC(y!, m! - 2, 1)).toISOString().slice(0, 10);
-    const res = await db().from("events").select("business_id").eq("type", "review_click").gte("created_at", startOf(prevMonth)).lt("created_at", startOf(today)).limit(50_000);
-    const reviews = count(res.data);
+    const monthName = MONTHS[Number(prevMonth.slice(5, 7)) - 1]!;
+    const res = await db().from("events").select("business_id, type").in("type", ["scan", "review_click"]).gte("created_at", startOf(prevMonth)).lt("created_at", startOf(today)).limit(50_000);
+    const rows = (res.data ?? []) as { business_id: string; type: string }[];
+    const scans = count(rows.filter((r) => r.type === "scan"));
+    const reviews = count(rows.filter((r) => r.type === "review_click"));
     for (const b of businesses) {
-      const n = reviews.get(b.id) ?? 0;
+      const period = { key: "prev", label: monthName, scans: scans.get(b.id) ?? 0, nfc: 0, qr: 0, reviews: reviews.get(b.id) ?? 0, feedback: 0, club: 0, top: null } as const;
       sent.months += await sendPushOnce(`month-${b.id}-${today.slice(0, 7)}`, { role: ["owner", "manager"], businessId: b.id }, {
-        title: `📊 Tu resumen de ${MONTHS[Number(prevMonth.slice(5, 7)) - 1]}`,
-        body: n
-          ? `${n} ${n === 1 ? "cliente fue" : "clientes fueron"} a dejarte reseña en Google gracias a FiveTap. Toca para ver el detalle.`
-          : "Toca para ver cómo le fue a tu local el mes pasado.",
-        url: `/mi/${b.owner_token}`,
+        title: `📊 Tu reporte de ${monthName} está listo`,
+        body: successLine({ ...period }, b.name),
+        url: `/mi/${b.owner_token}/reporte`,
       });
     }
   } else {

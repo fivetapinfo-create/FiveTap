@@ -687,3 +687,9 @@ p { margin: 0; text-wrap: pretty; }
 @media (prefers-reduced-motion: reduce) { .rc-paper { transform: none; transition: none; } .rc-spin, .rc-check { animation: none; } }
 .pay-total { font-size: 15px; }
 .pay-total b { font-size: 20px; }
+.report-seg { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+.report-seg a { text-align: center; padding: 10px 8px; font-size: 14px; }
+.report-success { color: #fff !important; font-weight: 500; margin-top: 10px; line-height: 1.5; }
+.report-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--gold); }
+.report-card b { display: block; font-size: 16px; }
+.report-card span { color: var(--muted); font-size: 14px; }
