@@ -210,6 +210,8 @@ export async function recordPayment(f: FormData) {
       method,
       method_label: method === "other" ? custom || str(f, "method_other", 40) : null,
       reference: opt(f, "reference", 120),
+      // The database default is the UTC date; at night in Panamá that is already tomorrow.
+      paid_at: todayPanama(),
       idempotency_key: key,
     }).select("id").single();
     if (ins.error) {

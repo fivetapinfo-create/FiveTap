@@ -64,7 +64,8 @@ function must<T>(res: { data: T | null; error: { message: string } | null }): T 
 }
 
 const PANAMA = 5 * 3600_000;
-const localDay = (iso: string) => new Date(Date.parse(iso) - PANAMA).toISOString().slice(0, 10);
+// A plain date ("2026-11-11") is already the local day; a timestamp is moved to Panamá time.
+const localDay = (iso: string) => (iso.length === 10 ? iso : new Date(Date.parse(iso) - PANAMA).toISOString().slice(0, 10));
 export const receiptMoney = (n: number) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 export const receiptUrl = (r: Pick<Receipt, "token">) => `${SITE_URL}/recibo/${r.token}`;
 
