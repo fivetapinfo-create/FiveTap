@@ -15,6 +15,8 @@ export type Plan = {
   cards: number;
   lanyards: number;
   badge: string | null;
+  /** Color of the label on the website. */
+  badge_color: "neutral" | "blue" | "purple" | "gold";
   features: string[];
   /** PayPal subscription plan (public id), charged by itself every month. */
   paypal_plan: string | null;
@@ -31,7 +33,7 @@ export const getPlans = unstable_cache(
     if (error) throw new Error(error.message);
     return (data ?? []).map((p) => ({ ...p, monthly: Number(p.monthly) })) as Plan[];
   },
-  ["plans-v1"],
+  ["plans-v2"],
   { tags: [PLANS_TAG], revalidate: 300 },
 );
 

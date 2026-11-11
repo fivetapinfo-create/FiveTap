@@ -174,7 +174,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
             <div className="plans plans-3">
               {plans.map((p, n) => (
                 <div key={p.key} className={`plan${n === 1 ? " plan-dark" : ""}`}>
-                  {p.badge && <span className={`plan-badge${n === 1 ? " plan-badge-gold" : ""}`}>{p.badge}</span>}
+                  {p.badge && <span className={`plan-badge plan-badge-${p.badge_color}`}>{p.badge}</span>}
                   <h3>{p.name}</h3>
                   <div className="price-row">
                     <span className="price num">{usd(p.monthly)}</span>

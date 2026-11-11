@@ -36,7 +36,16 @@ export default async function Plans({ searchParams }: { searchParams: Promise<{ 
                 <label className="field"><span>Placas NFC para mesas</span><input className="input" type="number" name="plaques" min={0} max={200} defaultValue={p.plaques} /></label>
                 <label className="field"><span>Tarjetas NFC para meseros</span><input className="input" type="number" name="cards" min={0} max={100} defaultValue={p.cards} /></label>
                 <label className="field"><span>Cordones porta tarjetas</span><input className="input" type="number" name="lanyards" min={0} max={100} defaultValue={p.lanyards} /></label>
-                <label className="field"><span>Etiqueta (opcional)</span><input className="input" name="badge" defaultValue={p.badge ?? ""} maxLength={30} placeholder="Más recomendado" /></label>
+                <label className="field"><span>Etiqueta (opcional)</span><input className="input" name="badge" defaultValue={p.badge ?? ""} maxLength={30} placeholder="Más popular" /></label>
+                <label className="field">
+                  <span>Color de la etiqueta</span>
+                  <select className="select" name="badge_color" defaultValue={p.badge_color}>
+                    <option value="neutral">Neutro</option>
+                    <option value="blue">Azul</option>
+                    <option value="purple">Morado</option>
+                    <option value="gold">Dorado</option>
+                  </select>
+                </label>
               </div>
               <label className="field">
                 <span>Qué incluye (una línea por punto)</span>

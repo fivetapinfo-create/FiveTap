@@ -731,3 +731,6 @@ p { margin: 0; text-wrap: pretty; }
 .quick-links { display: flex; flex-wrap: wrap; gap: 8px; }
 a.kpi { color: inherit; }
 .section-title { font-size: 18px; margin-top: 8px; }
+.plan-badge-blue { background: #2563eb; color: #fff; border-color: #2563eb; }
+.plan-badge-purple { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+.plan-badge-gold { background: var(--gold); color: #0a0a0a; border-color: var(--gold); }

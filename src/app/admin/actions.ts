@@ -486,6 +486,7 @@ export async function updatePlan(f: FormData) {
       cards: int("cards", 100),
       lanyards: int("lanyards", 100),
       badge: opt(f, "badge", 30),
+      badge_color: (["neutral", "blue", "purple", "gold"] as const).find((c) => c === str(f, "badge_color", 10)) ?? "neutral",
       features: String(f.get("features") ?? "").split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 12).map((l) => l.slice(0, 90)),
       paypal_plan: paypal || null,
       active: str(f, "active", 3) === "1",

@@ -492,3 +492,8 @@ create table if not exists agreements (
 );
 create index if not exists agreements_business_idx on agreements (business_id, created_at desc);
 alter table agreements enable row level security;
+
+-- Color of each plan's label on the website (Pro: blue "Más popular", Enterprise: purple).
+alter table plans add column if not exists badge_color text not null default 'neutral';
+alter table plans drop constraint if exists plans_badge_color_check;
+alter table plans add constraint plans_badge_color_check check (badge_color in ('neutral', 'blue', 'purple', 'gold'));
