@@ -9,31 +9,32 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, billingState, human, planLabel } from "@/lib/agenda";
 import { businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { countSubscriptions } from "@/lib/push";
+import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
-import { addSnapshot, addTags, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
+import { addSnapshot, addTags, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
 import { Flash } from "../../Flash";
 import { STATUS_LABEL, dateTime, pct, usd } from "../../format";
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; r?: string }> };
 
-const METHOD_LABEL = { paypal: "PayPal", card: "Tarjeta", ach: "ACH", yappy: "Yappy", cash: "Efectivo" } as const;
-const KIND_LABEL = { setup: "Instalación", monthly: "Mensualidad", annual: "Plan anual", pieces: "Piezas (pago único)", other: "Otro" } as const;
 
 export default async function BusinessPage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   // All queries start together: one round trip for the whole page.
   const detail = businessDetail(id);
-  const [d, report, contacts, snapshots, phonesOwner, phonesManager] = await Promise.all([
+  const [d, report, contacts, snapshots, phonesOwner, phonesManager, receipts, methods] = await Promise.all([
     detail,
     reportData(id, detail.then((x) => x?.tags ?? [])),
     contactsFor(id),
     reviewSnapshots(id),
     countSubscriptions({ role: "owner", businessId: id }),
     countSubscriptions({ role: "manager", businessId: id }),
+    receiptsForBusiness(id),
+    customMethods(),
   ]);
   if (!d) notFound();
   const { business: b, tags, stats, tagStats, feedback, payments } = d;
@@ -55,6 +56,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const isNew = sp.ok === "creado" || !stats?.scans_30d;
   const billing = billingState(b, payments);
   const plan = planLabel(b, billing.charge, tags.filter((t) => t.active).length);
+  const receiptByPayment = new Map(receipts.filter((r) => r.payment_id).map((r) => [r.payment_id!, r]));
+  const receiptEmail = b.billing_email || b.manager_email;
   if (feedback.some((f) => !f.read_at)) after(() => markRead({ businessId: b.id }));
 
   return (
@@ -322,14 +325,30 @@ export default async function BusinessPage({ params, searchParams }: Props) {
 
       <section className="panel" id="pagos">
         <div className="panel-head">
-          <h2>Pagos</h2>
+          <h2>Pagos y comprobantes</h2>
           <CopyButton value={payLink} label="Copiar link de pago" />
         </div>
+        {sp.r && sp.ok?.startsWith("comprobante") && (() => {
+          const r = receipts.find((x) => x.number === sp.r);
+          return r ? (
+            <div className="msg">
+              <p>Comprobante <b>{r.number}</b> emitido · {usd(Number(r.amount).toFixed(2))} · {r.method}</p>
+              <div className="row">
+                <a className="btn btn-ghost btn-sm" href={`/recibo/${r.token}`} target="_blank" rel="noreferrer">Ver comprobante</a>
+                <a className="btn btn-ghost btn-sm" href={`/recibo/${r.token}/pdf?dl=1`}>Descargar PDF</a>
+                {(b.billing_phone || b.manager_phone) && (
+                  <a className="btn btn-ghost btn-sm" href={`https://wa.me/${b.billing_phone || b.manager_phone}?text=${encodeURIComponent(`Hola, te escribe FiveTap. Confirmamos tu pago de ${usd(Number(r.amount).toFixed(2))}. Tu comprobante ${r.number}: ${SITE_URL}/recibo/${r.token} ¡Gracias! 🙌`)}`}>Enviar por WhatsApp</a>
+                )}
+              </div>
+            </div>
+          ) : null;
+        })()}
         <form action={recordPayment} className="form-section">
           <input type="hidden" name="business_id" value={b.id} />
+          <input type="hidden" name="idempotency_key" value={crypto.randomUUID()} />
           <div className="grid-2">
             <label className="field">
-              <span>Monto (USD)</span>
+              <span>Monto recibido (USD)</span>
               <input className="input" type="number" step="0.01" min={1} name="amount" defaultValue={billing.charge?.amount ?? b.monthly_fee} required />
             </label>
             <label className="field">
@@ -339,29 +358,91 @@ export default async function BusinessPage({ params, searchParams }: Props) {
               </select>
             </label>
             <label className="field">
-              <span>Método</span>
+              <span>Método de pago</span>
               <select className="select" name="method" defaultValue="yappy">
-                {Object.entries(METHOD_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                {(["yappy", "cash", "ach", "paypal", "card"] as const).map((k) => <option key={k} value={k}>{METHOD_LABEL[k]}</option>)}
+                {methods.map((m) => <option key={m.id} value={`m:${m.label}`}>{m.label}</option>)}
+                <option value="other">Otro (escríbelo abajo)</option>
               </select>
             </label>
             <label className="field">
               <span>Referencia (opcional)</span>
-              <input className="input" name="reference" placeholder="Nº de comprobante" />
+              <input className="input" name="reference" placeholder="Nº de transacción Yappy o transferencia" />
+            </label>
+            <label className="field">
+              <span>Si elegiste Otro: ¿cuál?</span>
+              <input className="input" name="method_other" maxLength={40} placeholder="Ej. Cheque" />
             </label>
           </div>
-          <SubmitButton className="btn btn-dark" pending="Guardando…">Registrar pago</SubmitButton>
+          <label className="check">
+            <input type="checkbox" name="confirm" value="1" required />
+            <span>Confirmo que el pago ya llegó y revisé el monto y el método.</span>
+          </label>
+          <label className="check">
+            <input type="checkbox" name="send" value="1" defaultChecked />
+            <span>
+              Enviar el comprobante al dueño: {receiptEmail ? <>por correo a <b>{receiptEmail}</b> y </> : <>sin correo registrado, solo </>}a su app FiveTap Business.
+            </span>
+          </label>
+          <SubmitButton className="btn btn-dark" pending="Registrando…">Registrar pago y emitir comprobante</SubmitButton>
         </form>
-        {payments.length > 0 && (
+        {(payments.length > 0 || receipts.length > 0) && (
           <div className="table-wrap">
             <table className="table">
+              <thead>
+                <tr><th>Fecha</th><th>Concepto</th><th>Método</th><th className="right">Monto</th><th>Comprobante</th><th /></tr>
+              </thead>
               <tbody>
-                {payments.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.paid_at}</td>
-                    <td>{KIND_LABEL[p.kind]}</td>
-                    <td>{METHOD_LABEL[p.method]}</td>
-                    <td className="muted">{p.reference ?? ""}</td>
-                    <td className="right num"><b>{usd(Number(p.amount).toFixed(2))}</b></td>
+                {payments.map((p) => {
+                  const r = receiptByPayment.get(p.id);
+                  return (
+                    <tr key={p.id}>
+                      <td>{human(p.paid_at.slice(0, 10))}</td>
+                      <td>{KIND_LABEL[p.kind]}</td>
+                      <td>{methodName(p)}{p.reference ? <span className="muted"> · {p.reference}</span> : null}</td>
+                      <td className="right num"><b>{usd(Number(p.amount).toFixed(2))}</b></td>
+                      <td>{r ? <a href={`/recibo/${r.token}`} target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>{r.number}</a> : <span className="muted">—</span>}</td>
+                      <td>
+                        <div className="row" style={{ justifyContent: "flex-end" }}>
+                          {r ? (
+                            <>
+                              <a className="btn btn-ghost btn-sm" href={`/recibo/${r.token}/pdf?dl=1`}>PDF</a>
+                              <form action={resendReceipt}>
+                                <input type="hidden" name="receipt_id" value={r.id} />
+                                <input type="hidden" name="back" value={`/admin/b/${b.id}#pagos`} />
+                                <SubmitButton className="btn btn-ghost btn-sm" pending="Enviando…">Reenviar</SubmitButton>
+                              </form>
+                            </>
+                          ) : (
+                            <form action={emitReceipt}>
+                              <input type="hidden" name="business_id" value={b.id} />
+                              <input type="hidden" name="payment_id" value={p.id} />
+                              <SubmitButton className="btn btn-ghost btn-sm" pending="Emitiendo…">Emitir comprobante</SubmitButton>
+                            </form>
+                          )}
+                          <details className="void-box">
+                            <summary className="btn btn-ghost btn-sm">Anular</summary>
+                            <form action={voidPayment} className="void-form">
+                              <input type="hidden" name="business_id" value={b.id} />
+                              <input type="hidden" name="payment_id" value={p.id} />
+                              <input className="input" name="reason" required minLength={4} maxLength={200} placeholder="Motivo (ej. monto equivocado)" />
+                              <SubmitButton className="btn btn-danger btn-sm" pending="Anulando…">Anular pago</SubmitButton>
+                              <small className="muted">El comprobante queda marcado como anulado y el cambio se guarda en el historial.</small>
+                            </form>
+                          </details>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {receipts.filter((r) => r.status === "void").map((r) => (
+                  <tr key={r.id} className="muted">
+                    <td>{human(r.paid_on)}</td>
+                    <td>{r.concept}</td>
+                    <td>{r.method}</td>
+                    <td className="right num"><s>{usd(Number(r.amount).toFixed(2))}</s></td>
+                    <td><a href={`/recibo/${r.token}`} target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>{r.number}</a></td>
+                    <td className="right"><span className="pill canceled">Anulado</span> {r.void_reason}</td>
                   </tr>
                 ))}
               </tbody>

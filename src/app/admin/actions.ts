@@ -9,6 +9,7 @@ import { reviewUrlFrom } from "@/lib/site";
 import { addDays, todayPanama } from "@/lib/agenda";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot } from "@/lib/data";
 import { sendPush } from "@/lib/push";
+import { audit, deliverReceipt, issueReceipt } from "@/lib/receipts";
 import { db } from "@/lib/supabase";
 import { VERTICALS, verticalByKey } from "@/lib/verticals";
 
@@ -88,6 +89,7 @@ export async function createBusiness(f: FormData) {
         manager_phone: phone(opt(f, "manager_phone", 30)),
         billing_name: opt(f, "billing_name", 80),
         billing_phone: phone(opt(f, "billing_phone", 30), "de quien paga"),
+        billing_email: email(opt(f, "billing_email", 120)),
         setup_fee: num(f, "setup_fee", 0),
         monthly_fee: num(f, "monthly_fee", 129),
         mode: str(f, "mode", 10) === "google" ? "google" : "full",
@@ -124,6 +126,7 @@ export async function updateBusiness(f: FormData) {
       manager_phone: phone(opt(f, "manager_phone", 30)),
       billing_name: opt(f, "billing_name", 80),
       billing_phone: phone(opt(f, "billing_phone", 30), "de quien paga"),
+      billing_email: email(opt(f, "billing_email", 120)),
       status: str(f, "status", 20),
       setup_fee: num(f, "setup_fee", 0),
       monthly_fee: num(f, "monthly_fee", 129),
@@ -170,42 +173,162 @@ export async function setTagActive(f: FormData) {
   revalidatePath(`/admin/b/${id}`);
 }
 
+const METHODS = ["paypal", "card", "ach", "yappy", "cash", "other"] as const;
+const KINDS = ["setup", "monthly", "annual", "pieces", "other"] as const;
+
+/**
+ * Registers a payment that already arrived, then issues its receipt and (if asked) sends
+ * it to the owner by email and in FiveTap Business. A double submit is ignored thanks to
+ * the form's one-time key; the receipt is one per payment.
+ */
 export async function recordPayment(f: FormData) {
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
-  let reactivated: { name: string; plaques: number } | null = null;
+  let result = "pago";
+  let receiptNumber = "";
   try {
-    const amount = num(f, "amount", 0);
-    if (amount <= 0) throw new Error("Monto inválido.");
+    const amount = Math.round(num(f, "amount", 0) * 100) / 100;
+    if (!(amount > 0)) throw new Error("Monto inválido.");
+    // "m:<label>" is a method added by the founder; it is saved as "other" with its name.
+    const rawMethod = str(f, "method", 80);
+    const custom = rawMethod.startsWith("m:") ? rawMethod.slice(2).trim() : "";
+    const method = custom ? "other" : (METHODS as readonly string[]).includes(rawMethod) ? rawMethod : "";
+    if (!method || (method === "other" && !custom && !str(f, "method_other", 40))) throw new Error("Elige el método de pago.");
+    const kind = (KINDS as readonly string[]).includes(str(f, "kind", 10)) ? str(f, "kind", 10) : "";
+    if (!kind) throw new Error("Elige el concepto del pago.");
+    if (str(f, "confirm", 3) !== "1") throw new Error("Confirma que el pago ya llegó antes de registrarlo.");
+    const key = str(f, "idempotency_key", 60) || null;
+
     const { data: before, error: bizError } = await db().from("businesses").select("*").eq("id", id).maybeSingle();
     if (bizError || !before) throw new Error(bizError?.message ?? "Negocio no encontrado.");
     const wasPaused = (await billingOf(before)).kind === "suspended";
-    const { error } = await db().from("payments").insert({
+
+    const ins = await db().from("payments").insert({
       business_id: id,
       amount,
-      kind: str(f, "kind", 10),
-      method: str(f, "method", 10),
+      kind,
+      method,
+      method_label: method === "other" ? custom || str(f, "method_other", 40) : null,
       reference: opt(f, "reference", 120),
-    });
-    if (error) throw new Error(error.message);
+      idempotency_key: key,
+    }).select("id").single();
+    if (ins.error) {
+      // Same form sent twice: the first one already did everything.
+      if (key && ins.error.code === "23505") redirect(`${back}?ok=pago#pagos`);
+      throw new Error(ins.error.message);
+    }
     // First payment turns a trial into a paying customer; extra days given are no longer needed.
     await db().from("businesses").update({ status: "active" }).eq("id", id).eq("status", "trial");
     await db().from("businesses").update({ grace_until: null }).eq("id", id);
-    if (wasPaused && !(await billingOf({ ...before, grace_until: null })).blocked) {
-      const { count } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", id).eq("active", true);
-      reactivated = { name: before.name, plaques: count ?? 0 };
-      await sendPush({ role: "owner", businessId: id }, {
-        title: `¡Listo, ${before.name}!`,
-        body: `Recibimos tu pago. ${reactivated.plaques === 1 ? "Tu placa ya funciona" : reactivated.plaques ? `Tus ${reactivated.plaques} placas ya funcionan` : "Tus placas ya funcionan"} otra vez. ¡Gracias! 🙌`,
-        url: `/mi/${before.owner_token}`,
-      }).catch(() => 0);
+    await audit("payment.recorded", { businessId: id, entity: "payment", entityId: ins.data.id, details: { amount, kind, method, method_label: custom || null, reference: opt(f, "reference", 120) } });
+
+    const reactivated = wasPaused && !(await billingOf({ ...before, grace_until: null })).blocked;
+    const receipt = await issueReceipt(ins.data.id);
+    receiptNumber = receipt.number;
+    const send = str(f, "send", 3) === "1";
+    if (send) {
+      const out = await deliverReceipt(receipt, { email: true, push: true, ownerToken: before.owner_token, reactivated });
+      result = out.email?.status === "sent" ? "comprobante-correo" : "comprobante-app";
+    } else if (reactivated) {
+      await sendPush({ role: "owner", businessId: id }, { title: `¡Listo, ${before.name}!`, body: "Recibimos tu pago. Tus placas ya funcionan otra vez. ¡Gracias! 🙌", url: `/mi/${before.owner_token}` }).catch(() => 0);
     }
+    if (reactivated) result += "-reactivado";
   } catch (e) {
+    if (e && typeof e === "object" && "digest" in e) throw e; // redirect()
     fail(back, e);
   }
   revalidatePath(back);
   revalidatePath("/admin/cobros");
-  redirect(`${back}?ok=${reactivated ? "reactivado" : "pago"}`);
+  revalidatePath("/admin/comprobantes");
+  redirect(`${back}?ok=${result}&r=${encodeURIComponent(receiptNumber)}#pagos`);
+}
+
+/** Sends an existing receipt again (email and app). The receipt and its number stay the same. */
+export async function resendReceipt(f: FormData) {
+  const rid = str(f, "receipt_id", 60);
+  const back = str(f, "back", 160).startsWith("/admin") ? str(f, "back", 160) : "/admin/comprobantes";
+  let ok = "reenviado";
+  try {
+    const { data: r, error } = await db().from("receipts").select("*").eq("id", rid).maybeSingle();
+    if (error || !r) throw new Error(error?.message ?? "Comprobante no encontrado.");
+    const token = r.business_id ? (await db().from("businesses").select("owner_token").eq("id", r.business_id).maybeSingle()).data?.owner_token : undefined;
+    const out = await deliverReceipt(r, { email: str(f, "email", 3) !== "0", push: str(f, "push", 3) !== "0", ownerToken: token });
+    if (out.email && out.email.status !== "sent") ok = "reenviado-sin-correo";
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(back.split("?")[0]!.split("#")[0]!);
+  revalidatePath("/admin/comprobantes");
+  redirect(`${back.split("#")[0]}${back.includes("?") ? "&" : "?"}ok=${ok}`);
+}
+
+/**
+ * Fixes a payment registered by mistake: the receipt stays, marked void with the reason,
+ * the payment stops counting (dates and status recalculate) and everything is audited.
+ * Then the right payment is registered again, with a new receipt.
+ */
+export async function voidPayment(f: FormData) {
+  const id = str(f, "business_id", 60);
+  const pid = str(f, "payment_id", 60);
+  const back = `/admin/b/${id}`;
+  try {
+    const reason = str(f, "reason", 200);
+    if (reason.length < 4) throw new Error("Escribe el motivo de la anulación.");
+    const { data: pay, error } = await db().from("payments").select("*").eq("id", pid).eq("business_id", id).maybeSingle();
+    if (error || !pay) throw new Error(error?.message ?? "Pago no encontrado.");
+    const { data: r } = await db().from("receipts").select("id, number").eq("payment_id", pid).maybeSingle();
+    if (r) {
+      const upd = await db().from("receipts").update({ status: "void", void_reason: reason, voided_at: new Date().toISOString() }).eq("id", r.id);
+      if (upd.error) throw new Error(upd.error.message);
+    }
+    const del = await db().from("payments").delete().eq("id", pid);
+    if (del.error) throw new Error(del.error.message);
+    await audit("payment.voided", { businessId: id, entity: "payment", entityId: pid, details: { reason, amount: pay.amount, kind: pay.kind, method: pay.method, method_label: pay.method_label, paid_at: pay.paid_at, receipt: r?.number ?? null } });
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(back);
+  revalidatePath("/admin/comprobantes");
+  redirect(`${back}?ok=anulado#pagos`);
+}
+
+/** Receipt for a payment registered before receipts existed (issued only, not sent). */
+export async function emitReceipt(f: FormData) {
+  const id = str(f, "business_id", 60);
+  const back = `/admin/b/${id}`;
+  let number = "";
+  try {
+    const { data: pay } = await db().from("payments").select("id").eq("id", str(f, "payment_id", 60)).eq("business_id", id).maybeSingle();
+    if (!pay) throw new Error("Pago no encontrado.");
+    number = (await issueReceipt(pay.id)).number;
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=comprobante-emitido&r=${encodeURIComponent(number)}#pagos`);
+}
+
+/** A payment method of the founder's own (e.g. "Nequi"), offered when registering payments. */
+export async function addPaymentMethod(f: FormData) {
+  const label = str(f, "label", 40);
+  try {
+    if (label.length < 2) throw new Error("Escribe el nombre del método.");
+    const { error } = await db().from("payment_methods").insert({ label });
+    if (error) throw new Error(error.code === "23505" ? "Ese método ya existe." : error.message);
+    await audit("method.added", { entity: "payment_method", entityId: label });
+  } catch (e) {
+    fail("/admin/comprobantes", e);
+  }
+  revalidatePath("/admin/comprobantes");
+  redirect("/admin/comprobantes?ok=metodo#metodos");
+}
+
+export async function removePaymentMethod(f: FormData) {
+  const mid = str(f, "id", 60);
+  const { data } = await db().from("payment_methods").delete().eq("id", mid).select("label").maybeSingle();
+  if (data) await audit("method.removed", { entity: "payment_method", entityId: data.label });
+  revalidatePath("/admin/comprobantes");
+  redirect("/admin/comprobantes?ok=metodo#metodos");
 }
 
 /** A few more days before the automatic pause (the owner promised to pay). */
@@ -222,6 +345,7 @@ export async function extendGrace(f: FormData) {
     const from = billing.suspendsOn && addDays(billing.suspendsOn, -1) > today ? addDays(billing.suspendsOn, -1) : today;
     const { error: upd } = await db().from("businesses").update({ grace_until: addDays(from, days) }).eq("id", id);
     if (upd) throw new Error(upd.message);
+    await audit("grace.extended", { businessId: id, entity: "business", entityId: id, details: { days, until: addDays(from, days) } });
   } catch (e) {
     fail(back, e);
   }

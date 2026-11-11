@@ -51,6 +51,7 @@ export function PausedScreen({ b, billing, token, plan }: { b: Business; billing
                   <a className="btn btn-dark" href={`/pagar?n=${encodeURIComponent(b.name)}`}>Ver cómo pagar</a>
                   <a className="btn btn-ghost" href={help}>Ya pagué · avisar por WhatsApp</a>
                 </div>
+                <Link href={`/mi/${token}/pagos`} style={{ textDecoration: "underline" }}>Ver mi facturación y mis pagos</Link>
               </>
             ) : (
               <div className="row">

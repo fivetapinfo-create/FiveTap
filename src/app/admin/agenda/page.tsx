@@ -40,7 +40,7 @@ function TaskRow({ t }: { t: Task }) {
           <p className="muted">{t.detail}</p>
         </div>
       </div>
-      {(t.whatsapp || t.businessId || t.link || t.webPaymentId || t.kind === "contrato" || t.kind === "mensajes") && (
+      {(t.whatsapp || t.businessId || t.link || t.webPaymentId || t.kind === "mensajes") && (
         <div className="row msg-actions">
           {t.whatsapp && (
             <a className="btn btn-dark btn-sm" href={t.whatsapp} target="_blank" rel="noopener noreferrer">
@@ -57,7 +57,6 @@ function TaskRow({ t }: { t: Task }) {
               </form>
             </>
           )}
-          {t.kind === "contrato" && <Link className="btn btn-ghost btn-sm" href="/admin/contratos/nuevo">Hacer contrato</Link>}
           {t.kind === "mensajes" && <Link className="btn btn-ghost btn-sm" href="/admin/mensajes">Ver mensajes</Link>}
           {t.businessId && <Link className="btn btn-ghost btn-sm" href={`/admin/b/${t.businessId}`}>Abrir negocio</Link>}
         </div>
@@ -88,14 +87,14 @@ export default async function Agenda() {
       <AppSetup
         endpoint="/admin/push"
         benefits={[
-          "Cada mañana: tus cobros, contratos, instalaciones y pendientes del día.",
+          "Cada mañana: tus cobros, instalaciones y pendientes del día.",
           "Al instante: cada mensaje privado que deja un cliente en cualquier local.",
         ]}
       />
 
       <section className="panel">
         <div className="panel-head"><h2>Hoy</h2></div>
-        {now.length ? now.map((t) => <TaskRow key={t.id} t={t} />) : <div className="empty"><p>Todo al día. Aquí aparecen los cobros, pruebas que terminan, renovaciones, contratos por hacer y quejas nuevas.</p></div>}
+        {now.length ? now.map((t) => <TaskRow key={t.id} t={t} />) : <div className="empty"><p>Todo al día. Aquí aparecen los cobros, renovaciones, registros nuevos y quejas nuevas.</p></div>}
       </section>
 
       <section className="panel">

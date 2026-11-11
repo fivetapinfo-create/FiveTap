@@ -35,12 +35,13 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
         <small>Al correo le llega cada queja al instante. Con su WhatsApp, desde tu panel se la reenvías con un toque.</small>
       </div>
       <div className="field">
-        <span>5. Quién paga FiveTap (normalmente el dueño, el que firma el contrato)</span>
+        <span>5. Quién paga FiveTap (normalmente el dueño)</span>
         <div className="grid-2">
           <input className="input" name="billing_name" defaultValue={v?.billing_name ?? ""} placeholder="Nombre" autoComplete="off" aria-label="Nombre de quien paga" />
           <input className="input" type="tel" inputMode="tel" name="billing_phone" defaultValue={v?.billing_phone ?? ""} placeholder="WhatsApp: 6000-0000" autoComplete="off" aria-label="WhatsApp de quien paga" />
         </div>
-        <small>A este número van los recordatorios de pago y el saludo de los lunes. Si es la misma persona de las quejas, déjalo vacío.</small>
+        <input className="input" type="email" name="billing_email" defaultValue={b?.billing_email ?? ""} placeholder="Correo para sus comprobantes de pago" autoComplete="off" aria-label="Correo de quien paga" />
+        <small>A este número van los recordatorios de pago y el saludo de los lunes, y a este correo sus comprobantes. Si es la misma persona de las quejas, déjalo vacío.</small>
       </div>
     </div>
   );

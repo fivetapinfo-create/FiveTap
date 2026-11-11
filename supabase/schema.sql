@@ -345,3 +345,77 @@ alter table web_payments enable row level security;
 -- pause by themselves until the payment is registered (nothing is deleted). The founder
 -- can give a few more days; the plaques keep working until grace_until (inclusive).
 alter table businesses add column if not exists grace_until date;
+
+-- Payment receipts (comprobantes de pago, not tax invoices). One per registered payment,
+-- with a snapshot of everything printed on it, so it survives a cancellation or even the
+-- venue being deleted. Numbered R-YYYY-0001; opened with a secret token link.
+alter table businesses add column if not exists billing_email text;
+alter table payments add column if not exists method_label text;
+alter table payments add column if not exists idempotency_key text unique;
+alter table payments drop constraint if exists payments_method_check;
+alter table payments add constraint payments_method_check check (method in ('paypal', 'card', 'ach', 'yappy', 'cash', 'other'));
+
+create sequence if not exists receipt_seq;
+create table if not exists receipts (
+  id            uuid primary key default gen_random_uuid(),
+  number        text not null unique default ('R-' || to_char(now() at time zone 'America/Panama', 'YYYY') || '-' || lpad(nextval('receipt_seq')::text, 4, '0')),
+  token         text not null unique default replace(gen_random_uuid()::text, '-', ''),
+  payment_id    uuid unique references payments (id) on delete set null,
+  business_id   uuid references businesses (id) on delete set null,
+  venue_name    text not null,
+  owner_name    text,
+  owner_email   text,
+  plan_label    text not null,
+  plaques       int not null default 0,
+  concept       text not null,
+  amount        numeric(10, 2) not null check (amount > 0),
+  currency      text not null default 'USD',
+  method        text not null,
+  reference     text,
+  paid_on       date not null,
+  period_start  date,
+  period_end    date,
+  service_start date,
+  next_due      date,
+  status        text not null default 'paid' check (status in ('paid', 'void')),
+  void_reason   text,
+  voided_at     timestamptz,
+  issued_at     timestamptz not null default now()
+);
+create index if not exists receipts_business_idx on receipts (business_id, issued_at desc);
+
+-- Every time a receipt goes out (email or app notification), and how it went.
+create table if not exists receipt_sends (
+  id          uuid primary key default gen_random_uuid(),
+  receipt_id  uuid not null references receipts (id) on delete cascade,
+  channel     text not null check (channel in ('email', 'push')),
+  recipient   text,
+  status      text not null check (status in ('sent', 'failed', 'skipped')),
+  detail      text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists receipt_sends_receipt_idx on receipt_sends (receipt_id, created_at desc);
+
+-- What the founder changed about money: payments registered or voided, receipts sent, extra days.
+create table if not exists audit_log (
+  id          uuid primary key default gen_random_uuid(),
+  at          timestamptz not null default now(),
+  action      text not null,
+  business_id uuid,
+  entity      text,
+  entity_id   text,
+  details     jsonb not null default '{}'::jsonb
+);
+create index if not exists audit_log_at_idx on audit_log (at desc);
+
+-- Payment methods the founder adds besides the built-in ones (e.g. "Nequi", "Cheque").
+create table if not exists payment_methods (
+  id          uuid primary key default gen_random_uuid(),
+  label       text not null unique,
+  created_at  timestamptz not null default now()
+);
+
+alter table receipts        enable row level security;
+alter table receipt_sends   enable row level security;
+alter table audit_log       enable row level security;
+alter table payment_methods enable row level security;

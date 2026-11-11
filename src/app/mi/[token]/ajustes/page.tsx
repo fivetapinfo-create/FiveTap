@@ -11,6 +11,7 @@ import { CANCEL_REASONS } from "@/lib/cancel";
 import { businessByOwnerToken, businessDetail } from "@/lib/data";
 import { formatPhone } from "@/lib/phone";
 import { SITE_URL, salesWhatsAppUrl } from "@/lib/site";
+import { methodName } from "@/lib/receipts";
 import { requestCancel, undoCancel } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const KIND = { setup: "Instalación", monthly: "Mensualidad", annual: "Plan anual", pieces: "Piezas", other: "Otro" } as const;
-const METHOD = { paypal: "PayPal", card: "Tarjeta", ach: "Transferencia", yappy: "Yappy", cash: "Efectivo" } as const;
 const money = (n: number) => `$${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 const day = (iso: string) => human(iso.slice(0, 10));
 
@@ -96,9 +96,12 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
               </>
             )}
           </dl>
-          {charge && !charge.auto && !b.cancel_requested_at && !canceled && (
-            <div className="msg"><a className="btn btn-dark btn-sm" style={{ width: "fit-content" }} href={`/pagar?n=${encodeURIComponent(b.name)}`}>Ver cómo pagar</a></div>
-          )}
+          <div className="msg">
+            <div className="row">
+              {charge && !charge.auto && !b.cancel_requested_at && !canceled && <a className="btn btn-dark btn-sm" href={`/pagar?n=${encodeURIComponent(b.name)}`}>Ver cómo pagar</a>}
+              <Link className="btn btn-ghost btn-sm" href={`${home}/pagos`}>Facturación y pagos</Link>
+            </div>
+          </div>
 
           {payments.length > 0 && (
             <div className="table-wrap">
@@ -108,7 +111,7 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
                   {payments.slice(0, 8).map((p) => (
                     <tr key={p.id}>
                       <td>{day(p.paid_at)}</td>
-                      <td>{KIND[p.kind]} <span className="muted">· {METHOD[p.method]}</span></td>
+                      <td>{KIND[p.kind]} <span className="muted">· {methodName(p)}</span></td>
                       <td className="right num">{money(p.amount)}</td>
                     </tr>
                   ))}

@@ -413,3 +413,110 @@ export async function founderAgreementPdf(c: CompanyRow, founders: FounderRow[],
   );
   return renderToBuffer(doc);
 }
+
+// ---------- Payment receipt ----------
+
+const GREEN = "#157f45";
+const RED = "#b42318";
+
+export type ReceiptPdfInput = {
+  number: string;
+  venue_name: string;
+  owner_name: string | null;
+  plan_label: string;
+  plaques: number;
+  concept: string;
+  amount: number;
+  currency: string;
+  method: string;
+  reference: string | null;
+  paid_on: string;
+  period_start: string | null;
+  period_end: string | null;
+  service_start: string | null;
+  next_due: string | null;
+  status: "paid" | "void";
+  void_reason: string | null;
+  issued_at: string;
+};
+
+const usd2 = (n: number) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const dayOf = (iso: string) => longDate(iso.slice(0, 10));
+const issuedDay = (iso: string) => new Date(Date.parse(iso) - 5 * 3600_000).toISOString().slice(0, 10);
+
+/** A payment receipt (not a tax invoice): one page, the amount and the period up front. */
+export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; legalName: string | null; site: string }) {
+  const paid = r.status === "paid";
+  const rows: [string, string][] = [
+    ["Concepto", `${r.concept} · FiveTap`],
+    ["Plan contratado", r.plan_label],
+    ["Placas NFC", String(r.plaques)],
+    ...(r.period_start && r.period_end ? ([["Período pagado", `${dayOf(r.period_start)} al ${dayOf(r.period_end)}`]] as [string, string][]) : []),
+    ...(r.service_start ? ([["Inicio del servicio", dayOf(r.service_start)]] as [string, string][]) : []),
+    ...(r.next_due ? ([["Próximo vencimiento", dayOf(r.next_due)]] as [string, string][]) : []),
+    ["Método de pago", r.method],
+    ...(r.reference ? ([["Referencia", r.reference]] as [string, string][]) : []),
+    ["Moneda", r.currency],
+  ];
+  const doc = (
+    <Document title={`Comprobante ${r.number} — FiveTap`} author={p.tradeName}>
+      <Page size="A4" style={s.page}>
+        <Header doc={`Comprobante ${r.number}`} tag={paid ? "PAGADO" : "ANULADO"} />
+        <View style={s.heroRow}>
+          <View>
+            <Text style={s.eyebrow}>Comprobante de pago</Text>
+            <Text style={s.title}>{usd2(r.amount)} {r.currency}</Text>
+            <Text style={s.subtitle}>{r.venue_name} · {r.plan_label}</Text>
+            <View style={s.rule} />
+          </View>
+          <Text style={[s.pill, { color: paid ? GREEN : RED, borderColor: paid ? GREEN : RED, fontSize: 10, paddingVertical: 4, paddingHorizontal: 12 }]}>{paid ? "PAGADO" : "ANULADO"}</Text>
+        </View>
+
+        <View style={s.facts}>
+          <View style={[s.fact, s.factFirst]}>
+            <Text style={s.eyebrow}>N.º de comprobante</Text>
+            <Text style={s.factValue}>{r.number}</Text>
+          </View>
+          <View style={s.fact}>
+            <Text style={s.eyebrow}>Fecha de pago</Text>
+            <Text style={s.factValue}>{dayOf(r.paid_on)}</Text>
+          </View>
+          <View style={s.fact}>
+            <Text style={s.eyebrow}>Fecha de emisión</Text>
+            <Text style={s.factValue}>{dayOf(issuedDay(r.issued_at))}</Text>
+          </View>
+        </View>
+
+        <View style={s.parties}>
+          <View style={s.party}>
+            <Text style={s.eyebrow}>Proveedor del servicio</Text>
+            <Text style={s.partyName}>{p.tradeName}</Text>
+            {p.legalName && p.legalName !== p.tradeName ? <KV k="Razón social" v={p.legalName} /> : null}
+            <KV k="Web" v={p.site} />
+          </View>
+          <View style={s.party}>
+            <Text style={s.eyebrow}>Cliente</Text>
+            <Text style={s.partyName}>{r.venue_name}</Text>
+            {r.owner_name ? <KV k="Propietario" v={r.owner_name} /> : null}
+          </View>
+        </View>
+
+        <Text style={s.label}>Detalle</Text>
+        <Rows rows={rows} />
+        <View style={[s.table, { flexDirection: "row", justifyContent: "space-between", paddingVertical: 10, paddingHorizontal: 12, backgroundColor: SOFT }]}>
+          <Text style={s.strong}>Total pagado</Text>
+          <Text style={[s.strong, { fontSize: 12 }]}>{usd2(r.amount)} {r.currency}</Text>
+        </View>
+
+        {!paid && (
+          <Text style={[s.small, { color: RED, marginBottom: 8 }]}>Comprobante anulado{r.void_reason ? `: ${r.void_reason}` : ""}. No es válido como constancia de pago.</Text>
+        )}
+        <Text style={s.small}>
+          Este documento es un comprobante de pago emitido por {p.tradeName}. No sustituye una factura fiscal. Gracias por confiar en FiveTap.
+        </Text>
+        <Footer left={`${p.tradeName} · ${p.site} · Comprobante ${r.number}`} />
+      </Page>
+    </Document>
+  );
+  return renderToBuffer(doc);
+}

@@ -13,6 +13,8 @@ export type Business = {
   manager_phone: string | null;
   billing_name: string | null;
   billing_phone: string | null;
+  /** Where payment receipts are emailed (falls back to the manager's email). */
+  billing_email: string | null;
   cancel_requested_at: string | null;
   cancel_reason: string | null;
   /** Extra days given by the founder: plaques keep working until this date even if late. */
@@ -53,7 +55,9 @@ export type Payment = {
   business_id: string;
   amount: number;
   kind: "setup" | "monthly" | "annual" | "pieces" | "other";
-  method: "paypal" | "card" | "ach" | "yappy" | "cash";
+  method: "paypal" | "card" | "ach" | "yappy" | "cash" | "other";
+  /** Name of a method the founder added (when method is "other"). */
+  method_label: string | null;
   reference: string | null;
   paid_at: string;
 };

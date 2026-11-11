@@ -700,3 +700,21 @@ p { margin: 0; text-wrap: pretty; }
 .report-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--gold); }
 .report-card b { display: block; font-size: 16px; }
 .report-card span { color: var(--muted); font-size: 14px; }
+
+/* Payments: confirm/send checkboxes, the void pop-over, receipts. */
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; cursor: pointer; }
+.check input { margin-top: 2px; width: 18px; height: 18px; flex: none; accent-color: #0a0a0a; }
+.void-box { position: relative; }
+.void-box > summary { list-style: none; cursor: pointer; }
+.void-box > summary::-webkit-details-marker { display: none; }
+.void-box[open] .void-form { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 16px; padding: 12px; display: grid; gap: 8px; width: 280px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+.receipt-page { max-width: 560px; margin: 0 auto; padding: 32px 16px 56px; display: grid; gap: 16px; }
+.receipt-card { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 24px; padding: 28px 24px; display: grid; gap: 14px; }
+.receipt-amount { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.receipt-status { justify-self: start; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: #e8f4ec; color: var(--ok); }
+.receipt-status.void { background: #fdeceb; color: var(--danger); }
+.receipt-rows { display: grid; margin: 0; }
+.receipt-rows > div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.receipt-rows dt { color: var(--muted); }
+.receipt-rows dd { margin: 0; font-weight: 600; text-align: right; }
+.receipt-note { font-size: 13px; color: var(--muted); line-height: 1.5; }

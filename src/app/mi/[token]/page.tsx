@@ -234,6 +234,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
               )}
               <div className="row msg-actions">
                 {!charge.auto && !b.cancel_requested_at && <a className="btn btn-dark btn-sm" href={payHref}>Ver cómo pagar</a>}
+                <Link className="btn btn-ghost btn-sm" href={`/mi/${token}/pagos`}>Facturación y pagos</Link>
                 <Link className="btn btn-ghost btn-sm" href={`/mi/${token}/ajustes#suscripcion`}>Administrar suscripción</Link>
               </div>
             </div>

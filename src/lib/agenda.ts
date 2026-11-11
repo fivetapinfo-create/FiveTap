@@ -39,7 +39,7 @@ export function addDays(iso: string, n: number) {
   return new Date(Date.parse(`${iso}T12:00:00Z`) + n * DAY).toISOString().slice(0, 10);
 }
 
-function addMonths(iso: string, n: number) {
+export function addMonths(iso: string, n: number) {
   const [y, m, d] = iso.split("-").map(Number);
   const t = new Date(Date.UTC(y!, m! - 1 + n, 1, 12));
   const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0, 12)).getUTCDate();
@@ -219,7 +219,6 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
   const businesses = (bizRes.data ?? []) as BizRow[];
   const payments = (payRes.data ?? []) as PayRow[];
   const contracts = (conRes.data ?? []) as { venue_name: string; start_date: string }[];
-  const contractNames = new Set(contracts.map((c) => c.venue_name.trim().toLowerCase()));
   const plaqueCount = new Map<string, number>();
   for (const t of (tagRes.data ?? []) as { business_id: string }[]) plaqueCount.set(t.business_id, (plaqueCount.get(t.business_id) ?? 0) + 1);
   const tasks: Task[] = [];
@@ -232,18 +231,6 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     const fee = Number(b.monthly_fee);
     const to = payer(b);
     const hi = `Hola${first(to.name)}`;
-
-    // Contract still to prepare for a client on a plan.
-    if (b.mode === "full" && fee > 0 && !contractNames.has(b.name.trim().toLowerCase())) {
-      tasks.push({
-        id: `contrato-${b.id}`,
-        kind: "contrato",
-        date: from,
-        title: `Hacer el contrato de ${b.name}`,
-        detail: "Este cliente tiene plan y todavía no tiene contrato generado.",
-        businessId: b.id,
-      });
-    }
 
     const charge = nextCharge(b, pays);
     // Asked to cancel from their app: no more reminders, just the follow-up until marked canceled.
@@ -364,7 +351,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
   // Installations booked by contract.
   for (const c of contracts) {
     if (inRange(c.start_date)) {
-      tasks.push({ id: `inst-${c.venue_name}-${c.start_date}`, kind: "instalacion", date: c.start_date, title: `Instalación en ${c.venue_name}`, detail: "Lleva las placas, las tarjetas de meseros y el contrato impreso en 2 copias." });
+      tasks.push({ id: `inst-${c.venue_name}-${c.start_date}`, kind: "instalacion", date: c.start_date, title: `Instalación en ${c.venue_name}`, detail: "Lleva las placas y las tarjetas de meseros." });
     }
   }
 
