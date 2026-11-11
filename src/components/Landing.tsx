@@ -200,7 +200,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
                 <h3>Listo en una visita. Funciona desde el primer día.</h3>
               </div>
               <ol className="trial-steps">
-                <li><b>Día 1</b> Dejamos tus placas NFC y las tarjetas de tus meseros, y <b>FiveTap Business</b> en tu celular, y anotamos tus estrellas y reseñas actuales en Google.</li>
+                <li><b>Día 1</b> Dejamos tus placas NFC, las tarjetas de tus meseros y FiveTap Business en tu celular, y anotamos tus estrellas y reseñas actuales en Google.</li>
                 <li><b>Cada día</b> Ves en tu app, en tiempo real, cuántos clientes tocan tus placas y van a dejarte su reseña. Cada queja te llega al instante.</li>
                 <li><b>Cada mes</b> Te llega tu reporte: toques, visitas a Google, mejores mesas y meseros, y tus reseñas antes y después de FiveTap.</li>
               </ol>
