@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, billingAll, human, planLabel, todayPanama, type BillingKind } from "@/lib/agenda";
+import { getPlans } from "@/lib/plans";
 import { SITE_URL } from "@/lib/site";
 import { extendGrace } from "../actions";
 import { Flash } from "../Flash";
@@ -19,7 +20,7 @@ const HINT: Partial<Record<BillingKind, string>> = {
 
 /** Who owes what: suspended, late (in grace), due soon, paused and up to date. */
 export default async function Collections({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
-  const [rows, sp] = await Promise.all([billingAll(), searchParams]);
+  const [rows, sp, plans] = await Promise.all([billingAll(), searchParams, getPlans()]);
   const today = todayPanama();
   const owed = (k: BillingKind[]) => rows.filter((r) => k.includes(r.billing.kind));
   const sum = (list: typeof rows) => list.reduce((n, r) => n + Number(r.billing.charge?.amount ?? 0), 0);
@@ -71,7 +72,7 @@ export default async function Collections({ searchParams }: { searchParams: Prom
                     return (
                       <tr key={b.id}>
                         <td><Link href={`/admin/b/${b.id}`}><b>{b.name}</b></Link></td>
-                        <td className="muted">{planLabel(b, c, plaques)}</td>
+                        <td className="muted">{planLabel(b, c, plaques, plans)}</td>
                         <td>{c ? `${human(c.due)}${billing.daysLate > 0 ? ` · ${billing.daysLate} d de atraso` : ""}` : "—"}</td>
                         <td className="right num"><b>{c ? usd(c.amount) : "—"}</b></td>
                         <td>{billing.suspendsOn && (kind === "late" || kind === "suspended") ? human(billing.suspendsOn) : ""}</td>

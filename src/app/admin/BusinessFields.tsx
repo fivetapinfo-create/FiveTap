@@ -1,3 +1,4 @@
+import { type Plan, planOf } from "@/lib/plans";
 import type { Business } from "@/lib/types";
 import { VERTICALS } from "@/lib/verticals";
 
@@ -48,10 +49,25 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
 }
 
 /** Defaults that rarely change: type, color, plan. */
-export function OptionFields({ b, fee }: { b?: Business; fee?: number }) {
+export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[]; planKey?: string }) {
+  const current = b ? planOf(b, plans)?.key ?? "" : planKey ?? "start";
   return (
     <div className="form-section">
       <div className="grid-2">
+        <label className="field">
+          <span>Plan</span>
+          <select className="select" name="plan_key" defaultValue={current}>
+            {plans.filter((p) => p.active || p.key === current).map((p) => (
+              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {p.plaques} placas + {p.cards} tarjetas</option>
+            ))}
+            <option value="">Personalizado (sin plan)</option>
+          </select>
+        </label>
+        <label className="field">
+          <span>Mensualidad (USD)</span>
+          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b ? b.monthly_fee : undefined} placeholder="La del plan" />
+          <small>{b ? "Su precio queda congelado aunque cambies el plan en Planes." : "Vacío: el precio del plan. Pon 0 para un negocio de prueba (no cobra ni se pausa)."}</small>
+        </label>
         <label className="field">
           <span>Tipo de negocio</span>
           <select className="select" name="kind" defaultValue={b?.kind ?? "restaurant"}>
@@ -64,26 +80,10 @@ export function OptionFields({ b, fee }: { b?: Business; fee?: number }) {
           <span>Color del botón principal</span>
           <input className="input" type="color" name="brand_color" defaultValue={b?.brand_color ?? "#0a0a0a"} />
         </label>
-        <label className="field">
-          <span>Qué compró</span>
-          <select className="select" name="mode" defaultValue={b?.mode ?? "full"}>
-            <option value="full">Plan FiveTap (página, alertas, club)</option>
-            {/* One-time pieces are no longer sold; kept only for venues that already had them. */}
-            {b?.mode === "google" && <option value="google">Pago único: directo a Google</option>}
-          </select>
-        </label>
-        <label className="field">
-          <span>Instalación (USD)</span>
-          <input className="input" type="number" min={0} step="1" name="setup_fee" defaultValue={b?.setup_fee ?? 0} />
-        </label>
-        <label className="field">
-          <span>Mensualidad (USD)</span>
-          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b?.monthly_fee ?? fee ?? 129} />
-        </label>
       </div>
-      <small className="muted">
-        Mensual: instalación 0 y mensualidad 129. Anual: instalación 0 y mensualidad 107.50 (registra los $1,290 como “Plan anual”, en uno o dos pagos). 1 placa mensual: mensualidad 35. Pago único (2 a 6 placas, tarjetas de mesero): “Directo a Google”, mensualidad 0.
-      </small>
+      {/* One-time pieces are no longer sold; kept only for venues that already had them. */}
+      <input type="hidden" name="mode" value={b?.mode === "google" ? "google" : "full"} />
+      <input type="hidden" name="setup_fee" value={b?.setup_fee ?? 0} />
     </div>
   );
 }

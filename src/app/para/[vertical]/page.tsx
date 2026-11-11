@@ -6,6 +6,7 @@ import { VERTICALS, verticalBySlug } from "@/lib/verticals";
 type Props = { params: Promise<{ vertical: string }> };
 
 export const dynamicParams = false;
+export const revalidate = 300;
 export const generateStaticParams = () => VERTICALS.map((v) => ({ vertical: v.slug }));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -1,57 +1,57 @@
-// Monthly plans: everything is a subscription and comes installed with FiveTap Business.
-// Plaques (tables, counter) and waiter cards are separate plans: a venue can take one,
-// the other or both. The annual price of any plan is 10 months (2 months free).
-// Read by the website, /pagar, the terms and the billing messages, so all say the same.
+import "server-only";
+import { unstable_cache } from "next/cache";
+import { db } from "./supabase";
 
-export type Tier = {
+// The three commercial plans (Start, Pro, Enterprise), all monthly, stored in the
+// database and edited from the panel (Planes). The website, /empezar, /pagar, the terms
+// and the billing messages all read them from here. Each venue keeps its own price
+// (monthly_fee), so a change only applies to new clients.
+
+export type Plan = {
   key: string;
   name: string;
-  qty: number;
   monthly: number;
+  plaques: number;
+  cards: number;
+  lanyards: number;
+  badge: string | null;
+  features: string[];
   /** PayPal subscription plan (public id), charged by itself every month. */
-  paypalPlan?: string;
+  paypal_plan: string | null;
+  sort: number;
+  active: boolean;
 };
 
-/** Plaques for tables or the counter, by the most a venue can have on the plan. */
-export const TIERS: Tier[] = [
-  { key: "una", name: "Una placa", qty: 1, monthly: 35, paypalPlan: "P-4YR42702SY3309026NLEKY4Y" },
-  { key: "mostrador", name: "Mostrador", qty: 4, monthly: 79, paypalPlan: "P-6GW556165B051122PNL2MAUA" },
-  { key: "esencial", name: "Esencial", qty: 10, monthly: 129, paypalPlan: "P-75J01261M17162054NLZLRPI" },
-  { key: "crecimiento", name: "Crecimiento", qty: 20, monthly: 189, paypalPlan: "P-5HJ75473KE688081PNL2MDSY" },
-  { key: "completo", name: "Completo", qty: 30, monthly: 259, paypalPlan: "P-92329494MY150421BNL2MPRA" },
-  { key: "grande", name: "Grande", qty: 40, monthly: 319, paypalPlan: "P-0S626060NH124931PNL2ME2I" },
-];
+export const PLANS_TAG = "plans";
 
-/** NFC cards with a lanyard for waiters, a plan of their own. */
-export const WAITER_TIERS: Tier[] = [
-  { key: "mesero-1", name: "1 tarjeta", qty: 1, monthly: 25, paypalPlan: "P-18B88557JU307035CNL2MGEY" },
-  { key: "meseros-3", name: "3 tarjetas", qty: 3, monthly: 69, paypalPlan: "P-38N05111V91958027NL2MHFI" },
-  { key: "meseros-5", name: "5 tarjetas", qty: 5, monthly: 109, paypalPlan: "P-51715975LE151450KNL2MINQ" },
-  { key: "meseros-8", name: "8 tarjetas", qty: 8, monthly: 159, paypalPlan: "P-7KX11316MM1520808NL2MJJY" },
-  { key: "meseros-10", name: "10 tarjetas", qty: 10, monthly: 199, paypalPlan: "P-2SG83244H6461041FNL2MKII" },
-];
+/** All plans, cheapest first. Cached for 5 minutes and refreshed at once when edited. */
+export const getPlans = unstable_cache(
+  async (): Promise<Plan[]> => {
+    const { data, error } = await db().from("plans").select("*").order("sort");
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((p) => ({ ...p, monthly: Number(p.monthly) })) as Plan[];
+  },
+  ["plans-v1"],
+  { tags: [PLANS_TAG], revalidate: 300 },
+);
 
-/** Above this many plaques (or a chain of venues), the price is quoted. */
-export const QUOTE_ABOVE = 40;
-
-export const annualPrice = (t: Tier) => t.monthly * 10;
-export const perPiece = (t: Tier) => t.monthly / t.qty;
-
-/** The plan whose monthly price is this fee, if any (custom prices have no plan name). */
-export function tierByFee(fee: number): { name: string } | null {
-  const plaque = TIERS.find((t) => t.monthly === Number(fee));
-  if (plaque) return { name: plaque.name };
-  const cards = WAITER_TIERS.find((t) => t.monthly === Number(fee));
-  return cards ? { name: `Meseros ${cards.name}` } : null;
+export async function activePlans() {
+  return (await getPlans()).filter((p) => p.active);
 }
 
-export type PlanChoice = Tier & { line: "placas" | "meseros"; title: string; detail: string };
+export async function planByKey(key: string | null | undefined) {
+  if (!key) return null;
+  return (await getPlans()).find((p) => p.key === key) ?? null;
+}
 
-/** A plan a venue can subscribe to on /empezar, by its key ("completo", "meseros-5"). */
-export function planByKey(key: string | undefined | null): PlanChoice | null {
-  const plaque = TIERS.find((t) => t.key === key);
-  if (plaque) return { ...plaque, line: "placas", title: `Placas ${plaque.name}`, detail: `${plaque.qty === 1 ? "1 placa NFC instalada" : `Hasta ${plaque.qty} placas NFC instaladas`} · FiveTap Business` };
-  const cards = WAITER_TIERS.find((t) => t.key === key);
-  if (cards) return { ...cards, line: "meseros", title: `Meseros · ${cards.name}`, detail: `${cards.name} NFC para meseros · FiveTap Business` };
-  return null;
+/** The plan a venue is on: its plan_key, or the plan whose price matches its fee. */
+export function planOf(b: { plan_key?: string | null; monthly_fee: number }, plans: Plan[]) {
+  return plans.find((p) => p.key === b.plan_key) ?? plans.find((p) => p.monthly === Number(b.monthly_fee)) ?? null;
+}
+
+/** "10 placas NFC para mesas · 2 tarjetas NFC para meseros con su cordón". */
+export function planPieces(p: Pick<Plan, "plaques" | "cards" | "lanyards">) {
+  const parts = [`${p.plaques} ${p.plaques === 1 ? "placa NFC" : "placas NFC"} para mesas`];
+  if (p.cards) parts.push(`${p.cards} ${p.cards === 1 ? "tarjeta NFC" : "tarjetas NFC"} para meseros${p.lanyards ? ` con ${p.lanyards === p.cards ? (p.cards === 1 ? "su cordón" : "sus cordones") : `${p.lanyards} cordones`}` : ""}`);
+  return parts;
 }

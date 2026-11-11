@@ -1,5 +1,5 @@
 import { normalizePhone } from "@/lib/phone";
-import { planByKey } from "@/lib/plans";
+import { activePlans } from "@/lib/plans";
 import { sendPush } from "@/lib/push";
 import { db } from "@/lib/supabase";
 
@@ -10,7 +10,9 @@ export const dynamic = "force-dynamic";
 // The founder gets a notification and a task in the Agenda to create the business.
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { subscriptionId?: string; venue?: string; owner?: string; phone?: string; plan?: string } | null;
-  const plan = planByKey(body?.plan) ?? planByKey("esencial")!;
+  const plans = await activePlans();
+  const plan = plans.find((p) => p.key === body?.plan) ?? plans[0];
+  if (!plan) return Response.json({ error: "No hay planes disponibles." }, { status: 500 });
   const venue = String(body?.venue ?? "").trim().slice(0, 80);
   const owner = String(body?.owner ?? "").trim().slice(0, 80);
   const phone = normalizePhone(String(body?.phone ?? ""));
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
     { role: "founder" },
     {
       title: subscription ? `🎉 Nuevo cliente · ${venue}` : `Nuevo registro · ${venue}`,
-      body: `${owner} · +${phone}. ${plan.title}: $${plan.monthly} al mes. ${subscription ? "Se suscribió por PayPal." : "Aún sin pagar."} Crea el negocio y coordina la instalación.`,
+      body: `${owner} · +${phone}. ${plan.name}: $${plan.monthly} al mes. ${subscription ? "Se suscribió por PayPal." : "Aún sin pagar."} Crea el negocio y coordina la instalación.`,
       url: "/admin/agenda",
     },
   );

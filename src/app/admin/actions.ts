@@ -1,12 +1,14 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { newCode, slugify } from "@/lib/codes";
 import { safeColor } from "@/lib/brand";
 import { normalizePhone } from "@/lib/phone";
 import { reviewUrlFrom } from "@/lib/site";
 import { addDays, todayPanama } from "@/lib/agenda";
+import { AGREEMENT_METHODS, SIGNER_ROLES, endOf } from "@/lib/agreement";
+import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot } from "@/lib/data";
 import { sendPush } from "@/lib/push";
 import { audit, deliverReceipt, issueReceipt } from "@/lib/receipts";
@@ -45,9 +47,11 @@ async function uploadLogo(file: FormDataEntryValue | null, slug: string): Promis
 }
 
 /** Inserts `count` tags labelled "<label> <n>", retrying on the rare code collision. */
-async function createTags(businessId: string, label: string, count: number, startAt: number) {
+async function createTags(businessId: string, label: string, count: number, startAt: number, kind: "table" | "waiter" = "table") {
+  if (count < 1) return;
   const rows = Array.from({ length: count }, (_, i) => ({
     business_id: businessId,
+    kind,
     label: count === 1 && startAt === 1 ? label : `${label} ${startAt + i}`,
   }));
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -67,7 +71,12 @@ export async function createBusiness(f: FormData) {
   const name = str(f, "name", 80);
   const review = str(f, "review", 500);
   const kind = VERTICALS.some((v) => v.key === str(f, "kind")) ? str(f, "kind") : "restaurant";
-  const spots = Math.min(Math.max(Math.round(num(f, "spots", 10)), 1), 80);
+  // The plan sets the price and how many table plaques and waiter cards to create;
+  // each one can be changed in the form (an empty field means "the plan's").
+  const plan = await planByKey(str(f, "plan_key", 30));
+  const spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? plan?.plaques ?? 10 : num(f, "spots", 10)), 0), 80);
+  const cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? plan?.cards ?? 0 : num(f, "cards", 0)), 0), 40);
+  const fee = str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
   const spotLabel = str(f, "spot_label", 30) || verticalByKey(kind).spot;
   if (!name || !review) fail("/admin/new", new Error("Escribe el nombre y el enlace de reseñas de Google."));
 
@@ -91,7 +100,8 @@ export async function createBusiness(f: FormData) {
         billing_phone: phone(opt(f, "billing_phone", 30), "de quien paga"),
         billing_email: email(opt(f, "billing_email", 120)),
         setup_fee: num(f, "setup_fee", 0),
-        monthly_fee: num(f, "monthly_fee", 129),
+        monthly_fee: fee,
+        plan_key: plan?.key ?? null,
         mode: str(f, "mode", 10) === "google" ? "google" : "full",
         // No free trial: the plan starts on installation day (30-day guarantee instead).
         status: "active",
@@ -101,7 +111,8 @@ export async function createBusiness(f: FormData) {
       .single();
     if (error) throw new Error(error.message);
     id = data.id;
-    await createTags(id, spotLabel, spots, 1);
+    await createTags(id, spotLabel, spots, 1, "table");
+    await createTags(id, "Mesero", cards, 1, "waiter");
     // Came from a self sign-up on /empezar: mark it as handled.
     const signup = str(f, "signup_id", 60);
     if (/^[0-9a-f-]{36}$/i.test(signup)) await db().from("signups").update({ business_id: id }).eq("id", signup);
@@ -129,7 +140,8 @@ export async function updateBusiness(f: FormData) {
       billing_email: email(opt(f, "billing_email", 120)),
       status: str(f, "status", 20),
       setup_fee: num(f, "setup_fee", 0),
-      monthly_fee: num(f, "monthly_fee", 129),
+      monthly_fee: str(f, "monthly_fee") === "" ? (await planByKey(str(f, "plan_key", 30)))?.monthly ?? 129 : num(f, "monthly_fee", 129),
+      plan_key: (await planByKey(str(f, "plan_key", 30)))?.key ?? null,
       mode: str(f, "mode", 10) === "google" ? "google" : "full",
       trial_ends_at: opt(f, "trial_ends_at", 10),
       notes: opt(f, "notes", 2000),
@@ -150,7 +162,8 @@ export async function addTags(f: FormData) {
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
-    const label = str(f, "label", 30) || "Mesa";
+    const kind = str(f, "kind", 10) === "waiter" ? "waiter" : "table";
+    const label = str(f, "label", 30) || (kind === "waiter" ? "Mesero" : "Mesa");
     const count = Math.min(Math.max(Math.round(num(f, "count", 1)), 1), 80);
     const { count: existing, error } = await db()
       .from("tags")
@@ -158,7 +171,7 @@ export async function addTags(f: FormData) {
       .eq("business_id", id)
       .like("label", `${label}%`);
     if (error) throw new Error(error.message);
-    await createTags(id, label, count, (existing ?? 0) + 1);
+    await createTags(id, label, count, (existing ?? 0) + 1, kind);
   } catch (e) {
     fail(back, e);
   }
@@ -452,4 +465,94 @@ export async function deleteBusiness(f: FormData) {
   }
   revalidatePath("/admin");
   redirect("/admin?ok=eliminado");
+}
+
+/**
+ * Edits one of the commercial plans (Planes): price, pieces, what it includes and its
+ * PayPal plan. Venues already on it keep their own price; the website updates at once.
+ */
+export async function updatePlan(f: FormData) {
+  const key = str(f, "key", 30);
+  try {
+    const before = await planByKey(key);
+    if (!before) throw new Error("Plan no encontrado.");
+    const int = (k: string, max: number) => Math.min(Math.max(Math.round(num(f, k, 0)), 0), max);
+    const paypal = str(f, "paypal_plan", 40);
+    if (paypal && !/^P-[A-Z0-9]{10,40}$/.test(paypal)) throw new Error("El ID de PayPal empieza con P- (ej. P-75J01261M17162054NLZLRPI).");
+    const patch = {
+      name: str(f, "name", 40) || before.name,
+      monthly: Math.round(num(f, "monthly", before.monthly) * 100) / 100,
+      plaques: int("plaques", 200),
+      cards: int("cards", 100),
+      lanyards: int("lanyards", 100),
+      badge: opt(f, "badge", 30),
+      features: String(f.get("features") ?? "").split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 12).map((l) => l.slice(0, 90)),
+      paypal_plan: paypal || null,
+      active: str(f, "active", 3) === "1",
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await db().from("plans").update(patch).eq("key", key);
+    if (error) throw new Error(error.message);
+    await audit("plan.updated", { entity: "plan", entityId: key, details: { from: { monthly: before.monthly, plaques: before.plaques, cards: before.cards, paypal_plan: before.paypal_plan }, to: { monthly: patch.monthly, plaques: patch.plaques, cards: patch.cards, paypal_plan: patch.paypal_plan } } });
+  } catch (e) {
+    fail("/admin/planes", e);
+  }
+  revalidateTag(PLANS_TAG);
+  for (const p of ["/", "/empezar", "/pagar", "/terminos", "/admin/planes"]) revalidatePath(p);
+  redirect(`/admin/planes?ok=plan#${key}`);
+}
+
+/**
+ * A 3-month contract for a venue, filled from its business: plan, price and the plaques
+ * and waiter cards it has. Only the signer, start date and payment method are typed.
+ */
+export async function createAgreement(f: FormData) {
+  const bid = str(f, "business_id", 60);
+  let id = "";
+  try {
+    const { data: b, error } = await db().from("businesses").select("*").eq("id", bid).maybeSingle();
+    if (error || !b) throw new Error(error?.message ?? "Elige el negocio.");
+    const signer = str(f, "signer_name", 100);
+    if (signer.length < 3) throw new Error("Escribe el nombre de quien firma por el local.");
+    const start = /^\d{4}-\d{2}-\d{2}$/.test(str(f, "start_date", 10)) ? str(f, "start_date", 10) : todayPanama();
+    const method = (AGREEMENT_METHODS as readonly string[]).includes(str(f, "payment_method", 60)) ? str(f, "payment_method", 60) : AGREEMENT_METHODS[0];
+    const role = (SIGNER_ROLES as readonly string[]).includes(str(f, "signer_role", 40)) ? str(f, "signer_role", 40) : SIGNER_ROLES[0];
+    const [{ data: tags }, plans] = await Promise.all([db().from("tags").select("kind, active").eq("business_id", bid), getPlans()]);
+    const active = ((tags ?? []) as { kind: string; active: boolean }[]).filter((t) => t.active);
+    const plan = planOf(b, plans);
+    const cards = active.filter((t) => t.kind === "waiter").length;
+    const ins = await db().from("agreements").insert({
+      business_id: bid,
+      venue_name: b.name,
+      venue_address: opt(f, "venue_address", 160),
+      signer_name: signer,
+      signer_role: role,
+      plan_name: plan?.name ?? "Plan FiveTap personalizado",
+      monthly_fee: Number(b.monthly_fee),
+      plaques: active.filter((t) => t.kind !== "waiter").length,
+      cards,
+      lanyards: cards, // one lanyard per waiter card
+      start_date: start,
+      end_date: endOf(start),
+      payment_method: method,
+    }).select("id, number").single();
+    if (ins.error) throw new Error(ins.error.message);
+    id = ins.data.id;
+    await audit("contract.created", { businessId: bid, entity: "contract", entityId: ins.data.number, details: { start, monthly: b.monthly_fee } });
+  } catch (e) {
+    fail(`/admin/contratos${bid ? `?b=${bid}` : ""}`, e);
+  }
+  revalidatePath("/admin/contratos");
+  revalidatePath(`/admin/b/${bid}`);
+  redirect(`/admin/contratos?ok=contrato&c=${id}`);
+}
+
+/** Removes a contract created by mistake (the action stays in the audit log). */
+export async function deleteAgreement(f: FormData) {
+  const aid = str(f, "id", 60);
+  const { data } = await db().from("agreements").delete().eq("id", aid).select("number, business_id, venue_name").maybeSingle();
+  if (data) await audit("contract.deleted", { businessId: data.business_id, entity: "contract", entityId: data.number, details: { venue: data.venue_name } });
+  revalidatePath("/admin/contratos");
+  if (data?.business_id) revalidatePath(`/admin/b/${data.business_id}`);
+  redirect("/admin/contratos?ok=contrato-borrado");
 }

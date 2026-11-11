@@ -10,6 +10,7 @@ import { MessageActions } from "@/components/MessageActions";
 import { PausedScreen } from "@/components/PausedScreen";
 import { billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail, contactsFor, reportData, reviewSnapshots } from "@/lib/data";
+import { getPlans } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
 import { dateTime, pct } from "../../admin/format";
@@ -29,6 +30,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 }
 
 const WAITER = /meser|camarer|tarjeta|barra|bartender|staff/i;
+// Plaques say what they are; older ones without a kind are told apart by their name.
+const isWaiter = (t: Tag) => t.kind === "waiter" || (!t.kind && WAITER.test(t.label));
 const money = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 const shortDate = (iso: string) => human(iso.slice(0, 10));
 
@@ -43,7 +46,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const { tags, tagStats, feedback, payments } = d;
   const billing = billingState(b, payments);
   if (billing.kind === "suspended" || billing.kind === "paused") {
-    return <PausedScreen b={b} billing={billing} token={token} plan={planLabel(b, billing.charge, tags.filter((t) => t.active).length)} />;
+    return <PausedScreen b={b} billing={billing} token={token} plan={planLabel(b, billing.charge, tags.filter((t) => t.active).length, await getPlans())} />;
   }
   const [prev, now] = report.periods;
   const sentSince = report.sinceReviews;
@@ -63,8 +66,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const row = (t: Tag) => ({ id: t.id, label: t.label, active: t.active, scans: tagStats.get(t.id)?.scans_30d ?? 0, reviews: tagStats.get(t.id)?.reviews_30d ?? 0 });
   const byScans = (a: { scans: number }, z: { scans: number }) => z.scans - a.scans;
   const groups = [
-    { title: "Placas de mesa", items: tags.filter((t) => !WAITER.test(t.label)).map(row).sort(byScans) },
-    { title: "Tarjetas de meseros", items: tags.filter((t) => WAITER.test(t.label)).map(row).sort(byScans) },
+    { title: "Placas de mesa", items: tags.filter((t) => !isWaiter(t)).map(row).sort(byScans) },
+    { title: "Tarjetas de meseros", items: tags.filter(isWaiter).map(row).sort(byScans) },
   ].filter((g) => g.items.length);
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 

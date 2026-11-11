@@ -18,6 +18,9 @@ const ACTION: Record<string, string> = {
   "grace.extended": "Días extra de plazo",
   "method.added": "Método de pago agregado",
   "method.removed": "Método de pago quitado",
+  "plan.updated": "Plan modificado",
+  "contract.created": "Contrato creado",
+  "contract.deleted": "Contrato borrado",
 };
 const SEND = { sent: "Enviado", failed: "Falló", skipped: "No enviado" } as const;
 

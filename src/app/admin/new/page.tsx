@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
-import { planByKey } from "@/lib/plans";
+import { getPlans } from "@/lib/plans";
 import { db } from "@/lib/supabase";
 import { createBusiness } from "../actions";
 import { EssentialFields, OptionFields } from "../BusinessFields";
@@ -16,7 +16,8 @@ export default async function NewBusiness({ searchParams }: Props) {
     : null;
   const prefill = signup ? { name: signup.venue_name, manager_name: signup.owner_name, manager_phone: signup.phone, billing_name: signup.owner_name, billing_phone: signup.phone } : undefined;
   // The plan chosen on /empezar sets the price and, for plaques, how many to create.
-  const chosen = signup ? planByKey(signup.plan) : null;
+  const plans = await getPlans();
+  const chosen = signup ? plans.find((p) => p.key === signup.plan) ?? null : null;
   return (
     <main className="container admin-main" style={{ maxWidth: 680 }}>
       <div>
@@ -29,23 +30,29 @@ export default async function NewBusiness({ searchParams }: Props) {
         </div>
       </div>
       <Flash error={error} />
-      {signup && <p className="alert alert-ok">Datos de {signup.venue_name}, que se registró solo desde la web{chosen ? ` con el plan ${chosen.title} ($${chosen.monthly} al mes)` : ""}. Solo falta el enlace de Google.</p>}
+      {signup && <p className="alert alert-ok">Datos de {signup.venue_name}, que se registró solo desde la web{chosen ? ` con el plan ${chosen.name} ($${chosen.monthly} al mes)` : ""}. Solo falta el enlace de Google.</p>}
       <form action={createBusiness} className="panel">
         {signup && <input type="hidden" name="signup_id" value={signup.id} />}
         <EssentialFields prefill={prefill} />
         <details className="more">
-          <summary>Más opciones (tipo, color, cantidad de placas, precio)</summary>
-          <OptionFields fee={chosen?.monthly} />
+          <summary>Más opciones (plan, precio, cantidad de placas y tarjetas, color)</summary>
+          <OptionFields plans={plans} planKey={chosen?.key ?? "start"} />
           <div className="form-section">
             <div className="grid-2">
               <label className="field">
-                <span>Cantidad de placas</span>
-                <input className="input" type="number" name="spots" min={1} max={80} defaultValue={chosen?.qty ?? 10} />
+                <span>Placas de mesa</span>
+                <input className="input" type="number" name="spots" min={0} max={80} placeholder="Las del plan" />
+                <small>Vacío: las del plan elegido.</small>
+              </label>
+              <label className="field">
+                <span>Tarjetas de meseros</span>
+                <input className="input" type="number" name="cards" min={0} max={40} placeholder="Las del plan" />
+                <small>Vacío: las del plan elegido.</small>
               </label>
               <label className="field">
                 <span>Nombre de cada placa</span>
-                <input className="input" name="spot_label" placeholder="Mesa, Barra, Caja…" defaultValue={chosen?.line === "meseros" ? "Mesero" : undefined} />
-                <small>Se numeran solas: Mesa 1, Mesa 2…</small>
+                <input className="input" name="spot_label" placeholder="Mesa, Barra, Caja…" />
+                <small>Se numeran solas: Mesa 1, Mesa 2… y Mesero 1, Mesero 2…</small>
               </label>
             </div>
           </div>

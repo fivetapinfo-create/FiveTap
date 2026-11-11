@@ -25,6 +25,8 @@ export type Business = {
   trial_ends_at: string | null;
   notes: string | null;
   owner_token: string;
+  /** Commercial plan (Start, Pro, Enterprise); null for a custom price. */
+  plan_key: string | null;
   mode: "full" | "google";
   created_at: string;
 };
@@ -33,6 +35,8 @@ export type Tag = {
   id: string;
   business_id: string;
   label: string;
+  /** A plaque on a table (or the counter) or a card a waiter carries. */
+  kind: "table" | "waiter";
   code: string;
   active: boolean;
   created_at: string;

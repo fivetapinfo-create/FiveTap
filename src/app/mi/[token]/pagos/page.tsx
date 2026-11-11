@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { BILLING_LABEL, billingState, human, planLabel } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail } from "@/lib/data";
+import { getPlans } from "@/lib/plans";
 import { receiptMoney, receiptsForBusiness } from "@/lib/receipts";
 
 export const dynamic = "force-dynamic";
@@ -29,11 +30,11 @@ export default async function OwnerBilling({ params }: Props) {
   const { token } = await params;
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
-  const [d, receipts] = await Promise.all([businessDetail(b.id), receiptsForBusiness(b.id)]);
+  const [d, receipts, plans] = await Promise.all([businessDetail(b.id), receiptsForBusiness(b.id), getPlans()]);
   if (!d) notFound();
   const billing = billingState(b, d.payments);
   const c = billing.charge;
-  const plan = planLabel(b, c, d.tags.filter((t) => t.active).length);
+  const plan = planLabel(b, c, d.tags.filter((t) => t.active).length, plans);
   const home = `/mi/${token}`;
   const paid = receipts.filter((r) => r.status === "paid");
   const total = paid.reduce((n, r) => n + Number(r.amount), 0);

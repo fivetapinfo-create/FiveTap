@@ -8,7 +8,9 @@ const LINKS: { href: string; label: string; className?: string; badge?: "todo" |
   { href: "/admin/agenda", label: "Agenda", badge: "todo" },
   { href: "/admin/cobros", label: "Cobros", badge: "late" },
   { href: "/admin/mensajes", label: "Mensajes", badge: "unread" },
-  { href: "/admin/comprobantes", label: "Comprobantes" },
+  { href: "/admin/comprobantes", label: "Comprobantes", className: "hide-sm" },
+  { href: "/admin/contratos", label: "Contratos", className: "hide-sm" },
+  { href: "/admin/planes", label: "Planes", className: "hide-sm" },
   { href: "/admin/empresa", label: "Empresa" },
 ];
 

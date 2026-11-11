@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { db } from "./supabase";
 import { SITE_URL } from "./site";
-import { planByKey, tierByFee } from "./plans";
+import { type Plan, getPlans, planOf } from "./plans";
 import type { Business, Payment } from "./types";
 
 // The founder's to-do list, computed from the data every time: payments to
@@ -80,7 +80,7 @@ export function calendarToken() {
   return createHash("sha256").update(`fivetap-agenda:${process.env.ADMIN_PASSWORD ?? ""}`).digest("hex").slice(0, 32);
 }
 
-type BizRow = Pick<Business, "id" | "name" | "status" | "mode" | "monthly_fee" | "trial_ends_at" | "manager_name" | "manager_phone" | "billing_name" | "billing_phone" | "cancel_requested_at" | "cancel_reason" | "created_at" | "grace_until">;
+type BizRow = Pick<Business, "id" | "name" | "status" | "mode" | "monthly_fee" | "trial_ends_at" | "manager_name" | "manager_phone" | "billing_name" | "billing_phone" | "cancel_requested_at" | "cancel_reason" | "created_at" | "grace_until" | "plan_key">;
 type PayRow = Pick<Payment, "business_id" | "kind" | "method" | "paid_at" | "amount">;
 
 /** Who gets payment reminders: the payer if set, otherwise the manager. */
@@ -177,10 +177,10 @@ export function billingState(
   return { kind: daysLate > 0 ? "late" : daysLate >= -3 ? "soon" : "ok", charge, daysLate, suspendsOn, blocked: false };
 }
 
-/** "Plan Completo · 30 placas", for messages about payments. */
-export function planLabel(b: Pick<Business, "monthly_fee">, charge: Charge | null, plaques: number) {
-  const tier = tierByFee(Number(b.monthly_fee));
-  const name = charge?.kind === "annual" ? "Plan anual" : tier ? `Plan ${tier.name}` : "Plan mensual";
+/** "FiveTap Pro · 20 placas", for messages about payments. */
+export function planLabel(b: { plan_key?: string | null; monthly_fee: number }, charge: Charge | null, plaques: number, plans: Plan[] = []) {
+  const plan = planOf(b, plans);
+  const name = charge?.kind === "annual" ? "Plan anual" : plan ? plan.name : "Plan mensual";
   return plaques > 0 ? `${name} · ${plaques} ${plaques === 1 ? "placa" : "placas"}` : name;
 }
 
@@ -189,7 +189,7 @@ type BillingRow = { business: BizRow & Pick<Business, "grace_until" | "owner_tok
 /** Every venue with its payment status and active plaques, for the panel and the daily job. */
 export async function billingAll(today = todayPanama()): Promise<BillingRow[]> {
   const [bizRes, payRes, tagRes] = await Promise.all([
-    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until, owner_token").order("name"),
+    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until, plan_key, owner_token").order("name"),
     db().from("payments").select("business_id, kind, method, paid_at, amount").order("paid_at"),
     db().from("tags").select("business_id").eq("active", true),
   ]);
@@ -206,14 +206,16 @@ export async function billingAll(today = todayPanama()): Promise<BillingRow[]> {
 
 /** Every task from `from` to `to` (inclusive), sorted by date. Overdue charges are pulled to `from`. */
 export async function agenda(from: string, to: string): Promise<Task[]> {
-  const [bizRes, payRes, conRes, unreadRes, signupRes, webRes, tagRes] = await Promise.all([
-    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until"),
+  const plans = await getPlans();
+  const [bizRes, payRes, conRes, unreadRes, signupRes, webRes, tagRes, agrRes] = await Promise.all([
+    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until, plan_key"),
     db().from("payments").select("business_id, kind, method, paid_at, amount").order("paid_at"),
     db().from("contracts").select("venue_name, start_date"),
     db().from("feedback").select("id", { count: "exact", head: true }).is("read_at", null),
     db().from("signups").select("id, venue_name, owner_name, phone, plan, paypal_subscription_id").is("business_id", null).order("created_at"),
     db().from("web_payments").select("id, paypal_order_id, item, amount, venue_name, payer_name").eq("handled", false).order("created_at"),
     db().from("tags").select("business_id").eq("active", true),
+    db().from("agreements").select("id, business_id, venue_name, end_date").gte("end_date", addDays(from, -1)),
   ]);
   for (const r of [bizRes, payRes, conRes]) if (r.error) throw new Error(r.error.message);
   const businesses = (bizRes.data ?? []) as BizRow[];
@@ -282,7 +284,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     const pay = `/pagar?n=${encodeURIComponent(b.name)}`;
     const billing = billingState(b, pays, from);
     const plaques = plaqueCount.get(b.id) ?? 0;
-    const plan = planLabel(b, charge, plaques);
+    const plan = planLabel(b, charge, plaques, plans);
     const placas = plaques === 1 ? "tu placa" : plaques ? `tus ${plaques} placas` : "tus placas";
     const lastDay = billing.suspendsOn ? addDays(billing.suspendsOn, -1) : due;
 
@@ -348,6 +350,21 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     }
   }
 
+  // 3-month contracts: two weeks before the end, review results and agree the renewal.
+  for (const a of (agrRes.data ?? []) as { id: string; business_id: string | null; venue_name: string; end_date: string }[]) {
+    const notice = addDays(a.end_date, -14);
+    if (inRange(notice)) {
+      tasks.push({
+        id: `contrato-fin-${a.id}`,
+        kind: "contrato",
+        date: notice,
+        title: `El contrato de 3 meses de ${a.venue_name} termina el ${human(a.end_date)}`,
+        detail: "Revisa con el dueño sus resultados y acuerden si renuevan por 3 meses, 12 meses u otro período.",
+        businessId: a.business_id ?? undefined,
+      });
+    }
+  }
+
   // Installations booked by contract.
   for (const c of contracts) {
     if (inRange(c.start_date)) {
@@ -370,13 +387,13 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
 
   // Venues that signed up by themselves on /empezar and still have no business here.
   for (const r of (signupRes.data ?? []) as { id: string; venue_name: string; owner_name: string; phone: string; plan: string; paypal_subscription_id: string | null }[]) {
-    const chosen = planByKey(r.plan) ?? planByKey("esencial")!;
+    const chosen = plans.find((p) => p.key === r.plan) ?? plans[0]!;
     tasks.push({
       id: `signup-${r.id}`,
       kind: "registro",
       date: from,
       title: `Nuevo registro: ${r.venue_name}`,
-      detail: `${r.owner_name} · +${r.phone}. ${chosen.title} · ${money(chosen.monthly)} al mes. ${r.paypal_subscription_id ? "Se suscribió por PayPal: registra el primer pago al crear el negocio." : "Todavía sin pagar."} Crea el negocio y coordina la instalación.`,
+      detail: `${r.owner_name} · +${r.phone}. ${chosen.name} · ${money(chosen.monthly)} al mes. ${r.paypal_subscription_id ? "Se suscribió por PayPal: registra el primer pago al crear el negocio." : "Todavía sin pagar."} Crea el negocio y coordina la instalación.`,
       whatsapp: wa(r.phone, `Hola ${r.owner_name.split(" ")[0]} 👋 Te escribe FiveTap. Recibimos tu registro de ${r.venue_name}. ¿Qué día y a qué hora te queda bien para instalar tus placas y FiveTap Business?`),
       link: { href: `/admin/new?signup=${r.id}`, label: "Crear negocio" },
     });

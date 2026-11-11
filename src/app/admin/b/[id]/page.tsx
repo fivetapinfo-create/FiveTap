@@ -9,6 +9,9 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, billingState, human, planLabel } from "@/lib/agenda";
 import { businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { countSubscriptions } from "@/lib/push";
+import { getPlans, planOf } from "@/lib/plans";
+import { agreementsFor } from "@/lib/agreements-db";
+import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
@@ -26,7 +29,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   // All queries start together: one round trip for the whole page.
   const detail = businessDetail(id);
-  const [d, report, contacts, snapshots, phonesOwner, phonesManager, receipts, methods] = await Promise.all([
+  const [d, report, contacts, snapshots, phonesOwner, phonesManager, receipts, methods, plans, agreements] = await Promise.all([
     detail,
     reportData(id, detail.then((x) => x?.tags ?? [])),
     contactsFor(id),
@@ -35,6 +38,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
     countSubscriptions({ role: "manager", businessId: id }),
     receiptsForBusiness(id),
     customMethods(),
+    getPlans(),
+    agreementsFor(id),
   ]);
   if (!d) notFound();
   const { business: b, tags, stats, tagStats, feedback, payments } = d;
@@ -55,7 +60,12 @@ export default async function BusinessPage({ params, searchParams }: Props) {
     .map((x) => ({ ...x, href: `https://wa.me/${x.phone}?text=${encodeURIComponent(access(x.name, x.rol))}` }));
   const isNew = sp.ok === "creado" || !stats?.scans_30d;
   const billing = billingState(b, payments);
-  const plan = planLabel(b, billing.charge, tags.filter((t) => t.active).length);
+  const plan = planLabel(b, billing.charge, tags.filter((t) => t.active).length, plans);
+  const currentPlan = planOf(b, plans);
+  // Older plaques have no kind: a waiter-like name means a waiter card.
+  const isWaiter = (t: { kind?: string; label: string }) => t.kind === "waiter" || (!t.kind && /meser|camarer|tarjeta/i.test(t.label));
+  const tables = tags.filter((t) => !isWaiter(t));
+  const waiters = tags.filter(isWaiter);
   const receiptByPayment = new Map(receipts.filter((r) => r.payment_id).map((r) => [r.payment_id!, r]));
   const receiptEmail = b.billing_email || b.manager_email;
   if (feedback.some((f) => !f.read_at)) after(() => markRead({ businessId: b.id }));
@@ -258,16 +268,57 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         )}
       </section>
 
+      <section className="panel" id="contrato">
+        <div className="panel-head">
+          <h2>Contrato</h2>
+          <Link className="btn btn-ghost btn-sm" href={`/admin/contratos?b=${b.id}#nuevo`}>{agreements.length ? "Nuevo contrato" : "Crear contrato de 3 meses"}</Link>
+        </div>
+        {agreements.length === 0 ? (
+          <div className="msg"><p className="muted">Sin contrato todavía. Créalo antes de la instalación para firmarlo ese día.</p></div>
+        ) : (
+          <div className="table-wrap">
+            <table className="table">
+              <tbody>
+                {agreements.map((a) => (
+                  <tr key={a.id}>
+                    <td><b>{a.number}</b><br /><small className="muted">{a.plan_name} · {money2(a.monthly_fee)}/mes</small></td>
+                    <td>{longDay(a.start_date)} al {longDay(a.end_date)}<br /><small className="muted">Firma: {a.signer_name}</small></td>
+                    <td className="right">
+                      <div className="row" style={{ justifyContent: "flex-end" }}>
+                        <a className="btn btn-ghost btn-sm" href={`/admin/contratos/${a.id}/pdf`} target="_blank" rel="noreferrer">Ver</a>
+                        <a className="btn btn-ghost btn-sm" href={`/admin/contratos/${a.id}/pdf?dl=1`}>PDF</a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <section className="panel" id="placas">
         <div className="panel-head">
-          <h2>Placas NFC · {tags.length}</h2>
+          <h2>Placas y tarjetas · {tables.length} de mesa · {waiters.length} de meseros</h2>
           <form action={addTags} className="row">
             <input type="hidden" name="business_id" value={b.id} />
-            <input className="input" name="count" type="number" min={1} max={80} defaultValue={1} style={{ width: 76, minHeight: 36, padding: "6px 10px" }} aria-label="Cantidad" />
-            <input className="input" name="label" defaultValue={v.spot} style={{ width: 110, minHeight: 36, padding: "6px 10px" }} aria-label="Nombre" />
+            <input className="input" name="count" type="number" min={1} max={80} defaultValue={1} style={{ width: 70, minHeight: 36, padding: "6px 10px" }} aria-label="Cantidad" />
+            <select className="select" name="kind" defaultValue="table" style={{ minHeight: 36, padding: "6px 10px", width: "auto" }} aria-label="Tipo">
+              <option value="table">Placas de mesa</option>
+              <option value="waiter">Tarjetas de meseros</option>
+            </select>
+            <input className="input" name="label" placeholder={`${v.spot} / Mesero`} style={{ width: 120, minHeight: 36, padding: "6px 10px" }} aria-label="Nombre" />
             <SubmitButton className="btn btn-ghost btn-sm" pending="…">+ Agregar</SubmitButton>
           </form>
         </div>
+        {currentPlan && (
+          <div className="msg">
+            <p className="muted">
+              {currentPlan.name} incluye {currentPlan.plaques} placas de mesa, {currentPlan.cards} tarjetas de meseros y {currentPlan.lanyards} cordones.
+              {tables.length !== currentPlan.plaques || waiters.length !== currentPlan.cards ? ` Hoy tiene ${tables.length} placas y ${waiters.length} tarjetas.` : " Ya tiene todo lo del plan."}
+            </p>
+          </div>
+        )}
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -280,8 +331,10 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 <th />
               </tr>
             </thead>
-            <tbody>
-              {tags.map((t) => {
+            {[{ title: "Placas de mesa", list: tables }, { title: "Tarjetas de meseros", list: waiters }].filter((g) => g.list.length).map((g) => (
+            <tbody key={g.title}>
+              <tr className="group-row"><th colSpan={6}>{g.title} · {g.list.length}</th></tr>
+              {g.list.map((t) => {
                 const ts = tagStats.get(t.id);
                 return (
                   <tr key={t.id} style={t.active ? undefined : { opacity: 0.45 }}>
@@ -319,6 +372,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 );
               })}
             </tbody>
+            ))}
           </table>
         </div>
       </section>
@@ -456,7 +510,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <form action={updateBusiness}>
           <input type="hidden" name="id" value={b.id} />
           <EssentialFields b={b} />
-          <OptionFields b={b} />
+          <OptionFields b={b} plans={plans} />
           <div className="form-section">
             <div className="grid-2">
               <label className="field">

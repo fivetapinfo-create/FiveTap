@@ -2,6 +2,7 @@ import "server-only";
 import { addDays, addMonths, human, nextCharge, planLabel } from "./agenda";
 import { getCompany } from "./company";
 import { type EmailResult, sendEmail } from "./email";
+import { getPlans } from "./plans";
 import { receiptPdf } from "./pdf/documents";
 import { sendPush } from "./push";
 import { SITE_URL } from "./site";
@@ -84,10 +85,11 @@ export async function issueReceipt(paymentId: string): Promise<Receipt> {
   if (existing) return existing;
   const pay = must(await db().from("payments").select("*").eq("id", paymentId).maybeSingle()) as Payment | null;
   if (!pay) throw new Error("El pago no existe.");
-  const [b, pays, tagCount] = await Promise.all([
+  const [b, pays, tagCount, plans] = await Promise.all([
     db().from("businesses").select("*").eq("id", pay.business_id).single().then((r) => must(r) as Business),
     db().from("payments").select("kind, method, paid_at, amount").eq("business_id", pay.business_id).then((r) => must(r) as Pick<Payment, "kind" | "method" | "paid_at" | "amount">[]),
     db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", pay.business_id).eq("active", true),
+    getPlans(),
   ]);
   const plaques = tagCount.count ?? 0;
   const after = nextCharge(b, pays);
@@ -99,7 +101,7 @@ export async function issueReceipt(paymentId: string): Promise<Receipt> {
     venue_name: b.name,
     owner_name: b.billing_name || b.manager_name,
     owner_email: b.billing_email || b.manager_email,
-    plan_label: planLabel(b, after, 0),
+    plan_label: planLabel(b, after, 0, plans),
     plaques,
     concept: KIND_LABEL[pay.kind],
     amount: Number(pay.amount),

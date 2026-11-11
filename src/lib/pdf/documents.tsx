@@ -14,6 +14,7 @@ import {
   longDate,
   money,
 } from "../contract";
+import { AGREEMENT_MONTHS, type Agreement, agreementClauses, longDay, money2 } from "../agreement";
 
 // Satoshi, the brand typeface (Fontshare, free for commercial use), embedded
 // from the project. No automatic hyphenation: names and legal text never break.
@@ -515,6 +516,94 @@ export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; leg
           Este documento es un comprobante de pago emitido por {p.tradeName}. No sustituye una factura fiscal. Gracias por confiar en FiveTap.
         </Text>
         <Footer left={`${p.tradeName} · ${p.site} · Comprobante ${r.number}`} />
+      </Page>
+    </Document>
+  );
+  return renderToBuffer(doc);
+}
+
+// ---------- 3-month contract ----------
+
+/** The 3-month contract: one or two pages, plain clauses and the signatures. */
+export async function agreementPdf(a: Agreement, p: Provider) {
+  const doc = (
+    <Document title={`Contrato ${a.number} — FiveTap`} author={p.trade_name}>
+      <Page size="A4" style={s.page}>
+        <Header doc={`Contrato ${a.number}`} tag="3 MESES" />
+        <View style={s.heroRow}>
+          <View>
+            <Text style={s.eyebrow}>Contrato de servicio</Text>
+            <Text style={s.title}>FiveTap · {a.venue_name}</Text>
+            <Text style={s.subtitle}>{a.plan_name} · {AGREEMENT_MONTHS} meses</Text>
+            <View style={s.rule} />
+          </View>
+        </View>
+
+        <View style={s.facts}>
+          <View style={[s.fact, s.factFirst]}>
+            <Text style={s.eyebrow}>Inicio</Text>
+            <Text style={s.factValue}>{longDay(a.start_date)}</Text>
+          </View>
+          <View style={s.fact}>
+            <Text style={s.eyebrow}>Fin</Text>
+            <Text style={s.factValue}>{longDay(a.end_date)}</Text>
+          </View>
+          <View style={s.fact}>
+            <Text style={s.eyebrow}>Mensualidad</Text>
+            <Text style={s.factValue}>{money2(a.monthly_fee)} USD</Text>
+          </View>
+        </View>
+
+        <View style={s.parties}>
+          <View style={s.party}>
+            <Text style={s.eyebrow}>Proveedor</Text>
+            <Text style={s.partyName}>{p.trade_name}</Text>
+            {p.legal_name && p.legal_name !== p.trade_name ? <KV k="Razón social" v={p.legal_name} /> : null}
+            {p.legal_address ? <KV k="Dirección" v={p.legal_address} /> : null}
+            <KV k={p.founder?.role ?? "Fundador"} v={fullName(p.founder)} />
+            {p.representative ? <KV k="Representante" v={`${p.representative.name} (${p.representative.role})`} /> : null}
+          </View>
+          <View style={s.party}>
+            <Text style={s.eyebrow}>Cliente</Text>
+            <Text style={s.partyName}>{a.venue_name}</Text>
+            {a.venue_address ? <KV k="Dirección" v={a.venue_address} /> : null}
+            <KV k={a.signer_role} v={a.signer_name} />
+          </View>
+        </View>
+
+        <Text style={s.label}>Lo que se entrega</Text>
+        <Rows
+          rows={[
+            ["Plan", a.plan_name],
+            ["Placas NFC para mesas", String(a.plaques)],
+            ["Tarjetas NFC para meseros", String(a.cards)],
+            ["Cordones porta tarjetas", String(a.lanyards)],
+            ["FiveTap Business", "Incluido"],
+            ["Forma de pago", a.payment_method],
+          ]}
+        />
+
+        {agreementClauses(a).map((c, i) => (
+          <View key={c.title} style={s.clause} wrap={false}>
+            <View style={s.clauseHead}>
+              <Text style={s.clauseNum}>{i + 1}.</Text>
+              <Text style={s.clauseTitle}>{c.title}</Text>
+            </View>
+            {c.paras.map((t) => <Text key={t} style={s.para}>{t}</Text>)}
+          </View>
+        ))}
+
+        <View wrap={false} style={{ marginTop: 10 }}>
+          <Text style={s.section}>Firmas</Text>
+          <Text style={s.signIntro}>Las partes leen este contrato, están de acuerdo y lo firman en dos ejemplares, en la ciudad de Panamá, el ____ de ______________ de ________.</Text>
+          <View style={s.signs}>
+            {p.representative ? <Sign forWho="Por FiveTap" name={p.representative.name} role={p.representative.role} /> : null}
+            <Sign forWho={p.representative ? "FiveTap · Fundador" : "Por FiveTap"} name={fullName(p.founder)} role={p.founder?.role ?? "Fundador"} />
+            <Sign forWho="Por el cliente" name={a.signer_name} role={`${a.signer_role} · ${a.venue_name}`} />
+          </View>
+        </View>
+
+        <Footer left={`FiveTap · Contrato ${a.number} · ${a.venue_name}`} />
       </Page>
     </Document>
   );

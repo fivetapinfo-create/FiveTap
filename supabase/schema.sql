@@ -419,3 +419,76 @@ alter table receipts        enable row level security;
 alter table receipt_sends   enable row level security;
 alter table audit_log       enable row level security;
 alter table payment_methods enable row level security;
+
+-- The three commercial plans (Start, Pro, Enterprise), editable from the panel: price,
+-- plaques, waiter cards, lanyards and what each one includes. Each venue keeps its own
+-- monthly_fee, so changing a plan's price only applies to new clients.
+create table if not exists plans (
+  key          text primary key,
+  name         text not null,
+  monthly      numeric(10, 2) not null check (monthly >= 0),
+  plaques      int not null default 0 check (plaques >= 0),
+  cards        int not null default 0 check (cards >= 0),
+  lanyards     int not null default 0 check (lanyards >= 0),
+  badge        text,
+  features     text[] not null default '{}',
+  paypal_plan  text,
+  sort         int not null default 0,
+  active       boolean not null default true,
+  updated_at   timestamptz not null default now()
+);
+alter table plans enable row level security;
+insert into plans (key, name, monthly, plaques, cards, lanyards, badge, sort, paypal_plan, features) values
+  ('start', 'FiveTap Start', 129, 10, 2, 2, null, 1, 'P-75J01261M17162054NLZLRPI', array[
+    'FiveTap Business para el dueño y el gerente',
+    'Mensajes privados de tus clientes al instante',
+    'Club de clientes y reporte mensual',
+    'Configuración inicial',
+    'Capacitación básica']),
+  ('pro', 'FiveTap Pro', 199, 20, 5, 5, 'Más recomendado', 2, null, array[
+    'Todo lo de Start',
+    'Resultados por mesero en FiveTap Business',
+    'Instalación y configuración en tu local',
+    'Capacitación de tu personal',
+    'Asesoría de implementación',
+    'Soporte prioritario']),
+  ('enterprise', 'FiveTap Enterprise', 299, 35, 10, 10, 'Premium', 3, null, array[
+    'Todo lo de Pro',
+    'Configuración personalizada',
+    'Capacitación ampliada',
+    'Asesoría estratégica',
+    'Acompañamiento durante la implementación',
+    'Soporte prioritario'])
+on conflict (key) do nothing;
+
+-- Which plan each venue is on, and table plaques vs. waiter cards.
+alter table businesses add column if not exists plan_key text references plans (key) on update cascade;
+alter table tags add column if not exists kind text not null default 'table';
+alter table tags drop constraint if exists tags_kind_check;
+alter table tags add constraint tags_kind_check check (kind in ('table', 'waiter'));
+
+-- 3-month contracts: a short agreement so a venue can try FiveTap with confidence.
+-- Renewal is agreed afterwards (3 months, 12 months or another period). Plan, price and
+-- what was delivered are copied from the business; opened with a secret token link.
+create sequence if not exists agreement_seq;
+create table if not exists agreements (
+  id              uuid primary key default gen_random_uuid(),
+  number          text not null unique default ('C-' || to_char(now() at time zone 'America/Panama', 'YYYY') || '-' || lpad(nextval('agreement_seq')::text, 3, '0')),
+  token           text not null unique default replace(gen_random_uuid()::text, '-', ''),
+  business_id     uuid references businesses (id) on delete set null,
+  venue_name      text not null,
+  venue_address   text,
+  signer_name     text not null,
+  signer_role     text not null,
+  plan_name       text not null,
+  monthly_fee     numeric(10, 2) not null check (monthly_fee >= 0),
+  plaques         int not null default 0,
+  cards           int not null default 0,
+  lanyards        int not null default 0,
+  start_date      date not null,
+  end_date        date not null,
+  payment_method  text not null,
+  created_at      timestamptz not null default now()
+);
+create index if not exists agreements_business_idx on agreements (business_id, created_at desc);
+alter table agreements enable row level security;

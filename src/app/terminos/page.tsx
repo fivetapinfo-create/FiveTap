@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
-import { REPLACEMENT_FEE, PLANS, money } from "@/lib/contract";
-import { QUOTE_ABOVE, TIERS, WAITER_TIERS, annualPrice } from "@/lib/plans";
+import { REPLACEMENT_FEE, money } from "@/lib/contract";
+import { activePlans, planPieces } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
 
-export default function Terms() {
+export const revalidate = 300;
+
+export default async function Terms() {
+  const plans = await activePlans().catch(() => []);
   return (
     <LegalPage title="Términos del servicio" updated="11 de noviembre de 2026">
       <p>Estos términos explican cómo funciona FiveTap para los negocios que lo contratan. Si firmaste un contrato con nosotros, el contrato manda sobre esta página.</p>
@@ -16,26 +19,22 @@ export default function Terms() {
 
       <h2>2. Planes y precios</h2>
       <ul>
-        {TIERS.map((t) => (
-          <li key={t.key}>
-            <b>Placas · {t.name}:</b> {money(t.monthly)} al mes, hasta {t.qty} {t.qty === 1 ? "placa instalada" : "placas instaladas"} con FiveTap Business. Anual: {money(annualPrice(t))}.
+        {plans.map((p) => (
+          <li key={p.key}>
+            <b>{p.name}:</b> {money(p.monthly)} al mes, con {planPieces(p).join(" y ")}, y FiveTap Business.
           </li>
         ))}
-        <li>
-          <b>Tarjetas para meseros</b> (plan aparte, con FiveTap Business):{" "}
-          {WAITER_TIERS.map((t) => `${t.name} ${money(t.monthly)}`).join(" · ")} al mes. Anual: 10 meses.
-        </li>
-        <li><b>{PLANS.annual.name} Esencial:</b> {money(PLANS.annual.price)} al año, con placas personalizadas con la marca de tu local (cantidad según cotización). Se paga en un solo pago o en dos partes: la mitad en línea y la mitad en efectivo el día de la instalación.</li>
-        <li><b>Más de {QUOTE_ABOVE} placas, cadenas o funciones especiales:</b> se cotizan por separado y por escrito.</li>
+        <li><b>Piezas adicionales, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito.</li>
       </ul>
+      <p>Todos los planes son mensuales. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>
       <p>Todo FiveTap es un servicio por suscripción: las placas y tarjetas son propiedad de FiveTap y funcionan mientras el plan esté activo. Cada plan incluye solo lo descrito; cualquier ampliación se cotiza aparte.</p>
       <p>Los planes se cobran de forma automática por PayPal, o por Yappy o transferencia si así lo acordamos.</p>
 
       <h2>3. Instalación</h2>
-      <p>La instalación de las placas y de FiveTap Business está incluida en los planes. La hacemos en una sola visita y dejamos todo funcionando.</p>
+      <p>Configuramos las placas, las tarjetas de meseros y FiveTap Business, y lo dejamos funcionando. Lo que incluye cada plan (configuración, instalación en el local, capacitación) es lo que se describe en el plan.</p>
 
       <h2>4. Cancelación</h2>
-      <p>El Plan Mensual y el Plan Placa no tienen permanencia: los cancelas cuando quieras, desde PayPal o avisándonos, y no se vuelve a cobrar. El servicio sigue hasta el final del período ya pagado. El Plan Anual cubre 12 meses y, pasada la prueba, no se reembolsa. Al cancelar un plan, retiramos las placas incluidas en él.</p>
+      <p>El servicio empieza con un contrato de 3 meses. Al terminar, el local decide si sigue mes a mes, si renueva por otro período o si termina el servicio. No hay renovaciones anuales automáticas. Al terminar, retiramos las placas y tarjetas, que son de FiveTap. Si firmaste un contrato, sus condiciones de cancelación son las que aplican.</p>
 
       <h2>5. Cambio y reposición de placas</h2>
       <p>Cambiamos gratis las piezas gastadas por el uso. Si una se pierde o se rompe, reponerla cuesta {money(REPLACEMENT_FEE)}. Si el servicio falla por nuestra causa más de 72 horas seguidas, ese mes no se cobra.</p>
