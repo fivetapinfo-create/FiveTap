@@ -734,3 +734,7 @@ a.kpi { color: inherit; }
 .plan-badge-blue { background: #2563eb; color: #fff; border-color: #2563eb; }
 .plan-badge-purple { background: #7c3aed; color: #fff; border-color: #7c3aed; }
 .plan-badge-gold { background: var(--gold); color: #0a0a0a; border-color: var(--gold); }
+/* Three plans: the label sits above the name, so long names never run under it. */
+.plans-3 .plan { padding-top: 76px; }
+.plans-3 .plan-badge { top: 30px; left: 36px; right: auto; }
+@media (max-width: 900px) { .plans-3 .plan { padding-top: 68px; } .plans-3 .plan-badge { left: 28px; top: 26px; } }
