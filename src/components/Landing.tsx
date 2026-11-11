@@ -5,7 +5,7 @@ import { Logo, LogoMark } from "./Logo";
 import { Bell, Chart, Check, Gift, Pin, Reply, Shield, Tap } from "./Icons";
 import { COPY } from "@/lib/i18n";
 import { salesWhatsAppUrl } from "@/lib/site";
-import { EXTRA_CARD_MONTHLY, QUOTE_ABOVE, TIERS, annualPrice } from "@/lib/plans";
+import { QUOTE_ABOVE, TIERS, WAITER_TIERS, annualPrice, perPiece } from "@/lib/plans";
 import { VERTICALS, type Vertical } from "@/lib/verticals";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
@@ -214,35 +214,42 @@ export function Landing({ vertical }: { vertical: Vertical }) {
             </div>
             <div className="pieces">
               <div className="piece">
-                <h3>Planes mensuales</h3>
-                <p className="muted">Placas NFC premium, tarjetas de meseros, instalación y FiveTap Business en una sola cuota. Mientras más placas, menos pagas por cada una.</p>
+                <h3>Placas para mesas y mostrador</h3>
+                <p className="muted">Placas NFC premium, instaladas en tu local con FiveTap Business. Mientras más placas, menos pagas por cada una.</p>
                 <ul className="volume">
                   {TIERS.map((t) => (
                     <li key={t.key}>
                       <span>{t.name}</span>
-                      <b className="num">${t.monthly}/mes</b>
+                      <b className="num">{usd(t.monthly)}/mes</b>
                       <small>
-                        Hasta {t.plaques} {t.plaques === 1 ? "placa" : "placas"}
-                        {t.cards ? ` · ${t.cards} ${t.cards === 1 ? "tarjeta" : "tarjetas"} de meseros` : ""}
-                        {t.plaques > 1 ? ` · $${(t.monthly / t.plaques).toFixed(2)} por placa` : ""} · anual {usd(annualPrice(t))}
+                        Hasta {t.qty} {t.qty === 1 ? "placa instalada" : "placas instaladas"}
+                        {t.qty > 1 ? ` · $${perPiece(t).toFixed(2)} por placa` : ""} · anual {usd(annualPrice(t))}
                       </small>
                     </li>
                   ))}
+                  <li><span>Más de {QUOTE_ABOVE} placas o cadenas</span><b className="num">Cotizar</b><small>te enviamos tu propuesta por sucursal</small></li>
                 </ul>
-                <a className="btn btn-dark" href={askPlaque}>Pedir mi plan</a>
+                <a className="btn btn-dark" href={askPlaque}>Pedir mis placas</a>
               </div>
               <div className="piece">
                 <h3>Tarjetas para meseros</h3>
-                <p className="muted">Tarjeta NFC con cordón: cada mesero la lleva y la presenta al traer la cuenta. Ya vienen incluidas en tu plan, y en FiveTap Business ves qué mesero consigue más reseñas.</p>
+                <p className="muted">Tarjeta NFC con cordón: cada mesero la lleva y la presenta al traer la cuenta. Es un plan aparte, con FiveTap Business: ves qué mesero consigue más reseñas.</p>
                 <ul className="volume">
-                  <li><span>Tarjeta adicional</span><b className="num">${EXTRA_CARD_MONTHLY}/mes</b><small>en cualquier plan, ya configurada</small></li>
-                  <li><span>Más de {QUOTE_ABOVE} placas o cadenas</span><b className="num">A cotizar</b><small>te enviamos tu propuesta por sucursal</small></li>
+                  {WAITER_TIERS.map((t) => (
+                    <li key={t.key}>
+                      <span>{t.name}</span>
+                      <b className="num">{usd(t.monthly)}/mes</b>
+                      <small>
+                        {t.qty === 1 ? "con FiveTap Business" : `$${perPiece(t).toFixed(2)} por tarjeta`} · anual {usd(annualPrice(t))}
+                      </small>
+                    </li>
+                  ))}
                 </ul>
                 <a className="btn btn-ghost" href={askWaiter}>Pedir tarjetas</a>
               </div>
             </div>
             <p className="muted pieces-note">
-              Todo funciona mientras tu plan esté activo: las placas y las tarjetas son de FiveTap, tú solo pagas el servicio. Si una se daña, la cambiamos.
+              Placas y tarjetas son planes separados: toma uno, el otro o los dos. Funcionan mientras tu plan esté activo, porque son de FiveTap y tú pagas el servicio. Si una se daña, la cambiamos.
             </p>
 
             <div className="trial">
@@ -307,7 +314,6 @@ export function Landing({ vertical }: { vertical: Vertical }) {
 
 const INCLUDED = [
   "10 placas NFC premium, instaladas y configuradas",
-  "2 tarjetas NFC para meseros",
   "FiveTap Business: resultados en tiempo real y ranking de meseros",
   "Alertas al celular de cada queja privada, al instante",
   "Club de clientes con WhatsApp y cumpleaños",
@@ -324,8 +330,9 @@ const ANNUAL_EXTRAS = [
 
 const FAQ: [string, string][] = [
   ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. Desde ese día, en tu app FiveTap Business ves en tiempo real los toques y las visitas a tu página de reseñas, y cada mes te llega tu reporte."],
-  ["Tengo pocas mesas, ¿me sirve?", "Sí. El plan Una placa cuesta $35 al mes y el Mostrador, hasta 4 placas, $79 al mes. Los dos incluyen FiveTap Business."],
-  ["Tengo muchas mesas, ¿cuánto cuesta?", "Hasta 20 placas, $179 al mes; hasta 30, $229; hasta 40, $269. Cada plan incluye tarjetas de meseros, instalación y FiveTap Business. Con más de 40 placas o varias sucursales, te cotizamos."],
+  ["Tengo pocas mesas, ¿me sirve?", "Sí. El plan Una placa cuesta $35 al mes y el Mostrador, hasta 4 placas, $79 al mes. Los dos vienen instalados con FiveTap Business."],
+  ["Tengo muchas mesas, ¿cuánto cuesta?", "Hasta 20 placas, $189 al mes; hasta 30, $259; hasta 40, $319; hasta 50, $379. Todas vienen instaladas con FiveTap Business. Con más de 50 placas o varias sucursales, te cotizamos."],
+  ["¿Las tarjetas de meseros van incluidas?", "Son un plan aparte, también con FiveTap Business: 1 tarjeta $25 al mes, 3 por $69, 5 por $109, 8 por $159 y 10 por $199. Puedes tenerlas solas o junto con tus placas."],
   ["¿Cómo funciona el plan anual?", "Cuesta $1,290 al año (2 meses gratis) e incluye placas personalizadas con la marca de tu local: nos dices cuántas quieres y te cotizamos. Lo pagas en un solo pago, o la mitad en línea y la mitad en efectivo el día de la instalación."],
   ["¿Google permite pedir reseñas?", "Sí. Lo que Google no permite es filtrar solo las buenas o dar descuentos a cambio. Por eso FiveTap le muestra el botón de Google a todos, siempre."],
   ["¿Mis clientes tienen que descargar algo?", "No. Acercan el celular a la placa (iPhone y Android) y se abre una página con dos botones."],

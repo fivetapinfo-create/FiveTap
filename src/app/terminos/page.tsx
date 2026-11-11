@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { REPLACEMENT_FEE, PLANS, money } from "@/lib/contract";
-import { EXTRA_CARD_MONTHLY, QUOTE_ABOVE, TIERS, annualPrice } from "@/lib/plans";
+import { QUOTE_ABOVE, TIERS, WAITER_TIERS, annualPrice } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
@@ -18,11 +18,13 @@ export default function Terms() {
       <ul>
         {TIERS.map((t) => (
           <li key={t.key}>
-            <b>Plan {t.name}:</b> {money(t.monthly)} al mes, hasta {t.plaques} {t.plaques === 1 ? "placa" : "placas"}
-            {t.cards ? ` y ${t.cards} ${t.cards === 1 ? "tarjeta" : "tarjetas"} para meseros` : ""}, con instalación y FiveTap Business. Anual: {money(annualPrice(t))}.
+            <b>Placas · {t.name}:</b> {money(t.monthly)} al mes, hasta {t.qty} {t.qty === 1 ? "placa instalada" : "placas instaladas"} con FiveTap Business. Anual: {money(annualPrice(t))}.
           </li>
         ))}
-        <li><b>Tarjeta de mesero adicional:</b> {money(EXTRA_CARD_MONTHLY)} al mes.</li>
+        <li>
+          <b>Tarjetas para meseros</b> (plan aparte, con FiveTap Business):{" "}
+          {WAITER_TIERS.map((t) => `${t.name} ${money(t.monthly)}`).join(" · ")} al mes. Anual: 10 meses.
+        </li>
         <li><b>{PLANS.annual.name} Esencial:</b> {money(PLANS.annual.price)} al año, con placas personalizadas con la marca de tu local (cantidad según cotización). Se paga en un solo pago o en dos partes: la mitad en línea y la mitad en efectivo el día de la instalación.</li>
         <li><b>Más de {QUOTE_ABOVE} placas, cadenas o funciones especiales:</b> se cotizan por separado y por escrito.</li>
       </ul>

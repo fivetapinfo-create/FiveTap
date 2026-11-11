@@ -4,7 +4,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
 import { AcceptedPayments, Amex, Bank, Mastercard, PayPal, Visa, Yappy } from "@/components/PaymentBadges";
 import { PayOnline } from "@/components/PayOnline";
-import { EXTRA_CARD_MONTHLY, QUOTE_ABOVE, TIERS, annualPrice } from "@/lib/plans";
+import { QUOTE_ABOVE, TIERS, WAITER_TIERS, annualPrice } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Pagar — FiveTap", robots: { index: false } };
@@ -17,11 +17,15 @@ type Props = { searchParams: Promise<{ n?: string }> };
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 const PLANS = [
   ...TIERS.map((t) => ({
-    name: `Plan ${t.name}`,
-    note: `Cada mes · hasta ${t.plaques} ${t.plaques === 1 ? "placa" : "placas"}${t.cards ? ` y ${t.cards} ${t.cards === 1 ? "tarjeta" : "tarjetas"} de meseros` : ""}, con FiveTap Business · anual ${usd(annualPrice(t))}`,
+    name: `Placas · ${t.name}`,
+    note: `Cada mes · hasta ${t.qty} ${t.qty === 1 ? "placa" : "placas"} instaladas con FiveTap Business · anual ${usd(annualPrice(t))}`,
     price: `${usd(t.monthly)}/mes`,
   })),
-  { name: "Tarjeta de mesero adicional", note: "En cualquier plan", price: `${usd(EXTRA_CARD_MONTHLY)}/mes` },
+  ...WAITER_TIERS.map((t) => ({
+    name: `Meseros · ${t.name}`,
+    note: `Cada mes · tarjetas NFC con cordón, con FiveTap Business · anual ${usd(annualPrice(t))}`,
+    price: `${usd(t.monthly)}/mes`,
+  })),
   { name: "Plan anual Esencial", note: "Un pago, o la mitad en línea ($645) y la mitad en efectivo el día de la instalación", price: "$1,290" },
   { name: `Más de ${QUOTE_ABOVE} placas o cadenas`, note: "Te enviamos tu propuesta", price: "Cotizar" },
 ];
@@ -74,6 +78,20 @@ export default async function Pay({ searchParams }: Props) {
           </div>
           <p className="muted">Plan anual en un solo pago, o su primera mitad. Para el plan mensual, entra a <Link href="/empezar" style={{ textDecoration: "underline" }}>Empezar</Link>. Los demás planes se pagan por Yappy, transferencia o con el enlace que te enviamos.</p>
           <PayOnline clientId={env.PAYPAL_CLIENT_ID} presetVenue={business} />
+        </section>
+      )}
+
+      {(env.PAYPAL_PLAQUES_LINK || env.PAYPAL_WAITERS_LINK) && (
+        <section className="pay-method rise" style={{ "--i": 2 } as React.CSSProperties}>
+          <div className="pay-method-head">
+            <h3>Pagar tu mensualidad</h3>
+            <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
+          </div>
+          <p className="muted">Elige tu plan en PayPal y paga el mes con tarjeta o PayPal. Escribe el nombre de tu negocio en la nota.</p>
+          <div className="pay-buttons">
+            {env.PAYPAL_PLAQUES_LINK && <a className="btn btn-dark" href={env.PAYPAL_PLAQUES_LINK} target="_blank" rel="noreferrer">Mensualidad de placas</a>}
+            {env.PAYPAL_WAITERS_LINK && <a className="btn btn-ghost" href={env.PAYPAL_WAITERS_LINK} target="_blank" rel="noreferrer">Mensualidad de tarjetas de meseros</a>}
+          </div>
         </section>
       )}
 
