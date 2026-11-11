@@ -340,3 +340,8 @@ create table if not exists web_payments (
 );
 create index if not exists web_payments_pending_idx on web_payments (created_at desc) where not handled;
 alter table web_payments enable row level security;
+
+-- Late payments: 5 days of grace after the due date, then the plaques and the owner app
+-- pause by themselves until the payment is registered (nothing is deleted). The founder
+-- can give a few more days; the plaques keep working until grace_until (inclusive).
+alter table businesses add column if not exists grace_until date;

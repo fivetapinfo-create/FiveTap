@@ -4,6 +4,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
 import { AcceptedPayments, Amex, Bank, Mastercard, PayPal, Visa, Yappy } from "@/components/PaymentBadges";
 import { PayOnline } from "@/components/PayOnline";
+import { EXTRA_CARD_MONTHLY, QUOTE_ABOVE, TIERS, annualPrice } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Pagar — FiveTap", robots: { index: false } };
@@ -13,15 +14,16 @@ export const dynamic = "force-dynamic";
 // through PayPal links: Visa, Mastercard and Amex work without a PayPal account.
 type Props = { searchParams: Promise<{ n?: string }> };
 
+const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 const PLANS = [
-  { name: "Plan mensual", note: "Cada mes · 10 placas, instalación y FiveTap Business incluidos", price: "$129" },
-  { name: "Plan anual", note: "Un pago, o la mitad en línea ($645) y la mitad en efectivo el día de la instalación", price: "$1,290" },
-  { name: "1 placa", note: "Cada mes · con FiveTap Business", price: "$35" },
-  { name: "2 placas", note: "Pago único, directo a Google", price: "$60" },
-  { name: "3 placas", note: "Pago único, directo a Google", price: "$85" },
-  { name: "4 placas", note: "Pago único · $25 c/u", price: "$100" },
-  { name: "6 placas", note: "Pago único · $22 c/u", price: "$132" },
-  { name: "Tarjetas para meseros", note: "1 por $25 · 4 por $90 · 6 por $120 · 10 por $180", price: "desde $25" },
+  ...TIERS.map((t) => ({
+    name: `Plan ${t.name}`,
+    note: `Cada mes · hasta ${t.plaques} ${t.plaques === 1 ? "placa" : "placas"}${t.cards ? ` y ${t.cards} ${t.cards === 1 ? "tarjeta" : "tarjetas"} de meseros` : ""}, con FiveTap Business · anual ${usd(annualPrice(t))}`,
+    price: `${usd(t.monthly)}/mes`,
+  })),
+  { name: "Tarjeta de mesero adicional", note: "En cualquier plan", price: `${usd(EXTRA_CARD_MONTHLY)}/mes` },
+  { name: "Plan anual Esencial", note: "Un pago, o la mitad en línea ($645) y la mitad en efectivo el día de la instalación", price: "$1,290" },
+  { name: `Más de ${QUOTE_ABOVE} placas o cadenas`, note: "Te enviamos tu propuesta", price: "Cotizar" },
 ];
 
 export default async function Pay({ searchParams }: Props) {
@@ -32,12 +34,10 @@ export default async function Pay({ searchParams }: Props) {
   const proof = salesWhatsAppUrl(`Hola, ya pagué FiveTap${forWho}. Te envío el comprobante.`);
   const askCardLink = salesWhatsAppUrl(`Hola, quiero pagar FiveTap${forWho} con tarjeta. ¿Me envías el enlace?`);
   const cardLinks = [
-    { url: env.PAYPAL_MONTHLY_URL, label: "Plan mensual · $129 al mes", dark: true },
+    { url: env.PAYPAL_MONTHLY_URL, label: "Plan Esencial · $129 al mes", dark: true },
     { url: env.PAYPAL_ANNUAL_URL, label: "Plan anual · $1,290", dark: false },
     { url: env.PAYPAL_ANNUAL_HALF_URL, label: "Mitad del plan anual · $645", dark: false },
-    { url: env.PAYPAL_PLAQUE_URL, label: "1 placa · $35 al mes", dark: false },
-    { url: env.PAYPAL_PACK_URL, label: "2 placas · $60 pago único", dark: false },
-    { url: env.PAYPAL_WAITER_URL, label: "Tarjeta para meseros · $25", dark: false },
+    { url: env.PAYPAL_PLAQUE_URL, label: "Plan Una placa · $35 al mes", dark: false },
     { url: env.CARD_PAYMENT_URL, label: "Pagar con tarjeta", dark: false },
   ].filter((l) => l.url);
   const recurring = env.PAYPAL_MONTHLY_URL || env.PAYPAL_PLAQUE_URL;
@@ -72,7 +72,7 @@ export default async function Pay({ searchParams }: Props) {
             <h3>Pagar en línea</h3>
             <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
           </div>
-          <p className="muted">Plan anual, placas o tarjetas, en un solo pago. Para el plan mensual, entra a <Link href="/empezar" style={{ textDecoration: "underline" }}>Empezar</Link>.</p>
+          <p className="muted">Plan anual en un solo pago, o su primera mitad. Para el plan mensual, entra a <Link href="/empezar" style={{ textDecoration: "underline" }}>Empezar</Link>. Los demás planes se pagan por Yappy, transferencia o con el enlace que te enviamos.</p>
           <PayOnline clientId={env.PAYPAL_CLIENT_ID} presetVenue={business} />
         </section>
       )}

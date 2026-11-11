@@ -6,11 +6,12 @@ import { ClubPanel } from "@/components/ClubPanel";
 import { CopyButton } from "@/components/CopyButton";
 import { MessageActions } from "@/components/MessageActions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { BILLING_LABEL, billingState, human, planLabel } from "@/lib/agenda";
 import { businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { countSubscriptions } from "@/lib/push";
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
-import { addSnapshot, addTags, resetOwnerLink, deleteBusiness, recordPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
+import { addSnapshot, addTags, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
 import { Flash } from "../../Flash";
@@ -52,6 +53,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
     .filter((x, i, all) => all.findIndex((y) => y.phone === x.phone) === i)
     .map((x) => ({ ...x, href: `https://wa.me/${x.phone}?text=${encodeURIComponent(access(x.name, x.rol))}` }));
   const isNew = sp.ok === "creado" || !stats?.scans_30d;
+  const billing = billingState(b, payments);
+  const plan = planLabel(b, billing.charge, tags.filter((t) => t.active).length);
   if (feedback.some((f) => !f.read_at)) after(() => markRead({ businessId: b.id }));
 
   return (
@@ -65,6 +68,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
               <h1>{b.name}</h1>
               <p>
                 {v.label} · <span className={`pill ${b.status}`}>{STATUS_LABEL[b.status]}</span>
+                {(billing.kind === "soon" || billing.kind === "late" || billing.kind === "suspended") && <> <span className={`pill bill-${billing.kind}`}>{BILLING_LABEL[billing.kind]}</span></>}
                 {b.status === "trial" && b.trial_ends_at ? ` hasta ${b.trial_ends_at}` : ""}
               </p>
             </div>
@@ -84,6 +88,24 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <b>Pidió cancelar desde su app</b> el {dateTime(b.cancel_requested_at)}
           {b.cancel_reason ? ` · Motivo: “${b.cancel_reason}”` : ""}. Cuando retires las placas, cámbialo a <b>Cancelado</b> en Editar datos.
         </p>
+      )}
+
+      {(billing.kind === "late" || billing.kind === "suspended") && billing.charge && (
+        <div className={`alert ${billing.kind === "suspended" ? "alert-error" : "alert-warn"}`} role="status">
+          <p>
+            <b>{billing.kind === "suspended" ? "Suspendido por falta de pago" : `Pago atrasado ${billing.daysLate} ${billing.daysLate === 1 ? "día" : "días"}`}</b>
+            {" "}· {plan} · {usd(billing.charge.amount)} vencido el {human(billing.charge.due)}.{" "}
+            {billing.kind === "suspended"
+              ? `Placas y app pausadas desde el ${human(billing.suspendsOn!)}. Al registrar el pago se reactivan solas y se le avisa al dueño.`
+              : `Si no registras el pago, se pausa el ${human(billing.suspendsOn!)}.`}
+          </p>
+          <form action={extendGrace} className="row" style={{ marginTop: 8 }}>
+            <input type="hidden" name="business_id" value={b.id} />
+            <input type="hidden" name="days" value="7" />
+            <a className="btn btn-dark btn-sm" href="#pagos">Registrar pago</a>
+            <SubmitButton className="btn btn-ghost btn-sm" pending="Guardando…">Dar 7 días más</SubmitButton>
+          </form>
+        </div>
       )}
 
       {isNew && (
@@ -298,7 +320,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel" id="pagos">
         <div className="panel-head">
           <h2>Pagos</h2>
           <CopyButton value={payLink} label="Copiar link de pago" />
@@ -308,11 +330,11 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <div className="grid-2">
             <label className="field">
               <span>Monto (USD)</span>
-              <input className="input" type="number" step="0.01" min={1} name="amount" defaultValue={payments.length ? b.monthly_fee : b.setup_fee} required />
+              <input className="input" type="number" step="0.01" min={1} name="amount" defaultValue={billing.charge?.amount ?? b.monthly_fee} required />
             </label>
             <label className="field">
               <span>Concepto</span>
-              <select className="select" name="kind" defaultValue={payments.length ? "monthly" : "setup"}>
+              <select className="select" name="kind" defaultValue={billing.charge?.kind === "annual" ? "annual" : "monthly"}>
                 {Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
               </select>
             </label>

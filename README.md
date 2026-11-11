@@ -64,9 +64,11 @@ un contador de no leídos.
 ### 5. Pagos (opcional)
 - **PayPal**: plan mensual $129 → `PAYPAL_MONTHLY_URL`
   (también es el botón de `/empezar`, junto con `PAYPAL_CLIENT_ID`); plan anual
-  $1,290 y su mitad $645 → `PAYPAL_ANNUAL_URL`, `PAYPAL_ANNUAL_HALF_URL`; 1 placa
-  $35/mes, 2 placas $60 y tarjeta de mesero $25 → `PAYPAL_PLAQUE_URL`,
-  `PAYPAL_PACK_URL`, `PAYPAL_WAITER_URL`. Sin enlace, cada botón abre WhatsApp.
+  $1,290 y su mitad $645 → `PAYPAL_ANNUAL_URL`, `PAYPAL_ANNUAL_HALF_URL`; plan de
+  1 placa $35/mes → `PAYPAL_PLAQUE_URL`. Ya no se venden placas ni tarjetas de pago
+  único: todo es un plan mensual (`src/lib/plans.ts`). Sin enlace, cada botón abre WhatsApp.
+- **Atrasos**: 5 días de gracia después del vencimiento; el día 6 las placas y la app del
+  dueño se pausan solas (sin borrar nada) y vuelven al registrar el pago. Ver *Cobros*.
 - **Yappy**: tu directorio → `YAPPY_HANDLE`.
 - **ACH**: `BANK_NAME`, `BANK_ACCOUNT_NAME`, `BANK_ACCOUNT_TYPE`, `BANK_ACCOUNT_NUMBER`.
 - Cada pago se registra en el panel del negocio. El primero lo pasa de *Prueba* a *Activo*.

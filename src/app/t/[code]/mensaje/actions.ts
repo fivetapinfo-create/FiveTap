@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { insertFeedback, logEvent, markNotified, recentFeedbackCount, tagByCode } from "@/lib/data";
+import { guestClosed, insertFeedback, logEvent, markNotified, recentFeedbackCount, tagByCode } from "@/lib/data";
 import { notifyFeedback } from "@/lib/notify";
 import { sendPush } from "@/lib/push";
 import { normalizePhone } from "@/lib/phone";
@@ -22,7 +22,7 @@ export async function sendFeedback(formData: FormData) {
   if (message.length < 3) redirect(`${base}error=corto`);
 
   const tag = await tagByCode(code);
-  if (!tag || !tag.active) redirect(`/t/${code}`);
+  if (!tag || (await guestClosed(tag))) redirect(`/t/${code}`);
 
   const req = await guestRequest();
   let feedbackId: string;

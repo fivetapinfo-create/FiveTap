@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { BusinessLogo } from "@/components/BusinessLogo";
 import { Check, StarSolid } from "@/components/Icons";
 import { SubmitButton } from "@/components/SubmitButton";
-import { tagByCode } from "@/lib/data";
+import { guestClosed, tagByCode } from "@/lib/data";
 import { guestRequest } from "../request";
 import { Inactive } from "../Inactive";
 import { joinClub } from "./actions";
@@ -20,7 +20,7 @@ const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
 export default async function ClubPage({ params, searchParams }: Props) {
   const [{ code }, sp, { copy }] = await Promise.all([params, searchParams, guestRequest()]);
   const tag = await tagByCode(code);
-  if (!tag || !tag.active || tag.business.status === "canceled") return <Inactive copy={copy} />;
+  if (!tag || (await guestClosed(tag))) return <Inactive copy={copy} />;
 
   const b = tag.business;
   const q = sp.s === "q" ? "?s=q" : "";

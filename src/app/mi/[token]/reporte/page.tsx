@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BusinessLogo } from "@/components/BusinessLogo";
 import { Logo } from "@/components/Logo";
-import { human } from "@/lib/agenda";
+import { billingState, human } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail, reportData, reviewSnapshots } from "@/lib/data";
 import { successLine } from "@/lib/report-copy";
 
@@ -27,6 +27,9 @@ export default async function MonthlyReport({ params, searchParams }: Props) {
   const detail = businessDetail(b.id);
   const [d, report, snapshots] = await Promise.all([detail, reportData(b.id, detail.then((x) => x?.tags ?? [])), reviewSnapshots(b.id)]);
   if (!d) notFound();
+  const billing = billingState(b, d.payments);
+  // Paused for a late payment: the home shows how to pay.
+  if (billing.kind === "suspended" || billing.kind === "paused") redirect(`/mi/${token}`);
   const key = sp.mes === "actual" ? "this" : "prev";
   const p = report.periods.find((x) => x.key === key)!;
   const before = snapshots[0];

@@ -7,7 +7,8 @@ import { ClubPanel } from "@/components/ClubPanel";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Logo } from "@/components/Logo";
 import { MessageActions } from "@/components/MessageActions";
-import { human, nextCharge, todayPanama } from "@/lib/agenda";
+import { PausedScreen } from "@/components/PausedScreen";
+import { billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail, contactsFor, reportData, reviewSnapshots } from "@/lib/data";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
@@ -40,6 +41,10 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const [d, contacts, snapshots, report] = await Promise.all([businessDetail(b.id), contactsFor(b.id), reviewSnapshots(b.id), reportData(b.id)]);
   if (!d) notFound();
   const { tags, tagStats, feedback, payments } = d;
+  const billing = billingState(b, payments);
+  if (billing.kind === "suspended" || billing.kind === "paused") {
+    return <PausedScreen b={b} billing={billing} token={token} plan={planLabel(b, billing.charge, tags.filter((t) => t.active).length)} />;
+  }
   const [prev, now] = report.periods;
   const sentSince = report.sinceReviews;
   const label = new Map(tags.map((t) => [t.id, t.label]));

@@ -3,6 +3,8 @@ const OK: Record<string, string> = {
   guardado: "Cambios guardados.",
   placas: "Placas nuevas generadas.",
   pago: "Pago registrado.",
+  reactivado: "Pago registrado. Sus placas y su app ya funcionan otra vez, y le avisamos al dueño.",
+  plazo: "Plazo extendido: sus placas siguen funcionando hasta la nueva fecha.",
   eliminado: "Negocio eliminado.",
   empresa: "Datos de la empresa guardados.",
   fundador: "Fundadores actualizados.",

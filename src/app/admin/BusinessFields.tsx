@@ -67,7 +67,8 @@ export function OptionFields({ b }: { b?: Business }) {
           <span>Qué compró</span>
           <select className="select" name="mode" defaultValue={b?.mode ?? "full"}>
             <option value="full">Plan FiveTap (página, alertas, club)</option>
-            <option value="google">Pago único: directo a Google</option>
+            {/* One-time pieces are no longer sold; kept only for venues that already had them. */}
+            {b?.mode === "google" && <option value="google">Pago único: directo a Google</option>}
           </select>
         </label>
         <label className="field">

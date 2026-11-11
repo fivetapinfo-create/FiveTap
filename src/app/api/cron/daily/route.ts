@@ -1,4 +1,4 @@
-import { agenda, cheerOfTheWeek, todayPanama } from "@/lib/agenda";
+import { agenda, billingAll, cheerOfTheWeek, todayPanama } from "@/lib/agenda";
 import { sendPushOnce } from "@/lib/push";
 import { successLine } from "@/lib/report-copy";
 import { db } from "@/lib/supabase";
@@ -12,7 +12,6 @@ export const maxDuration = 60;
 
 const DAY = 86_400_000;
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-const OVERDUE_NUDGES = [1, 3, 7, 14, 21, 30]; // Days after the due date.
 
 const MORNINGS = [
   "¡Que hoy se llene tu local de buenas mesas! 🍽️",
@@ -35,13 +34,11 @@ export async function GET(req: Request) {
   const yesterday = shift(today, -1);
   const sent = { founder: 0, payments: 0, mornings: 0, months: 0 };
 
-  const [tasks, bizRes] = await Promise.all([
-    agenda(today, today),
-    db().from("businesses").select("id, name, status, owner_token").in("status", ["trial", "active"]),
-  ]);
-  if (bizRes.error) return Response.json({ error: bizRes.error.message }, { status: 500 });
-  const businesses = bizRes.data as { id: string; name: string; status: string; owner_token: string }[];
-  const tokenOf = new Map(businesses.map((b) => [b.id, b.owner_token]));
+  const [tasks, billing] = await Promise.all([agenda(today, today), billingAll(today)]);
+  const open = billing.filter((r) => r.business.status === "trial" || r.business.status === "active");
+  const tokenOf = new Map(open.map((r) => [r.business.id, r.business.owner_token]));
+  // Paused for a late payment: they get the payment notices, not the daily summary or the report.
+  const businesses = open.filter((r) => !r.billing.blocked).map((r) => r.business);
 
   // 1. Founder: today's to-do list.
   if (tasks.length) {
@@ -53,13 +50,13 @@ export async function GET(req: Request) {
     });
   }
 
-  // 2. Whoever pays: reminders, due day, renewals, end of trial. Overdue only on some days.
+  // 2. Whoever pays: reminders, due day, renewals, the final notice and the pause.
+  // The agenda only attaches a notification on the days it has to go out.
   for (const t of tasks) {
     if (!t.push || !t.businessId || !tokenOf.has(t.businessId)) continue;
     let key = t.id;
     if (t.kind === "cobro" && t.due && t.due < today) {
       const late = Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${t.due}T12:00:00Z`)) / DAY);
-      if (!OVERDUE_NUDGES.includes(late)) continue;
       key = `${t.id}-late${late}`;
     }
     sent.payments += await sendPushOnce(`owner-${key}`, { role: "owner", businessId: t.businessId }, {

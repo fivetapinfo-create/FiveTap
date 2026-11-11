@@ -1,6 +1,6 @@
 import { NextResponse, after, type NextRequest } from "next/server";
 import { deviceFrom, isBot } from "@/lib/device";
-import { logEvent, tagByCode } from "@/lib/data";
+import { guestClosed, logEvent, tagByCode } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
   const tag = await tagByCode(code);
-  if (!tag || !tag.active) return NextResponse.redirect(new URL(`/t/${code}`, req.url));
+  if (!tag || (await guestClosed(tag))) return NextResponse.redirect(new URL(`/t/${code}`, req.url));
 
   const ua = req.headers.get("user-agent") || "";
   if (!isBot(ua)) {

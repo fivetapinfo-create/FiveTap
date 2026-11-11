@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { GuestCard } from "@/components/GuestCard";
-import { logEvent, tagByCode } from "@/lib/data";
+import { guestClosed, logEvent, tagByCode } from "@/lib/data";
 import { guestRequest, sourceFrom } from "./request";
 import { Inactive } from "./Inactive";
 
@@ -15,7 +15,7 @@ export default async function TapPage({ params, searchParams }: Props) {
   const [{ code }, sp, req] = await Promise.all([params, searchParams, guestRequest()]);
   const tag = await tagByCode(code);
 
-  if (!tag || !tag.active || tag.business.status === "canceled") return <Inactive copy={req.copy} />;
+  if (!tag || (await guestClosed(tag))) return <Inactive copy={req.copy} />;
 
   const source = sourceFrom(sp.s);
   // Logged after the response is sent: the guest never waits on the insert.

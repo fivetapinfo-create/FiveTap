@@ -15,6 +15,8 @@ export type Business = {
   billing_phone: string | null;
   cancel_requested_at: string | null;
   cancel_reason: string | null;
+  /** Extra days given by the founder: plaques keep working until this date even if late. */
+  grace_until: string | null;
   status: BusinessStatus;
   setup_fee: number;
   monthly_fee: number;

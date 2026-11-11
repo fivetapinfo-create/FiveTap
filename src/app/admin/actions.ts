@@ -6,7 +6,8 @@ import { newCode, slugify } from "@/lib/codes";
 import { safeColor } from "@/lib/brand";
 import { normalizePhone } from "@/lib/phone";
 import { reviewUrlFrom } from "@/lib/site";
-import { addReviewSnapshot, deleteReviewSnapshot } from "@/lib/data";
+import { addDays, todayPanama } from "@/lib/agenda";
+import { addReviewSnapshot, billingOf, deleteReviewSnapshot } from "@/lib/data";
 import { sendPush } from "@/lib/push";
 import { db } from "@/lib/supabase";
 import { VERTICALS, verticalByKey } from "@/lib/verticals";
@@ -172,9 +173,13 @@ export async function setTagActive(f: FormData) {
 export async function recordPayment(f: FormData) {
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
+  let reactivated: { name: string; plaques: number } | null = null;
   try {
     const amount = num(f, "amount", 0);
     if (amount <= 0) throw new Error("Monto inválido.");
+    const { data: before, error: bizError } = await db().from("businesses").select("*").eq("id", id).maybeSingle();
+    if (bizError || !before) throw new Error(bizError?.message ?? "Negocio no encontrado.");
+    const wasPaused = (await billingOf(before)).kind === "suspended";
     const { error } = await db().from("payments").insert({
       business_id: id,
       amount,
@@ -183,13 +188,46 @@ export async function recordPayment(f: FormData) {
       reference: opt(f, "reference", 120),
     });
     if (error) throw new Error(error.message);
-    // First payment turns a trial into a paying customer.
+    // First payment turns a trial into a paying customer; extra days given are no longer needed.
     await db().from("businesses").update({ status: "active" }).eq("id", id).eq("status", "trial");
+    await db().from("businesses").update({ grace_until: null }).eq("id", id);
+    if (wasPaused && !(await billingOf({ ...before, grace_until: null })).blocked) {
+      const { count } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", id).eq("active", true);
+      reactivated = { name: before.name, plaques: count ?? 0 };
+      await sendPush({ role: "owner", businessId: id }, {
+        title: `¡Listo, ${before.name}!`,
+        body: `Recibimos tu pago. ${reactivated.plaques === 1 ? "Tu placa ya funciona" : reactivated.plaques ? `Tus ${reactivated.plaques} placas ya funcionan` : "Tus placas ya funcionan"} otra vez. ¡Gracias! 🙌`,
+        url: `/mi/${before.owner_token}`,
+      }).catch(() => 0);
+    }
   } catch (e) {
     fail(back, e);
   }
   revalidatePath(back);
-  redirect(`${back}?ok=pago`);
+  revalidatePath("/admin/cobros");
+  redirect(`${back}?ok=${reactivated ? "reactivado" : "pago"}`);
+}
+
+/** A few more days before the automatic pause (the owner promised to pay). */
+export async function extendGrace(f: FormData) {
+  const id = str(f, "business_id", 60);
+  const days = Math.min(Math.max(Math.round(num(f, "days", 7)), 1), 30);
+  const back = str(f, "back", 120).startsWith("/admin") ? str(f, "back", 120) : `/admin/b/${id}`;
+  try {
+    const { data: b, error } = await db().from("businesses").select("*").eq("id", id).maybeSingle();
+    if (error || !b) throw new Error(error?.message ?? "Negocio no encontrado.");
+    const billing = await billingOf(b);
+    const today = todayPanama();
+    // Counted from today, or from the current last day if that is later.
+    const from = billing.suspendsOn && addDays(billing.suspendsOn, -1) > today ? addDays(billing.suspendsOn, -1) : today;
+    const { error: upd } = await db().from("businesses").update({ grace_until: addDays(from, days) }).eq("id", id);
+    if (upd) throw new Error(upd.message);
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(`/admin/b/${id}`);
+  revalidatePath("/admin/cobros");
+  redirect(`${back}${back.includes("?") ? "&" : "?"}ok=plazo`);
 }
 
 /** Google review count taken by hand: the first one before FiveTap, then each month. */

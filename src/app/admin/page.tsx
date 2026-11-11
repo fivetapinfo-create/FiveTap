@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { BusinessLogo } from "@/components/BusinessLogo";
+import { BILLING_LABEL, billingAll } from "@/lib/agenda";
 import { listBusinesses } from "@/lib/data";
 import { verticalByKey } from "@/lib/verticals";
 import { Flash } from "./Flash";
 import { STATUS_LABEL, pct, ago, usd } from "./format";
 
 export default async function AdminHome({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
-  const [rows, sp] = await Promise.all([listBusinesses(), searchParams]);
+  const [rows, sp, billing] = await Promise.all([listBusinesses(), searchParams, billingAll()]);
+  const billOf = new Map(billing.map((r) => [r.business.id, r.billing]));
   const sum = (k: "scans_30d" | "reviews_30d" | "feedback_30d") =>
     rows.reduce((n, r) => n + Number(r.stats?.[k] ?? 0), 0);
   const paying = rows.filter((r) => r.business.status === "active");
@@ -63,7 +65,15 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
                         </span>
                       </Link>
                     </td>
-                    <td><span className={`pill ${b.status}`}>{STATUS_LABEL[b.status]}</span></td>
+                    <td>
+                      {(() => {
+                        // Payment status when it matters (due soon, late, paused for it); otherwise the plain status.
+                        const k = billOf.get(b.id)?.kind;
+                        return k === "soon" || k === "late" || k === "suspended"
+                          ? <Link href="/admin/cobros" className={`pill bill-${k}`}>{BILLING_LABEL[k]}</Link>
+                          : <span className={`pill ${b.status}`}>{STATUS_LABEL[b.status]}</span>;
+                      })()}
+                    </td>
                     <td className="right num">{s?.scans_7d ?? 0}</td>
                     <td className="right num">{s?.scans_30d ?? 0}</td>
                     <td className="right num">{s?.reviews_30d ?? 0}</td>

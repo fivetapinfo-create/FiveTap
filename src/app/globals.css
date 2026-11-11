@@ -355,6 +355,13 @@ p { margin: 0; text-wrap: pretty; }
 .pill.trial::before { background: var(--gold); }
 .pill.active::before { background: var(--ok); }
 .pill.canceled::before { background: var(--danger); }
+.pill.bill-ok::before { background: var(--ok); }
+.pill.bill-soon::before { background: var(--gold); }
+.pill.bill-late::before { background: #d97706; }
+.pill.bill-late { border-color: #d97706; }
+.pill.bill-suspended::before { background: var(--danger); }
+.pill.bill-suspended { border-color: var(--danger); color: var(--danger); }
+.paused .owner-hero > b { color: #fff; }
 .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
 .muted { color: var(--muted); }
 .empty { padding: 56px 20px; text-align: center; color: var(--muted); display: grid; gap: 16px; justify-items: center; }

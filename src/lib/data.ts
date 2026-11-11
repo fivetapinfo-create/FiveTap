@@ -1,4 +1,5 @@
 import "server-only";
+import { billingState, type Billing } from "./agenda";
 import { db } from "./supabase";
 import type { Business, BusinessStats, Contact, Feedback, Payment, Tag, TagStats } from "./types";
 import type { Device } from "./device";
@@ -18,6 +19,23 @@ export async function tagByCode(code: string): Promise<TagWithBusiness | null> {
   if (!/^[a-z0-9]{4,16}$/.test(code)) return null;
   const res = await db().from("tags").select("*, business:businesses(*)").eq("code", code).maybeSingle();
   return must(res) as TagWithBusiness | null;
+}
+
+/** A venue's payments, newest first (enough to know the current period, also for annual halves). */
+export async function recentPayments(businessId: string) {
+  const res = await db().from("payments").select("kind, method, paid_at, amount").eq("business_id", businessId).order("paid_at", { ascending: false }).limit(24);
+  return must(res) as Pick<Payment, "kind" | "method" | "paid_at" | "amount">[];
+}
+
+/** Where the venue stands with its payments: paused, canceled or unpaid past the grace days close everything. */
+export async function billingOf(b: Business): Promise<Billing> {
+  return billingState(b, await recentPayments(b.id));
+}
+
+/** The plaque's pages (tap, message, club, Google) are closed: plaque off, venue paused, canceled or unpaid. */
+export async function guestClosed(tag: TagWithBusiness | null): Promise<boolean> {
+  if (!tag || !tag.active) return true;
+  return (await billingOf(tag.business)).blocked;
 }
 
 export async function logEvent(e: {
