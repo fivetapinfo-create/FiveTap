@@ -18,9 +18,8 @@ export const TIERS: Tier[] = [
   { key: "mostrador", name: "Mostrador", qty: 4, monthly: 79, paypalPlan: "P-6GW556165B051122PNL2MAUA" },
   { key: "esencial", name: "Esencial", qty: 10, monthly: 129, paypalPlan: "P-75J01261M17162054NLZLRPI" },
   { key: "crecimiento", name: "Crecimiento", qty: 20, monthly: 189, paypalPlan: "P-5HJ75473KE688081PNL2MDSY" },
-  { key: "completo", name: "Completo", qty: 30, monthly: 259 },
+  { key: "completo", name: "Completo", qty: 30, monthly: 259, paypalPlan: "P-92329494MY150421BNL2MPRA" },
   { key: "grande", name: "Grande", qty: 40, monthly: 319, paypalPlan: "P-0S626060NH124931PNL2ME2I" },
-  { key: "premium", name: "Premium", qty: 50, monthly: 379 },
 ];
 
 /** NFC cards with a lanyard for waiters, a plan of their own. */
@@ -33,7 +32,7 @@ export const WAITER_TIERS: Tier[] = [
 ];
 
 /** Above this many plaques (or a chain of venues), the price is quoted. */
-export const QUOTE_ABOVE = 50;
+export const QUOTE_ABOVE = 40;
 
 export const annualPrice = (t: Tier) => t.monthly * 10;
 export const perPiece = (t: Tier) => t.monthly / t.qty;

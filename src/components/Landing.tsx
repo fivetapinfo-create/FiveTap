@@ -331,7 +331,7 @@ const ANNUAL_EXTRAS = [
 const FAQ: [string, string][] = [
   ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. Desde ese día, en tu app FiveTap Business ves en tiempo real los toques y las visitas a tu página de reseñas, y cada mes te llega tu reporte."],
   ["Tengo pocas mesas, ¿me sirve?", "Sí. El plan Una placa cuesta $35 al mes y el Mostrador, hasta 4 placas, $79 al mes. Los dos vienen instalados con FiveTap Business."],
-  ["Tengo muchas mesas, ¿cuánto cuesta?", "Hasta 20 placas, $189 al mes; hasta 30, $259; hasta 40, $319; hasta 50, $379. Todas vienen instaladas con FiveTap Business. Con más de 50 placas o varias sucursales, te cotizamos."],
+  ["Tengo muchas mesas, ¿cuánto cuesta?", "Hasta 20 placas, $189 al mes; hasta 30, $259; hasta 40, $319. Todas vienen instaladas con FiveTap Business. Con más de 40 placas o varias sucursales, te cotizamos."],
   ["¿Las tarjetas de meseros van incluidas?", "Son un plan aparte, también con FiveTap Business: 1 tarjeta $25 al mes, 3 por $69, 5 por $109, 8 por $159 y 10 por $199. Puedes tenerlas solas o junto con tus placas."],
   ["¿Cómo funciona el plan anual?", "Cuesta $1,290 al año (2 meses gratis) e incluye placas personalizadas con la marca de tu local: nos dices cuántas quieres y te cotizamos. Lo pagas en un solo pago, o la mitad en línea y la mitad en efectivo el día de la instalación."],
   ["¿Google permite pedir reseñas?", "Sí. Lo que Google no permite es filtrar solo las buenas o dar descuentos a cambio. Por eso FiveTap le muestra el botón de Google a todos, siempre."],
