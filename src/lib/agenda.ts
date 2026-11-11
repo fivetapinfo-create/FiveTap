@@ -159,19 +159,6 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
       });
     }
 
-    // 30-day guarantee: on day 30, take today's Google review count to compare with day 1.
-    const day30 = addDays(localDate(b.created_at), 30);
-    if (b.mode === "full" && fee > 0 && inRange(day30) && !pays.some((p) => p.kind === "annual")) {
-      tasks.push({
-        id: `garantia-${b.id}`,
-        kind: "prueba",
-        date: day30,
-        title: `Día 30 de garantía: ${b.name}`,
-        detail: "Anota hoy sus reseñas de Google en la ficha (Reseñas en Google · antes y después) y compáralas con las del día de la instalación.",
-        businessId: b.id,
-      });
-    }
-
     const charge = nextCharge(b, pays);
     // Asked to cancel from their app: no more reminders, just the follow-up until marked canceled.
     if (b.cancel_requested_at) {

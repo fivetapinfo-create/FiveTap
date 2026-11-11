@@ -233,7 +233,7 @@ export function ContractForm({ today, error }: { today: string; error?: string }
           <div><span>Mensualidad</span><b>{PLANS[plan].label}</b></div>
           <div><span>Precio</span><b className="num">{money(fee)} / {PLANS[plan].every}{PLANS[plan].perPlaque ? ` (${Math.max(1, plaques)} × ${money(PLANS[plan].price)})` : ""}</b></div>
           <div><span>FiveTap Business</span><b>{withBusiness ? "Incluido" : "No incluido"}</b></div>
-          <div><span>Garantía</span><b>{plan === "monthly" ? "30 días" : "—"}</b></div>
+          <div><span>Instalación</span><b>Incluida</b></div>
           <div><span>Se paga el día de la instalación</span><b className="num">{money(total)}</b></div>
           <div><span>Después</span><b className="num">{money(fee)} cada {PLANS[plan].every}</b></div>
         </div>

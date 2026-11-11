@@ -22,13 +22,13 @@ export default function Terms() {
       </ul>
       <p>Los planes se cobran de forma automática por PayPal, o por Yappy o transferencia si así lo acordamos.</p>
 
-      <h2>3. Garantía de 30 días</h2>
-      <p>El día de la instalación anotamos cuántas reseñas tiene tu local en Google. Si en tus primeros 30 días del {PLANS.monthly.name} no sumas reseñas nuevas, te devolvemos tu primera mensualidad y retiramos las placas. Pídela por WhatsApp a más tardar el día 35.</p>
+      <h2>3. Instalación</h2>
+      <p>La instalación de las placas y de FiveTap Business está incluida en los planes. La hacemos en una sola visita y dejamos todo funcionando.</p>
 
       <h2>4. Cancelación</h2>
       <p>El Plan Mensual y el Plan Placa no tienen permanencia: los cancelas cuando quieras, desde PayPal o avisándonos, y no se vuelve a cobrar. El servicio sigue hasta el final del período ya pagado. El Plan Anual cubre 12 meses y, pasada la prueba, no se reembolsa. Al cancelar un plan, retiramos las placas incluidas en él.</p>
 
-      <h2>5. Garantía y reposición</h2>
+      <h2>5. Cambio y reposición de placas</h2>
       <p>Cambiamos gratis las piezas gastadas por el uso. Si una se pierde o se rompe, reponerla cuesta {money(REPLACEMENT_FEE)}. Si el servicio falla por nuestra causa más de 72 horas seguidas, ese mes no se cobra.</p>
 
       <h2>6. Precio congelado</h2>

@@ -176,7 +176,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
                     <li key={t}><Check />{t}</li>
                   ))}
                 </ul>
-                <p className="trial-includes"><Check /><span><b>Garantía de 30 días</b> · si no sumas reseñas, te devolvemos tu dinero</span></p>
+                <p className="trial-includes"><Check /><span><b>Instalación incluida</b> · listo en una sola visita</span></p>
                 <a className="btn btn-dark" href="/empezar">Empezar ahora</a>
               </div>
 
@@ -241,12 +241,12 @@ export function Landing({ vertical }: { vertical: Vertical }) {
             <div className="trial">
               <div className="trial-head">
                 <Shield style={{ width: 24, height: 24 }} />
-                <h3>Garantía de 30 días. Sin riesgo.</h3>
+                <h3>Listo en una visita. Funciona desde el primer día.</h3>
               </div>
               <ol className="trial-steps">
-                <li><b>Día 1</b> Instalamos tus 10 placas NFC y <b>FiveTap Business</b>, y anotamos tus estrellas y reseñas actuales en Google.</li>
-                <li><b>Día 1 al 30</b> En tu app ves en tiempo real cuántos clientes van a dejarte su reseña.</li>
-                <li><b>Día 30</b> Comparamos tus reseñas con las del primer día. Si en tu primer mes no sumaste reseñas nuevas, te devolvemos tus $129 y retiramos las placas.</li>
+                <li><b>Día 1</b> Instalamos tus 10 placas NFC y <b>FiveTap Business</b> en tu celular, y anotamos tus estrellas y reseñas actuales en Google.</li>
+                <li><b>Cada día</b> Ves en tu app, en tiempo real, cuántos clientes tocan tus placas y van a dejarte su reseña. Cada queja te llega al instante.</li>
+                <li><b>Cada mes</b> Te llega tu reporte: toques, visitas a Google, mejores mesas y meseros, y tus reseñas antes y después de FiveTap.</li>
               </ol>
               <div>
                 <p className="muted">Pagas con tarjeta, PayPal, Yappy o transferencia.</p>
@@ -277,7 +277,7 @@ export function Landing({ vertical }: { vertical: Vertical }) {
           <div className="container">
             <LogoMark size={44} />
             <h2>Empieza a recibir reseñas esta semana.</h2>
-            <p className="muted-d">Te lo instalamos en una visita, con garantía de 30 días: si no sumas reseñas, te devolvemos tu dinero.</p>
+            <p className="muted-d">Te lo instalamos en una visita, sin costo de instalación. Desde ese día lo ves funcionar en tu celular.</p>
             <a className="btn btn-light" href={talk}>Escríbenos por WhatsApp</a>
           </div>
         </section>
@@ -331,7 +331,6 @@ const WAITER_PRICES: [string, string, string][] = [
 ];
 
 const FAQ: [string, string][] = [
-  ["¿Y si no me funciona?", "Tienes garantía de 30 días. El día de la instalación anotamos tus reseñas en Google; si en tu primer mes no sumas reseñas nuevas, te devolvemos tus $129 y retiramos las placas. Aplica al plan mensual."],
   ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. Desde ese día, en tu app FiveTap Business ves en tiempo real los toques y las visitas a tu página de reseñas, y cada mes te llega tu reporte."],
   ["Tengo pocas mesas, ¿me sirve?", "Sí. 1 placa por $35 al mes con FiveTap Business, o placas de pago único: 2 por $60, 3 por $85, 4 por $100 y 6 por $132."],
   ["¿Cómo funciona el plan anual?", "Cuesta $1,290 al año (2 meses gratis) e incluye placas personalizadas con la marca de tu local: nos dices cuántas quieres y te cotizamos. Lo pagas en un solo pago, o la mitad en línea y la mitad en efectivo el día de la instalación."],

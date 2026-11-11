@@ -7,7 +7,7 @@ import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Empieza con FiveTap",
-  description: "Plan mensual de FiveTap: 10 placas NFC, instalación y FiveTap Business por $129 al mes, con garantía de 30 días.",
+  description: "Plan mensual de FiveTap: 10 placas NFC, instalación y FiveTap Business por $129 al mes. Cancelas cuando quieras.",
 };
 export const dynamic = "force-dynamic";
 
@@ -30,7 +30,7 @@ export default async function Start({ searchParams }: Props) {
 
       <header className="rise">
         <h1 className="pay-title">Empieza con FiveTap</h1>
-        <p className="muted">{business ? `${business} · ` : ""}Todo incluido por $129 al mes, con <b>garantía de 30 días</b>.</p>
+        <p className="muted">{business ? `${business} · ` : ""}Todo incluido por <b>$129 al mes</b>, sin costo de instalación.</p>
       </header>
 
       <section className="pay-method rise" style={{ "--i": 1 } as React.CSSProperties}>
@@ -38,9 +38,9 @@ export default async function Start({ searchParams }: Props) {
         <ol className="trial-steps">
           <li><b>Hoy</b> Te registras y activas tu plan. Te escribimos para elegir el día de la instalación.</li>
           <li><b>Día de la instalación</b> Dejamos tus 10 placas NFC y FiveTap Business en tu celular. Anotamos tus reseñas actuales en Google.</li>
-          <li><b>Día 30</b> Comparamos tus reseñas con las del primer día.</li>
+          <li><b>Desde ese día</b> Ves en tu app cuántos clientes van a dejarte su reseña, y cada mes te llega tu reporte.</li>
         </ol>
-        <p className="muted"><b>Garantía de 30 días:</b> si en tu primer mes no sumas reseñas nuevas en Google, te devolvemos tus $129 y retiramos las placas.</p>
+        <p className="muted">Sin permanencia: cancelas cuando quieras, desde tu app, desde PayPal o con un mensaje.</p>
       </section>
 
       <section className="pay-method pay-method-pick rise" style={{ "--i": 2 } as React.CSSProperties}>
