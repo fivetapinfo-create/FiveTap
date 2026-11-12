@@ -809,3 +809,62 @@ html[data-theme="dark"] .admin .app-inapp { background: rgba(212, 175, 55, 0.14)
 .mini-note { font-size: 14px; }
 @media (max-width: 960px) { .mini-kits { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .mini-kit { padding: 22px; } .mini-kits { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mini-card.best { grid-column: 1 / -1; } }
+
+/* Landing: the system (client → app → result) and the two side offers under the plans. */
+.system { display: grid; grid-template-columns: repeat(3, 1fr) 1.15fr; gap: 20px; align-items: stretch; }
+.system-col { border-top: 1px solid var(--line-strong); padding-top: 18px; display: grid; gap: 12px; align-content: start; }
+.system-col h3 { font-size: 20px; letter-spacing: -0.01em; }
+.system-col .ticks { margin: 0; }
+.system-n { font-size: 13px; color: var(--faint); font-weight: 500; }
+.system-app { background: #0a0a0a; color: #fff; border-radius: 24px; padding: 24px; display: grid; gap: 6px; align-content: start; box-shadow: var(--shadow-lg); }
+.system-app-tag { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); margin-bottom: 8px; }
+.system-app small { color: rgba(255, 255, 255, 0.7); font-size: 14px; }
+.system-app > b { font-size: 44px; letter-spacing: -0.03em; line-height: 1.05; }
+.system-app > b em { font-style: normal; color: rgba(255, 255, 255, 0.45); font-weight: 400; }
+.system-app-up { color: #7ee2a8; font-size: 14px; }
+.system-app-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.14); padding-top: 14px; }
+.system-app-row span { display: grid; font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+.system-app-row b { font-size: 20px; color: #fff; }
+@media (max-width: 1000px) { .system { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .system { grid-template-columns: 1fr; } }
+
+.offer-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+.offer-card { border: 1px solid var(--line-strong); border-radius: 24px; padding: 26px 28px; display: grid; gap: 8px; align-content: start; background: var(--surface); transition: box-shadow 200ms ease, transform 200ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) { .offer-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); } }
+.offer-kicker { font-size: 13px; color: var(--faint); font-weight: 500; }
+.offer-card h3 { font-size: 22px; letter-spacing: -0.01em; }
+.offer-card p { color: var(--muted); font-size: 16px; }
+.offer-link { font-weight: 600; margin-top: 6px; }
+@media (max-width: 720px) { .offer-row { grid-template-columns: 1fr; } }
+
+/* Owner app: reputation in Google, before → now. */
+.rep { border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--radius); padding: 18px 20px; display: grid; gap: 12px; }
+.rep-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.rep-head > span { font-weight: 600; }
+.rep-nums { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.rep-nums > div { display: grid; gap: 2px; }
+.rep-nums small { font-size: 12px; color: var(--muted); }
+.rep-nums b { font-size: 34px; line-height: 1; letter-spacing: -0.02em; }
+.rep-nums em { font-style: normal; font-size: 13px; color: var(--muted); }
+.rep-arrow { color: var(--faint); font-size: 22px; }
+.rep-gain { margin-left: auto; font-size: 22px; color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); padding: 6px 12px; border-radius: 999px; }
+
+/* Private messages: new, seen, resolved. */
+.msg-state { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line-strong); }
+.msg-state.new { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.msg-state.seen { color: var(--muted); }
+.msg-state.done { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.msg-done p { color: var(--muted); }
+.msg-row { align-items: center; }
+.msg-row .msg-actions { margin: 0; }
+
+/* Owner app PIN */
+.pin-gate { max-width: 360px; justify-items: center; text-align: center; padding-top: 48px; }
+.pin-form { display: grid; gap: 12px; width: 100%; }
+.pin-input { text-align: center; font-size: 28px; letter-spacing: 0.5em; padding-left: 0.5em; }
+
+/* Club: send a promotion one WhatsApp at a time */
+.promo-start { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.promo { display: grid; gap: 12px; }
+.promo-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 340px; overflow-y: auto; }
+.promo-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }

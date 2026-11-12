@@ -8,6 +8,7 @@ import { MessageActions } from "@/components/MessageActions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, addDays, billingState, human, planLabel } from "@/lib/agenda";
 import { businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
+import { placesReady } from "@/lib/places";
 import { countSubscriptions } from "@/lib/push";
 import { getPlans, planOf } from "@/lib/plans";
 import { agreementsFor } from "@/lib/agreements-db";
@@ -15,7 +16,7 @@ import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
-import { addSnapshot, addTags, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
+import { addSnapshot, addTags, clearOwnerPin, countFromGoogle, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
 import { Flash } from "../../Flash";
@@ -107,7 +108,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <p className={`alert ${billing.kind === "ended" ? "alert-error" : "alert-warn"}`} role="status">
           <b>{billing.kind === "ended" ? "Terminó su FiveTap Test" : "FiveTap Test · válido 30 días"}</b>
           {" "}· {billing.kind === "ended" ? `Sus placas están pausadas desde el ${human(billing.suspendsOn)}.` : `Último día: ${human(addDays(billing.suspendsOn, -1))}. Al día siguiente se pausa sola.`}
-          {" "}Cuando elija su plan, cámbialo en <b>Editar datos → Plan</b> y registra su primer pago.
+          {" "}Cuando elija su plan, cámbialo en <b>Editar datos → Plan</b> y registra su primer pago con <b>$40 de descuento</b> (lo que pagó por el Test).
         </p>
       )}
 
@@ -178,7 +179,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 <tbody>
                   {snapshots.map((s, i) => (
                     <tr key={s.id}>
-                      <td>{s.taken_on}{i === 0 && <span className="muted"> · antes de FiveTap</span>}</td>
+                      <td>{s.taken_on}{i === 0 && <span className="muted"> · antes de FiveTap</span>}{s.source === "google" && <span className="muted"> · leído de Google</span>}</td>
                       <td className="right num">{s.reviews}</td>
                       <td className="right num">{s.rating?.toFixed(1) ?? "—"}</td>
                       <td className="right num">{i === 0 ? "—" : `${s.reviews - snapshots[0]!.reviews >= 0 ? "+" : ""}${s.reviews - snapshots[0]!.reviews}`}</td>
@@ -194,6 +195,19 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 </tbody>
               </table>
             </div>
+          )}
+          {b.google_place_id && placesReady() ? (
+            <form action={countFromGoogle} className="row">
+              <input type="hidden" name="business_id" value={b.id} />
+              <SubmitButton className="btn btn-dark btn-sm" pending="Leyendo Google…">Contar ahora desde Google</SubmitButton>
+              <small className="muted">También se cuenta solo cada lunes.</small>
+            </form>
+          ) : (
+            <small className="muted">
+              {b.google_place_id
+                ? "Para contarlas solas cada semana, falta configurar GOOGLE_PLACES_API_KEY. Mientras, anótalas aquí."
+                : "Agrega el Place ID en Editar datos y FiveTap podrá contarlas solo cada semana. Mientras, anótalas aquí."}
+            </small>
           )}
           <form action={addSnapshot} className="snapshot-form">
             <input type="hidden" name="business_id" value={b.id} />
@@ -236,6 +250,13 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             )}
           </div>
           {!accessFor.length && <small className="muted">Agrega el WhatsApp del gerente o de quien paga (Editar datos) para enviarle el acceso con un toque.</small>}
+          {b.owner_pin_hash && (
+            <form action={clearOwnerPin} className="row">
+              <input type="hidden" name="business_id" value={b.id} />
+              <SubmitButton className="btn btn-ghost btn-sm" pending="Quitando…">Quitar PIN del dueño</SubmitButton>
+              <small className="muted">El local activó un PIN en su app. Quítalo solo si lo olvidaron.</small>
+            </form>
+          )}
           <form action={resetOwnerLink} className="row">
             <input type="hidden" name="business_id" value={b.id} />
             <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar enlace privado</SubmitButton>
@@ -260,7 +281,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 <span>{tags.find((t) => t.id === f.tag_id)?.label ?? "—"}</span>
                 <span>{dateTime(f.created_at)}</span>
                 <span>{f.notified_via.includes("email") ? "Enviado por email" : "Solo en el panel"}</span>
-                {!f.read_at && <span className="badge">Nuevo</span>}
+                <span className={`msg-state ${f.resolved_at ? "done" : f.read_at ? "seen" : "new"}`}>{f.resolved_at ? "Resuelto por el local" : f.read_at ? "Visto" : "Nuevo"}</span>
               </div>
               <p>{f.message}</p>
               <MessageActions

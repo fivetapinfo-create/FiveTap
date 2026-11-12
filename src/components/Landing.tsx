@@ -6,7 +6,7 @@ import { Bell, Chart, Check, Gift, Pin, Reply, Shield, Tap } from "./Icons";
 import { COPY } from "@/lib/i18n";
 import { salesWhatsAppUrl } from "@/lib/site";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, MINI_EXTRA_CARD, MINI_INCLUDES, MINI_KITS, TEST_PIECES, founderWhatsApp } from "@/lib/test-kit";
+import { FOUNDER_PHONE, TEST_OFFER, founderWhatsApp } from "@/lib/test-kit";
 import { VERTICALS, type Vertical } from "@/lib/verticals";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
@@ -22,7 +22,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
     BASE_FAQ[0]!,
     [
       "¿Qué plan me conviene?",
-      `${plans.map((p) => `${p.name}: ${p.plaques} placas para mesas y ${p.cards} tarjetas para meseros por ${fmt(p.monthly)} al mes`).join(". ")}. ¿Necesitas más piezas o tienes varias sucursales? Te lo cotizamos.`,
+      `${plans.map((p) => `${p.name}: ${p.plaques} placas para mesas y ${p.cards} tarjetas para meseros por ${fmt(p.monthly)} al mes`).join(". ")}. ¿Necesitas una cantidad específica o tienes varias sucursales? Cotiza con el Founder de FiveTap: ${FOUNDER_PHONE}.`,
     ],
     ...BASE_FAQ.slice(1),
   ];
@@ -47,19 +47,19 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
         <section className="hero dark">
           <div className="container hero-grid">
             <div>
-              <p className="eyebrow-caps muted-d rise" style={i(0)}>Para {vertical.plural} · Panamá</p>
+              <p className="eyebrow-caps muted-d rise" style={i(0)}>Software de reputación para {vertical.plural} · Panamá</p>
               <h1 className="rise" style={i(1)}>
-                Tus clientes felices no dejan reseñas. <span>Ahora sí.</span>
+                Tu reputación en Google, <span>en piloto automático.</span>
               </h1>
               <p className="hero-sub muted-d rise" style={i(2)}>
-                Placas NFC premium {vertical.where}. Un toque con el celular y tu cliente deja su reseña en Google en
-                segundos. Y si algo salió mal, también puede escribirte en privado para que lo resuelvas a tiempo.
+                Placas NFC {vertical.where} y en tus meseros. El cliente contento te deja su reseña en Google en
+                segundos; el molesto te escribe a ti primero. Y tú ves todo en tu celular, medido.
               </p>
               <div className="hero-cta rise" style={i(3)}>
                 <a className="btn btn-light" href="/empezar">Empezar ahora</a>
                 <Link className="btn btn-ghost" href={`/demo?n=${encodeURIComponent(demoName)}`}>Ver la demo</Link>
               </div>
-              <p className="hero-note muted-d rise" style={i(4)}>Sin permanencia · Sin descargar nada · Lo instalamos nosotros</p>
+              <p className="hero-note muted-d rise" style={i(4)}>Instalación incluida · Sin descargar nada · Reseñas medidas antes y después</p>
             </div>
 
             <div className="rise" style={i(2)}>
@@ -125,15 +125,64 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="container">
             <div className="section-head">
+              <span className="kicker eyebrow-caps">Un sistema, no una placa</span>
+              <h2>Lo que toca tu cliente, lo que ves tú y lo que lo demuestra.</h2>
+            </div>
+            <div className="system">
+              <div className="system-col">
+                <span className="system-n">1 · Tu cliente</span>
+                <h3>Un toque, tres opciones</h3>
+                <ul className="ticks">
+                  <li><Check />Dejar reseña en Google</li>
+                  <li><Check />Hablar con el gerente, en privado</li>
+                  <li><Check />Unirse a tu club de promociones</li>
+                </ul>
+              </div>
+              <div className="system-col">
+                <span className="system-n">2 · Tú y tu gerente</span>
+                <h3>FiveTap Business</h3>
+                <ul className="ticks">
+                  <li><Check />Avisos al instante de cada queja</li>
+                  <li><Check />Toques y visitas a Google en tiempo real</li>
+                  <li><Check />Qué mesa y qué mesero rinde más</li>
+                </ul>
+              </div>
+              <div className="system-col">
+                <span className="system-n">3 · El resultado</span>
+                <h3>Reseñas medidas</h3>
+                <ul className="ticks">
+                  <li><Check />Anotamos tus reseñas el día 1</li>
+                  <li><Check />Reporte cada mes con el antes y el después</li>
+                  <li><Check />A los 3 meses revisamos los números juntos</li>
+                </ul>
+              </div>
+              <div className="system-app" role="img" aria-label="Ejemplo de FiveTap Business">
+                <span className="system-app-tag">Ejemplo · FiveTap Business</span>
+                <small>Reseñas en Google</small>
+                <b className="num">84 <em>→</em> 126</b>
+                <span className="system-app-up">+42 desde que tienes FiveTap · ★ 4.3 → 4.6</span>
+                <div className="system-app-row">
+                  <span><b className="num">318</b>Toques</span>
+                  <span><b className="num">57</b>A Google</span>
+                  <span><b className="num">4</b>Quejas resueltas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="section" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <div className="section-head">
               <span className="kicker eyebrow-caps">Qué incluye</span>
               <h2>Lo necesario para que te elijan en Google. Nada más.</h2>
             </div>
             <div className="features">
               <Feature icon={<Tap />} title="Placas NFC premium" text={`Diseño elegante ${vertical.where}, programadas para tu local. Si algo cambia, las reprogramamos al instante.`} />
               <Feature icon={<Pin />} title="Edición con tu marca" text="¿Las quieres con tu logo y tus colores? Las fabricamos a medida para tu local y cambiamos las que tienes." />
-              <Feature icon={<Bell />} title="Quejas privadas al instante" text="“Hablar con el gerente” te avisa por email mientras el cliente sigue en el local." />
-              <Feature icon={<Reply />} title="Avisos en tu celular" text="FiveTap Business te avisa cada queja al instante, te resume el día cada mañana y te envía tu reporte del mes." />
-              <Feature icon={<Chart />} title="Reporte mensual" text="Toques, visitas a Google y reseñas nuevas, explicados en un mensaje." />
+              <Feature icon={<Bell />} title="Quejas privadas al instante" text="“Hablar con el gerente” te avisa en el celular mientras el cliente sigue en el local. Respondes por WhatsApp y lo marcas como resuelto." />
+              <Feature icon={<Chart />} title="Reseñas medidas" text="Tus reseñas y estrellas de Google antes y después de FiveTap, con tu resumen cada mañana y tu reporte cada mes." />
+              <Feature icon={<Reply />} title="Equipo medido" text="Cada tarjeta de mesero cuenta sus toques y sus visitas a Google. Sabes quién consigue más reseñas." />
               <Feature icon={<Gift />} title="Club de clientes" text="Tus clientes dejan su WhatsApp y su cumpleaños para recibir tus promociones. Ellos vuelven." />
               <Feature icon={<Shield />} title="Dentro de las reglas de Google" text="Todos tus clientes ven el botón de reseña. Sin trucos que arriesguen tu perfil." />
             </div>
@@ -169,28 +218,9 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
           <div className="container">
             <div className="section-head">
               <span className="kicker eyebrow-caps">Planes</span>
-              <h2>Pruébalo 30 días o elige tu plan.</h2>
-              <p className="muted">Precios de lanzamiento. Los planes son mensuales e incluyen placas NFC para mesas, tarjetas NFC para meseros con su cordón y FiveTap Business.</p>
+              <h2>Elige tu plan. Lo instalamos esta semana.</h2>
+              <p className="muted">Planes mensuales con placas NFC para mesas, tarjetas NFC para meseros con su cordón, FiveTap Business e instalación incluida. Precios de lanzamiento.</p>
             </div>
-            <div className="test-kit">
-              <div className="test-kit-head">
-                <h3>FiveTap Test</h3>
-                <p className="muted">Una sola pieza, válida por 30 días. Se cierra sola al terminar y eliges tu plan, sin cobros sorpresa.</p>
-              </div>
-              <div className="test-kit-items">
-                {TEST_PIECES.map((t) => (
-                  <a key={t.key} className="test-piece" href={founderWhatsApp(`Hola, quiero FiveTap Test de 30 días: ${t.name} ($${t.monthly}) para mi ${kind}.`)}>
-                    <span><b>{t.name}</b><small>{t.detail}</small></span>
-                    <span className="num">{usd(t.monthly)}<small> · 30 días</small></span>
-                  </a>
-                ))}
-              </div>
-              <p className="muted test-kit-note">
-                ¿Necesitas más de 4 piezas o una cantidad específica? Cotiza con el Founder de FiveTap:{" "}
-                <a href={founderWhatsApp(`Hola, quiero cotizar FiveTap para mi ${kind}. Necesito ___ piezas.`)} style={{ textDecoration: "underline" }}><b>{FOUNDER_PHONE}</b></a>
-              </p>
-            </div>
-
             <div className="plans plans-3">
               {plans.map((p, n) => (
                 <div key={p.key} className={`plan${n === 1 ? " plan-dark" : ""}`}>
@@ -210,31 +240,23 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
               ))}
             </div>
             {plans.length === 0 && <a className="btn btn-dark" href={talk}>Pide tu plan por WhatsApp</a>}
-            <div className="mini-kit" id="mini">
-              <div className="mini-head">
-                <span className="mini-tag">Exclusivo</span>
-                <h3>FiveTap Mini</h3>
-                <p className="muted">Para cafeterías, barras, mostradores y locales con pocas mesas: de 1 a 5 placas NFC con FiveTap Business. Pago mensual.</p>
-              </div>
-              <div className="mini-kits">
-                {MINI_KITS.map((k) => (
-                  <a key={k.key} className={`mini-card${"best" in k && k.best ? " best" : ""}`} href={founderWhatsApp(`Hola, quiero FiveTap ${k.name} (${k.plaques} ${k.plaques === 1 ? "placa" : "placas"}, $${k.monthly} al mes) para mi ${kind}.`)}>
-                    <span className="mini-name">{k.name}{"best" in k && k.best ? <em>Mejor precio</em> : null}</span>
-                    <b className="num">{usd(k.monthly)}<small> / mes</small></b>
-                    <small>{k.plaques === 1 ? "1 placa NFC" : `${k.plaques} placas · $${(k.monthly / k.plaques).toFixed(2)} c/u`}</small>
-                  </a>
-                ))}
-              </div>
-              <ul className="ticks mini-includes">
-                {MINI_INCLUDES.map((t) => <li key={t}><Check />{t}</li>)}
-              </ul>
-              <p className="muted mini-note">
-                Tarjeta NFC para mesero con cordón: +{usd(MINI_EXTRA_CARD)} al mes cada una, hasta 2 por local. ¿6 mesas o más? Te conviene FiveTap Start.
-              </p>
+            <div className="offer-row">
+              <a className="offer-card" href={founderWhatsApp(`Hola, quiero ${TEST_OFFER.name} de 30 días (${usd(TEST_OFFER.price)}) para mi ${kind}.`)}>
+                <span className="offer-kicker">¿Quieres probar primero?</span>
+                <h3>{TEST_OFFER.name} · <span className="num">{usd(TEST_OFFER.price)}</span></h3>
+                <p>{TEST_OFFER.detail}, por 30 días. Si luego eliges un plan, los {usd(TEST_OFFER.price)} se descuentan de tu primer mes.</p>
+                <span className="offer-link">Pedir mi Test →</span>
+              </a>
+              <a className="offer-card" id="cotizar" href={founderWhatsApp(`Hola, quiero cotizar FiveTap para mi ${kind}. Necesito ___ placas y ___ tarjetas de meseros.`)}>
+                <span className="offer-kicker">¿Necesitas una cantidad específica?</span>
+                <h3>Cotiza con el Founder</h3>
+                <p>Pocas mesas, una barra, varias sucursales o más piezas: te armamos el plan exacto para tu local.</p>
+                <span className="offer-link">WhatsApp {FOUNDER_PHONE} →</span>
+              </a>
             </div>
 
             <p className="muted pieces-note">
-              Empiezas con un contrato de 3 meses para comprobar los resultados; luego sigues mes a mes, sin permanencia anual. Las placas y tarjetas son de FiveTap y funcionan mientras tu plan esté activo. ¿Necesitas más piezas o algo especial? <a href={talk} style={{ textDecoration: "underline" }}>Te lo cotizamos</a>.
+              Empiezas con un contrato de 3 meses para comprobar los resultados; luego sigues mes a mes, sin permanencia anual. Las placas y tarjetas son de FiveTap y funcionan mientras tu plan esté activo.
             </p>
 
             <div className="trial">
@@ -243,9 +265,9 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
                 <h3>Listo en una visita. Funciona desde el primer día.</h3>
               </div>
               <ol className="trial-steps">
-                <li><b>Día 1</b> Dejamos tus placas NFC, las tarjetas de tus meseros y FiveTap Business en tu celular, y anotamos tus estrellas y reseñas actuales en Google.</li>
+                <li><b>Día 1</b> Dejamos tus placas NFC, las tarjetas de tus meseros y FiveTap Business en tu celular, y anotamos por escrito tus estrellas y reseñas actuales en Google.</li>
                 <li><b>Cada día</b> Ves en tu app, en tiempo real, cuántos clientes tocan tus placas y van a dejarte su reseña. Cada queja te llega al instante.</li>
-                <li><b>Cada mes</b> Te llega tu reporte: toques, visitas a Google, mejores mesas y meseros, y tus reseñas antes y después de FiveTap.</li>
+                <li><b>Mes 3</b> Revisamos juntos tus reseñas antes y después de FiveTap, y decides si sigues. Cada mes te llega además tu reporte.</li>
               </ol>
               <div>
                 <p className="muted">Pagas con tarjeta, PayPal, Yappy o transferencia.</p>
@@ -276,7 +298,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
           <div className="container">
             <LogoMark size={44} />
             <h2>Empieza a recibir reseñas esta semana.</h2>
-            <p className="muted-d">Te lo instalamos en una visita, sin costo de instalación. Desde ese día lo ves funcionar en tu celular.</p>
+            <p className="muted-d">Te lo instalamos en una visita, sin costo de instalación. Desde ese día lo ves funcionar en tu celular, con tus reseñas medidas.</p>
             <a className="btn btn-light" href={talk}>Escríbenos por WhatsApp</a>
           </div>
         </section>
@@ -285,7 +307,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
       <footer className="footer dark">
         <div className="container footer-in">
           <Logo size={18} />
-          <span className="eyebrow-caps">Más reseñas. Más clientes.</span>
+          <span className="eyebrow-caps">Tu reputación en Google, en piloto automático.</span>
           <span className="footer-links">
             <Link href="/pagar">Pagos</Link>
             <Link href="/terminos">Términos</Link>
@@ -298,9 +320,9 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
 }
 
 const BASE_FAQ: [string, string][] = [
-  ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. Desde ese día, en tu app FiveTap Business ves en tiempo real los toques y las visitas a tu página de reseñas, y cada mes te llega tu reporte."],
+  ["¿Cómo sé que está funcionando?", "El día de la instalación anotamos tus estrellas y el número de reseñas en Google. Desde ese día, en tu app FiveTap Business ves en tiempo real los toques, las visitas a tu página de reseñas y cuántas reseñas nuevas sumaste. A los 3 meses revisamos los números juntos."],
   ["¿Google permite pedir reseñas?", "Sí. Lo que Google no permite es filtrar solo las buenas o dar descuentos a cambio. Por eso FiveTap le muestra el botón de Google a todos, siempre."],
-  ["¿Mis clientes tienen que descargar algo?", "No. Acercan el celular a la placa (iPhone y Android) y se abre una página con dos botones."],
+  ["¿Mis clientes tienen que descargar algo?", "No. Acercan el celular a la placa (iPhone y Android) y se abre tu página con tres opciones: dejar reseña en Google, hablar con el gerente o recibir tus promociones."],
   ["¿Puedo tener las placas con mi logo?", "Sí. Con tu plan activo, fabricamos tus placas a medida con tu logo y tus colores, y cambiamos las de tu local. Se cotiza según el diseño y la cantidad."],
   ["¿Qué pasa si un cliente está molesto?", "Toca “Hablar con el gerente” y te escribe en privado. Te llega al instante para resolverlo mientras sigue en el local."],
   ["¿Cómo funciona el club de clientes?", "Tus clientes pueden dejar su WhatsApp y su cumpleaños para recibir tus promociones. Es opcional y con su permiso. Tú ves la lista y la descargas en Excel."],

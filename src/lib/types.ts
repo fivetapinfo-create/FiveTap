@@ -28,6 +28,10 @@ export type Business = {
   /** Commercial plan (Start, Pro, Enterprise); null for a custom price. */
   plan_key: string | null;
   mode: "full" | "google";
+  /** Google Place ID ("ChIJ…"), used to read the review count from Google. */
+  google_place_id: string | null;
+  /** Optional PIN for the owner app (hash); null means the private link is enough. */
+  owner_pin_hash: string | null;
   created_at: string;
 };
 
@@ -51,6 +55,7 @@ export type Feedback = {
   phone: string | null;
   notified_via: string[];
   read_at: string | null;
+  resolved_at: string | null;
   created_at: string;
 };
 

@@ -5,12 +5,13 @@ import { redirect } from "next/navigation";
 import { newCode, slugify } from "@/lib/codes";
 import { safeColor } from "@/lib/brand";
 import { normalizePhone } from "@/lib/phone";
-import { reviewUrlFrom } from "@/lib/site";
+import { placeIdFrom, reviewUrlFrom } from "@/lib/site";
 import { addDays, todayPanama } from "@/lib/agenda";
 import { AGREEMENT_METHODS, SIGNER_ROLES, endOf } from "@/lib/agreement";
 import { TEST_ACTIVE_DAYS } from "@/lib/test-kit";
 import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
-import { addReviewSnapshot, billingOf, deleteReviewSnapshot } from "@/lib/data";
+import { addReviewSnapshot, billingOf, deleteReviewSnapshot, snapshotFromGoogle } from "@/lib/data";
+import { placesReady } from "@/lib/places";
 import { sendPush } from "@/lib/push";
 import { audit, deliverReceipt, issueReceipt } from "@/lib/receipts";
 import { db } from "@/lib/supabase";
@@ -83,6 +84,16 @@ export async function createBusiness(f: FormData) {
   const fee = isTest ? 0 : str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
   const spotLabel = str(f, "spot_label", 30) || verticalByKey(kind).spot;
   if (!name || !review) fail("/admin/new", new Error("Escribe el nombre y el enlace de reseñas de Google."));
+  // The "before": how many reviews and stars the venue has in Google today. Without it,
+  // there is nothing to show the owner at renewal. Read from Google when possible.
+  const placeId = placeIdFrom(str(f, "place_id", 300)) ?? placeIdFrom(review);
+  const startRaw = str(f, "reviews_start", 7);
+  const startReviews = startRaw === "" ? null : Math.round(Number(startRaw));
+  const startRatingRaw = str(f, "rating_start", 4).replace(",", ".");
+  const startRating = startRatingRaw ? Math.round(Number(startRatingRaw) * 10) / 10 : null;
+  const autoBaseline = startReviews === null && placeId && placesReady();
+  if (!autoBaseline && (startReviews === null || !(startReviews >= 0))) fail("/admin/new", new Error("Anota cuántas reseñas tiene hoy en Google (el “antes”). Míralo en Google Maps: es el número entre paréntesis junto a las estrellas."));
+  if (startRating !== null && !(startRating >= 1 && startRating <= 5)) fail("/admin/new", new Error("Las estrellas van de 1 a 5 (ej. 4.3)."));
 
   let id: string;
   try {
@@ -97,6 +108,7 @@ export async function createBusiness(f: FormData) {
         logo_url,
         brand_color: safeColor(str(f, "brand_color")),
         google_review_url: reviewUrlFrom(review),
+        google_place_id: placeId,
         manager_email: email(opt(f, "manager_email", 120)),
         manager_name: opt(f, "manager_name", 80),
         manager_phone: phone(opt(f, "manager_phone", 30)),
@@ -117,6 +129,8 @@ export async function createBusiness(f: FormData) {
     id = data.id;
     await createTags(id, spotLabel, spots, 1, "table");
     await createTags(id, "Mesero", cards, 1, "waiter");
+    if (autoBaseline) await snapshotFromGoogle(id, placeId!, todayPanama());
+    else await addReviewSnapshot({ business_id: id, taken_on: todayPanama(), reviews: startReviews!, rating: startRating });
     // Came from a self sign-up on /empezar: mark it as handled.
     const signup = str(f, "signup_id", 60);
     if (/^[0-9a-f-]{36}$/i.test(signup)) await db().from("signups").update({ business_id: id }).eq("id", signup);
@@ -136,6 +150,7 @@ export async function updateBusiness(f: FormData) {
       kind: str(f, "kind", 30),
       brand_color: safeColor(str(f, "brand_color")),
       google_review_url: reviewUrlFrom(str(f, "review", 500)),
+      google_place_id: placeIdFrom(str(f, "place_id", 300)) ?? placeIdFrom(str(f, "review", 500)),
       manager_email: email(opt(f, "manager_email", 120)),
       manager_name: opt(f, "manager_name", 80),
       manager_phone: phone(opt(f, "manager_phone", 30)),
@@ -405,6 +420,22 @@ export async function addSnapshot(f: FormData) {
   redirect(`${back}?ok=resenas#resenas`);
 }
 
+/** Reads today's review count and stars straight from Google (needs the Place ID and the API key). */
+export async function countFromGoogle(f: FormData) {
+  const id = str(f, "business_id", 60);
+  const back = `/admin/b/${id}`;
+  try {
+    const { data, error } = await db().from("businesses").select("google_place_id").eq("id", id).single();
+    if (error) throw new Error(error.message);
+    if (!data.google_place_id) throw new Error("Este negocio no tiene Place ID. Agrégalo en Editar datos.");
+    await snapshotFromGoogle(id, data.google_place_id, todayPanama());
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=resenas#resenas`);
+}
+
 export async function removeSnapshot(f: FormData) {
   const id = str(f, "business_id", 60);
   try {
@@ -425,6 +456,20 @@ export async function testOwnerPush(f: FormData) {
 }
 
 /** New private link for the venue: the old one stops working and its phones stop getting notifications. */
+/** The owner forgot their PIN: the private link opens the app directly again. */
+export async function clearOwnerPin(f: FormData) {
+  const id = str(f, "business_id", 60);
+  const back = `/admin/b/${id}`;
+  try {
+    const { error } = await db().from("businesses").update({ owner_pin_hash: null }).eq("id", id);
+    if (error) throw new Error(error.message);
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=guardado#app`);
+}
+
 export async function resetOwnerLink(f: FormData) {
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;

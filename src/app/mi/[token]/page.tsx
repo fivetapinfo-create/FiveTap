@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PinGate } from "@/components/PinGate";
+import { pinUnlocked } from "@/lib/owner-pin";
 import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
 import { BusinessLogo } from "@/components/BusinessLogo";
@@ -10,7 +12,9 @@ import { MessageActions } from "@/components/MessageActions";
 import { PausedScreen } from "@/components/PausedScreen";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { addDays, billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
-import { businessByOwnerToken, businessDetail, contactsFor, reportData, reviewSnapshots } from "@/lib/data";
+import { after } from "next/server";
+import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
+import { setMessageResolved } from "./actions";
 import { getPlans } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
@@ -18,7 +22,7 @@ import { dateTime } from "../../admin/format";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ rol?: string; instalar?: string; app?: string }> };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ rol?: string; instalar?: string; app?: string; pin?: string }> };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const [{ token }, sp] = await Promise.all([params, searchParams]);
@@ -41,6 +45,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const [{ token }, sp] = await Promise.all([params, searchParams]);
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
+  if (!(await pinUnlocked(b))) return <PinGate b={b} token={token} wrong={sp.pin === "mal"} />;
   // Everything at once: one round trip after finding the venue.
   const [d, contacts, snapshots, report] = await Promise.all([businessDetail(b.id), contactsFor(b.id), reviewSnapshots(b.id), reportData(b.id)]);
   if (!d) notFound();
@@ -50,6 +55,9 @@ export default async function OwnerPage({ params, searchParams }: Props) {
     return <PausedScreen b={b} billing={billing} token={token} plan={planLabel(b, billing.charge, tags.filter((t) => t.active).length, await getPlans())} />;
   }
   const [prev, now] = report.periods;
+  const pending = feedback.filter((f) => !f.resolved_at);
+  // Seen once the owner or the manager opens the app: the founder can tell it reached them.
+  if (feedback.some((f) => !f.read_at)) after(() => markRead({ businessId: b.id }));
   const sentSince = report.sinceReviews;
   const label = new Map(tags.map((t) => [t.id, t.label]));
 
@@ -60,10 +68,12 @@ export default async function OwnerPage({ params, searchParams }: Props) {
 
   const row = (t: Tag) => ({ id: t.id, label: t.label, active: t.active, scans: tagStats.get(t.id)?.scans_30d ?? 0, reviews: tagStats.get(t.id)?.reviews_30d ?? 0 });
   const byScans = (a: { scans: number }, z: { scans: number }) => z.scans - a.scans;
+  const byReviews = (a: { reviews: number; scans: number }, z: { reviews: number; scans: number }) => z.reviews - a.reviews || z.scans - a.scans;
   const groups = [
-    { title: "Placas de mesa", items: tags.filter((t) => !isWaiter(t)).map(row).sort(byScans) },
-    { title: "Tarjetas de meseros", items: tags.filter(isWaiter).map(row).sort(byScans) },
+    { title: "Ranking de meseros · quién lleva más clientes a Google", waiters: true, items: tags.filter(isWaiter).map(row).sort(byReviews) },
+    { title: "Placas de mesa", waiters: false, items: tags.filter((t) => !isWaiter(t)).map(row).sort(byScans) },
   ].filter((g) => g.items.length);
+  const MEDALS = ["🥇", "🥈", "🥉"];
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
   const charge = nextCharge(b, payments);
@@ -104,13 +114,33 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         <section className="owner-hero glance">
           <span>Este mes, clientes que fueron a dejarte reseña</span>
           <b className="num">{now!.reviews}</b>
-          <p>Mes pasado: {prev!.reviews}{sentSince > now!.reviews ? ` · ${sentSince} desde que tienes FiveTap` : ""}{gained !== null && gained > 0 ? ` · +${gained} reseñas nuevas en Google` : ""}</p>
+          <p>Mes pasado: {prev!.reviews}{sentSince > now!.reviews ? ` · ${sentSince} desde que tienes FiveTap` : ""}</p>
           <div className="glance-row">
             <a href="#placas"><b className="num">{now!.scans}</b><span>Toques</span></a>
             <a href="#mensajes"><b className="num">{now!.feedback}</b><span>Mensajes</span></a>
             <a href="#club"><b className="num">{now!.club}</b><span>Nuevos en el club</span></a>
           </div>
         </section>
+
+        {before && (
+          <section className="rep" aria-label="Tu reputación en Google">
+            <div className="rep-head">
+              <span>Tu reputación en Google</span>
+              <small className="muted">{latest ? `Actualizado el ${shortDate(latest.taken_on)}` : `Medido el ${shortDate(before.taken_on)}`}</small>
+            </div>
+            <div className="rep-nums">
+              <div><small>Antes de FiveTap</small><b className="num">{before.reviews}</b>{before.rating ? <em>★ {before.rating.toFixed(1)}</em> : null}</div>
+              <span className="rep-arrow" aria-hidden>→</span>
+              <div><small>Hoy</small><b className="num">{(latest ?? before).reviews}</b>{(latest ?? before).rating ? <em>★ {(latest ?? before).rating!.toFixed(1)}</em> : null}</div>
+              {gained !== null && gained > 0 && <strong className="rep-gain num">+{gained}</strong>}
+            </div>
+            <p className="muted">
+              {gained !== null && gained > 0
+                ? `${gained} ${gained === 1 ? "reseña nueva" : "reseñas nuevas"} en Google desde que tienes FiveTap.`
+                : "Este es tu punto de partida. Aquí verás cuántas reseñas nuevas sumas cada semana."}
+            </p>
+          </section>
+        )}
 
         {billing.kind === "trial" && billing.suspendsOn && (
           <a className="alert alert-ok glance-alert" href={`/empezar?n=${encodeURIComponent(b.name)}`}>
@@ -149,19 +179,31 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         />
 
         <section className="panel" id="mensajes">
-          <div className="panel-head"><h2>Mensajes privados</h2></div>
+          <div className="panel-head">
+            <h2>Mensajes privados</h2>
+            {feedback.length > 0 && <span className="muted">{pending.length ? `${pending.length} por resolver` : "Todo resuelto ✓"}</span>}
+          </div>
           {feedback.length === 0 ? (
             <div className="empty"><p>Sin mensajes por ahora. Aquí te llega lo que un cliente quiera decirte en privado.</p></div>
           ) : (
-            feedback.slice(0, 10).map((f) => (
-              <div key={f.id} className="msg">
+            [...pending, ...feedback.filter((f) => f.resolved_at)].slice(0, 12).map((f) => (
+              <div key={f.id} className={`msg${f.resolved_at ? " msg-done" : ""}`}>
                 <div className="msg-meta">
                   <b style={{ color: "var(--ink)" }}>{f.name || "Sin nombre"}</b>
                   <span>{(f.tag_id && label.get(f.tag_id)) || "—"}</span>
                   <span>{dateTime(f.created_at)}</span>
+                  <span className={`msg-state ${f.resolved_at ? "done" : f.read_at ? "seen" : "new"}`}>{f.resolved_at ? "Resuelto" : f.read_at ? "Visto" : "Nuevo"}</span>
                 </div>
                 <p>{f.message}</p>
-                <MessageActions business={b.name} spot={(f.tag_id && label.get(f.tag_id)) || null} guestName={f.name} guestPhone={f.phone} message={f.message} />
+                <div className="row msg-row">
+                  {!f.resolved_at && <MessageActions business={b.name} spot={(f.tag_id && label.get(f.tag_id)) || null} guestName={f.name} guestPhone={f.phone} message={f.message} />}
+                  <form action={setMessageResolved}>
+                    <input type="hidden" name="token" value={token} />
+                    <input type="hidden" name="feedback_id" value={f.id} />
+                    <input type="hidden" name="resolved" value={f.resolved_at ? "0" : "1"} />
+                    <button className={`btn btn-sm ${f.resolved_at ? "btn-ghost" : "btn-dark"}`} type="submit">{f.resolved_at ? "Reabrir" : "Marcar resuelto ✓"}</button>
+                  </form>
+                </div>
               </div>
             ))
           )}
@@ -182,7 +224,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
                       {g.items.map((t) => (
                         <tr key={t.id}>
                           <td>
-                            <b>{t.label}</b> {best > 0 && t.scans === best && "🏆"}
+                            {g.waiters ? <>{t.reviews > 0 && MEDALS.at(g.items.indexOf(t))} <b>{t.label}</b></> : <><b>{t.label}</b> {best > 0 && t.scans === best && "🏆"}</>}
                             {!t.active && <span className="muted"> · desactivada</span>}
                           </td>
                           <td className="right num">{t.scans}</td>
@@ -197,7 +239,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           )}
         </section>
 
-        <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} />
+        <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} business={b.name} />
 
         {charge && b.status !== "canceled" && (
           <section className="panel" id="plan">
@@ -207,7 +249,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             </div>
             <div className="msg">
               {b.status === "trial" && charge.kind === "trial" ? (
-                <p>Tu semana de prueba termina el <b>{shortDate(charge.due)}</b>. Luego, {money(charge.amount)} al mes.</p>
+                <p>Tu FiveTap Test termina el <b>{shortDate(charge.due)}</b>. Elige tu plan para seguir sin pausa.</p>
               ) : (
                 <p>
                   {charge.due < today ? "Pago pendiente desde el " : "Próximo pago: "}

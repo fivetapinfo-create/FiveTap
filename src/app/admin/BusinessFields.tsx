@@ -26,6 +26,11 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
           </a>.
         </small>
       </label>
+      <label className="field">
+        <span>Place ID del local (para medir sus reseñas)</span>
+        <input className="input" name="place_id" defaultValue={b?.google_place_id ?? ""} placeholder="ChIJ… (opcional si ya lo pegaste arriba)" autoComplete="off" />
+        <small>Con el Place ID, FiveTap lee cada semana de Google cuántas reseñas y estrellas tiene el local y se lo muestra al dueño.</small>
+      </label>
       <div className="field">
         <span>4. Quién recibe las quejas privadas (dueño, gerente o supervisor)</span>
         <div className="grid-2">
@@ -86,6 +91,26 @@ export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[
       {/* One-time pieces are no longer sold; kept only for venues that already had them. */}
       <input type="hidden" name="mode" value={b?.mode === "google" ? "google" : "full"} />
       <input type="hidden" name="setup_fee" value={b?.setup_fee ?? 0} />
+    </div>
+  );
+}
+
+/** The "before": reviews and stars in Google the day FiveTap is installed. Only when creating. */
+export function BaselineFields({ auto }: { auto: boolean }) {
+  return (
+    <div className="form-section">
+      <div className="field">
+        <span>6. Reseñas en Google hoy (el “antes”)</span>
+        <div className="grid-2">
+          <input className="input" name="reviews_start" inputMode="numeric" pattern="[0-9]*" required={!auto} placeholder="Reseñas: 84" aria-label="Reseñas en Google hoy" />
+          <input className="input" name="rating_start" inputMode="decimal" placeholder="Estrellas: 4.3" aria-label="Estrellas en Google hoy" />
+        </div>
+        <small>
+          {auto
+            ? "Con el Place ID lo leemos solo de Google; escríbelo solo si quieres anotarlo tú."
+            : "Míralo en Google Maps: el número entre paréntesis junto a las estrellas. Es lo que le mostrarás al dueño a los 3 meses."}
+        </small>
+      </div>
     </div>
   );
 }

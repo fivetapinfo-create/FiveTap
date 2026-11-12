@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { db } from "./supabase";
 import { SITE_URL } from "./site";
+import { TEST_OFFER } from "./test-kit";
 import { type Plan, getPlans, planOf } from "./plans";
 import type { Business, Payment } from "./types";
 
@@ -80,7 +81,7 @@ export function calendarToken() {
   return createHash("sha256").update(`fivetap-agenda:${process.env.ADMIN_PASSWORD ?? ""}`).digest("hex").slice(0, 32);
 }
 
-type BizRow = Pick<Business, "id" | "name" | "status" | "mode" | "monthly_fee" | "trial_ends_at" | "manager_name" | "manager_phone" | "billing_name" | "billing_phone" | "cancel_requested_at" | "cancel_reason" | "created_at" | "grace_until" | "plan_key">;
+type BizRow = Pick<Business, "id" | "name" | "status" | "mode" | "monthly_fee" | "trial_ends_at" | "manager_name" | "manager_phone" | "billing_name" | "billing_phone" | "cancel_requested_at" | "cancel_reason" | "created_at" | "grace_until" | "plan_key" | "google_place_id">;
 type PayRow = Pick<Payment, "business_id" | "kind" | "method" | "paid_at" | "amount">;
 
 /** Who gets payment reminders: the payer if set, otherwise the manager. */
@@ -195,12 +196,12 @@ export function planLabel(b: { plan_key?: string | null; monthly_fee: number }, 
   return plaques > 0 ? `${name} · ${plaques} ${plaques === 1 ? "placa" : "placas"}` : name;
 }
 
-type BillingRow = { business: BizRow & Pick<Business, "grace_until" | "owner_token">; billing: Billing; plaques: number };
+type BillingRow = { business: BizRow & Pick<Business, "grace_until" | "owner_token" | "google_place_id">; billing: Billing; plaques: number };
 
 /** Every venue with its payment status and active plaques, for the panel and the daily job. */
 export async function billingAll(today = todayPanama()): Promise<BillingRow[]> {
   const [bizRes, payRes, tagRes] = await Promise.all([
-    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until, plan_key, owner_token").order("name"),
+    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until, plan_key, owner_token, google_place_id").order("name"),
     db().from("payments").select("business_id, kind, method, paid_at, amount").order("paid_at"),
     db().from("tags").select("business_id").eq("active", true),
   ]);
@@ -219,7 +220,7 @@ export async function billingAll(today = todayPanama()): Promise<BillingRow[]> {
 export async function agenda(from: string, to: string): Promise<Task[]> {
   const plans = await getPlans();
   const [bizRes, payRes, conRes, unreadRes, signupRes, webRes, tagRes, agrRes] = await Promise.all([
-    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until, plan_key"),
+    db().from("businesses").select("id, name, status, mode, monthly_fee, trial_ends_at, manager_name, manager_phone, billing_name, billing_phone, cancel_requested_at, cancel_reason, created_at, grace_until, plan_key, google_place_id"),
     db().from("payments").select("business_id, kind, method, paid_at, amount").order("paid_at"),
     db().from("contracts").select("venue_name, start_date"),
     db().from("feedback").select("id", { count: "exact", head: true }).is("read_at", null),
@@ -271,7 +272,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
           title: `Hoy es el último día de la prueba de ${b.name}`,
           detail: "Mañana se pausa sola. Revisa con el dueño sus resultados y ayúdale a elegir su plan.",
           businessId: b.id,
-          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Hoy es el último día de tu FiveTap Test. ¿Revisamos tus resultados y eliges el plan que más te conviene? ${SITE_URL}${empezar}`),
+          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Hoy es el último día de tu FiveTap Test. ¿Revisamos tus resultados y eliges el plan que más te conviene? Los $${TEST_OFFER.price} del Test se descuentan de tu primer mes. ${SITE_URL}${empezar}`),
           push: { title: `Hoy termina tu prueba · ${b.name}`, body: "Mira cuántos clientes fueron a dejarte reseña y elige tu plan para seguir mañana sin pausa.", url: empezar },
         });
       }
@@ -282,9 +283,9 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
           kind: "prueba",
           date: from,
           title: `Terminó la prueba de ${b.name}: ofrécele un plan`,
-          detail: `Sus placas están pausadas desde el ${human(endsOn)}. Cuando elija su plan, cámbialo en Editar datos y registra su primer pago.`,
+          detail: `Sus placas están pausadas desde el ${human(endsOn)}. Cuando elija su plan, cámbialo en Editar datos y registra su primer pago con el Test descontado ($${TEST_OFFER.price} menos).`,
           businessId: b.id,
-          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Tu FiveTap Test terminó. Elige tu plan y tus placas vuelven a funcionar el mismo día: ${SITE_URL}${empezar}`),
+          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Tu FiveTap Test terminó. Elige tu plan y tus placas vuelven a funcionar el mismo día; los $${TEST_OFFER.price} del Test se descuentan de tu primer mes: ${SITE_URL}${empezar}`),
           push: from === endsOn ? { title: `Tu prueba terminó · ${b.name}`, body: "Tus placas están en pausa. Elige tu plan y vuelven a funcionar el mismo día.", url: empezar } : undefined,
         });
       }
@@ -419,6 +420,11 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
   for (let d = from; d <= to; d = addDays(d, 1)) {
     if (d.endsWith("-01") && onPlan.length) {
       tasks.push({ id: `reporte-${d}`, kind: "reporte", date: d, title: `Enviar el reporte del mes a ${onPlan.length} cliente${onPlan.length === 1 ? "" : "s"}`, detail: "En cada negocio: Reporte mensual → Mes pasado → Copiar reporte → WhatsApp." });
+      // Without Google's count (no Place ID or no API key), the month's count is typed by hand.
+      const manual = onPlan.filter((x) => !(x.google_place_id && process.env.GOOGLE_PLACES_API_KEY));
+      if (manual.length) {
+        tasks.push({ id: `conteo-${d}`, kind: "reporte", date: d, title: `Anotar las reseñas de Google de ${manual.length} cliente${manual.length === 1 ? "" : "s"}`, detail: `${manual.slice(0, 4).map((x) => x.name).join(", ")}${manual.length > 4 ? "…" : ""}: en cada negocio, Reseñas en Google → Agregar conteo. El dueño ve el antes → hoy en su app.` });
+      }
     }
     // Monday: a short "have a great week" to every owner (buttons in the Agenda page).
     const withPhone = onPlan.filter((x) => payer(x).phone).length;

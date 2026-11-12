@@ -32,7 +32,7 @@ export default async function Inbox() {
                 </Link>
                 <span>{m.tag?.label ?? "—"}</span>
                 <span>{dateTime(m.created_at)}</span>
-                {!m.read_at && <span className="badge">Nuevo</span>}
+                <span className={`msg-state ${m.resolved_at ? "done" : m.read_at ? "seen" : "new"}`}>{m.resolved_at ? "Resuelto por el local" : m.read_at ? "Visto" : "Nuevo"}</span>
               </div>
               <p><b>{m.name || "Sin nombre"}:</b> {m.message}</p>
               <MessageActions

@@ -1,6 +1,8 @@
 import { agenda, billingAll, cheerOfTheWeek, todayPanama } from "@/lib/agenda";
 import { sendPushOnce } from "@/lib/push";
 import { successLine } from "@/lib/report-copy";
+import { snapshotFromGoogle } from "@/lib/data";
+import { placesReady } from "@/lib/places";
 import { db } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +34,7 @@ export async function GET(req: Request) {
 
   const today = todayPanama();
   const yesterday = shift(today, -1);
-  const sent = { founder: 0, payments: 0, mornings: 0, months: 0 };
+  const sent = { founder: 0, payments: 0, mornings: 0, months: 0, counts: 0 };
 
   const [tasks, billing] = await Promise.all([agenda(today, today), billingAll(today)]);
   const open = billing.filter((r) => r.business.status === "trial" || r.business.status === "active");
@@ -121,6 +123,21 @@ export async function GET(req: Request) {
           : greeting,
         url: `/mi/${b.owner_token}`,
       });
+    }
+  }
+
+  // 4. Mondays: each venue's review count and stars, read from Google (needs the API key and
+  // the venue's Place ID). The owner sees "before → now" in the app and the report.
+  if (placesReady() && new Date(`${today}T12:00:00Z`).getUTCDay() === 1) {
+    for (const r of open) {
+      const placeId = r.business.google_place_id;
+      if (!placeId) continue;
+      try {
+        await snapshotFromGoogle(r.business.id, placeId, today);
+        sent.counts++;
+      } catch (e) {
+        console.error("google count", r.business.id, e);
+      }
     }
   }
 

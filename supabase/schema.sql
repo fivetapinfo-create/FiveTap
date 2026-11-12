@@ -497,3 +497,16 @@ alter table agreements enable row level security;
 alter table plans add column if not exists badge_color text not null default 'neutral';
 alter table plans drop constraint if exists plans_badge_color_check;
 alter table plans add constraint plans_badge_color_check check (badge_color in ('neutral', 'blue', 'purple', 'gold'));
+
+-- ---------- Reputation measured, messages closed, optional PIN ----------
+
+-- The venue's Google Place ID ("ChIJ…"): with GOOGLE_PLACES_API_KEY set, FiveTap reads its
+-- review count and stars from Google every week (source 'google'); otherwise counts are typed.
+alter table businesses add column if not exists google_place_id text;
+alter table review_snapshots add column if not exists source text not null default 'manual';
+alter table review_snapshots drop constraint if exists review_snapshots_source_check;
+alter table review_snapshots add constraint review_snapshots_source_check check (source in ('manual', 'google'));
+-- A private message is new (read_at null), seen, or resolved.
+alter table feedback add column if not exists resolved_at timestamptz;
+-- Optional 4-digit PIN for the owner app (scrypt hash); null means no PIN.
+alter table businesses add column if not exists owner_pin_hash text;

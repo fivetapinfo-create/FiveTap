@@ -1,6 +1,7 @@
 import type { Contact, Tag } from "@/lib/types";
 import { formatPhone, waLink } from "@/lib/phone";
 import { CopyButton } from "./CopyButton";
+import { PromoSender } from "./PromoSender";
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const bday = (c: Contact) => (c.birthday_month && c.birthday_day ? `${c.birthday_day} ${MONTHS[c.birthday_month - 1]}` : "—");
@@ -11,12 +12,15 @@ export function ClubPanel({
   tags,
   csvHref,
   remove,
+  business,
 }: {
   contacts: Contact[];
   tags: Tag[];
   csvHref: string;
   /** Admin only: a server action that deletes one contact (guests can ask to be removed). */
   remove?: (f: FormData) => Promise<void>;
+  /** Owner app only: shows the promotion sender, signed with the venue's name. */
+  business?: string;
 }) {
   const label = new Map(tags.map((t) => [t.id, t.label]));
   const month = Number(new Date().toLocaleString("en-US", { timeZone: "America/Panama", month: "numeric" }));
@@ -39,6 +43,11 @@ export function ClubPanel({
         <div className="empty"><p>Todavía nadie se ha unido. Aparecen aquí cuando un cliente toca “Recibe promociones”.</p></div>
       ) : (
         <>
+          {business && (
+            <div className="msg">
+              <PromoSender business={business} people={contacts.map((c) => ({ id: c.id, name: c.name, phone: c.phone, birthday: c.birthday_month === month }))} />
+            </div>
+          )}
           {birthdays.length > 0 && (
             <div className="club-bdays">
               <b>🎂 Cumpleaños este mes</b>

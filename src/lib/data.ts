@@ -228,15 +228,15 @@ export async function businessDetail(id: string) {
 
 // ---------- Google reviews, counted by hand ----------
 
-export type ReviewSnapshot = { id: string; business_id: string; taken_on: string; reviews: number; rating: number | null };
+export type ReviewSnapshot = { id: string; business_id: string; taken_on: string; reviews: number; rating: number | null; source?: "manual" | "google" };
 
 /** Oldest first: the first one is the count before FiveTap. */
 export async function reviewSnapshots(businessId: string) {
-  const res = await db().from("review_snapshots").select("id, business_id, taken_on, reviews, rating").eq("business_id", businessId).order("taken_on").order("created_at");
+  const res = await db().from("review_snapshots").select("id, business_id, taken_on, reviews, rating, source").eq("business_id", businessId).order("taken_on").order("created_at");
   return (must(res) as ReviewSnapshot[]).map((s) => ({ ...s, rating: s.rating === null ? null : Number(s.rating) }));
 }
 
-export async function addReviewSnapshot(s: { business_id: string; taken_on: string; reviews: number; rating: number | null }) {
+export async function addReviewSnapshot(s: { business_id: string; taken_on: string; reviews: number; rating: number | null; source?: "manual" | "google" }) {
   const { error } = await db().from("review_snapshots").insert(s);
   if (error) throw new Error(error.message);
 }
@@ -244,4 +244,14 @@ export async function addReviewSnapshot(s: { business_id: string; taken_on: stri
 export async function deleteReviewSnapshot(id: string) {
   const { error } = await db().from("review_snapshots").delete().eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+/** Reads the venue's count and stars from Google and saves it as today's count. */
+export async function snapshotFromGoogle(businessId: string, placeId: string, takenOn: string) {
+  const { fetchPlaceRating } = await import("./places");
+  const r = await fetchPlaceRating(placeId);
+  // One Google count per day: a second read the same day replaces the first.
+  await db().from("review_snapshots").delete().eq("business_id", businessId).eq("taken_on", takenOn).eq("source", "google");
+  await addReviewSnapshot({ business_id: businessId, taken_on: takenOn, reviews: r.reviews, rating: r.rating, source: "google" });
+  return r;
 }

@@ -3,7 +3,8 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { getPlans } from "@/lib/plans";
 import { db } from "@/lib/supabase";
 import { createBusiness } from "../actions";
-import { EssentialFields, OptionFields } from "../BusinessFields";
+import { placesReady } from "@/lib/places";
+import { BaselineFields, EssentialFields, OptionFields } from "../BusinessFields";
 import { Flash } from "../Flash";
 
 type Props = { searchParams: Promise<{ error?: string; signup?: string }> };
@@ -25,7 +26,7 @@ export default async function NewBusiness({ searchParams }: Props) {
         <div className="admin-head" style={{ marginTop: 8 }}>
           <div>
             <h1>Nuevo negocio</h1>
-            <p>Cuatro datos. Las placas NFC se crean solas.</p>
+            <p>Nombre, Google, contactos y el “antes”. Las placas NFC se crean solas.</p>
           </div>
         </div>
       </div>
@@ -34,6 +35,7 @@ export default async function NewBusiness({ searchParams }: Props) {
       <form action={createBusiness} className="panel">
         {signup && <input type="hidden" name="signup_id" value={signup.id} />}
         <EssentialFields prefill={prefill} />
+        <BaselineFields auto={placesReady()} />
         <details className="more">
           <summary>Más opciones (plan, precio, cantidad de placas y tarjetas, color)</summary>
           <OptionFields plans={plans} planKey={chosen?.key ?? "start"} />

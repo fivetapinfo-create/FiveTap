@@ -43,6 +43,19 @@ function officialReview(placeId: string) {
   return writeReview(placeId);
 }
 
+/** The Place ID inside a pasted value (bare "ChIJ…", writereview?placeid=…, a Maps link), if any. */
+export function placeIdFrom(input: string | null | undefined): string | null {
+  const value = (input ?? "").trim();
+  if (!value) return null;
+  if (!/^https?:\/\//i.test(value)) return /^[A-Za-z0-9_-]{20,}$/.test(value) ? value : null;
+  try {
+    const url = new URL(value);
+    return url.searchParams.get("placeid") || url.searchParams.get("query_place_id") || /place_id:([A-Za-z0-9_-]{20,})/.exec(decodeURIComponent(value))?.[1] || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Accepts a Place ID or a link that opens the review window (g.page/r/…/review,
  * writereview?placeid=…) and returns the review link. A Maps link that carries the place

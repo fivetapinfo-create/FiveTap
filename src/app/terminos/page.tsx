@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { REPLACEMENT_FEE, money } from "@/lib/contract";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, MINI_EXTRA_CARD, MINI_KITS, TEST_PIECES } from "@/lib/test-kit";
+import { FOUNDER_PHONE, TEST_OFFER } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
@@ -12,7 +12,7 @@ export const revalidate = 300;
 export default async function Terms() {
   const plans = await activePlans().catch(() => []);
   return (
-    <LegalPage title="Términos del servicio" updated="11 de noviembre de 2026">
+    <LegalPage title="Términos del servicio" updated="12 de noviembre de 2026">
       <p>Estos términos explican cómo funciona FiveTap para los negocios que lo contratan. Si firmaste un contrato con nosotros, el contrato manda sobre esta página.</p>
 
       <h2>1. Qué es FiveTap</h2>
@@ -25,14 +25,8 @@ export default async function Terms() {
             <b>{p.name}:</b> {money(p.monthly)} al mes, con {planPieces(p).join(" y ")}, y FiveTap Business.
           </li>
         ))}
-        {TEST_PIECES.map((t) => (
-          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)}, válido por 30 días: {t.detail}. Se cancela solo al terminar el día 29 y el local elige un plan para seguir.</li>
-        ))}
-        <li>
-          <b>FiveTap Mini</b> (locales pequeños, con FiveTap Business):{" "}
-          {MINI_KITS.map((k) => `${k.name} ${money(k.monthly)}`).join(" · ")} al mes. Tarjeta de mesero con cordón: +{money(MINI_EXTRA_CARD)} al mes cada una.
-        </li>
-        <li><b>Más de 4 piezas, una cantidad específica, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
+        <li><b>{TEST_OFFER.name}:</b> {money(TEST_OFFER.price)}, válido por 30 días: {TEST_OFFER.detail}. Se cancela solo al terminar el día 29 y el local elige un plan para seguir. Si el local contrata un plan al terminar, el precio del Test se descuenta de su primer mes.</li>
+        <li><b>Una cantidad específica de placas o tarjetas, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
       </ul>
       <p>Todos los planes son mensuales. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>
       <p>Todo FiveTap es un servicio por suscripción: las placas y tarjetas son propiedad de FiveTap y funcionan mientras el plan esté activo. Cada plan incluye solo lo descrito; cualquier ampliación se cotiza aparte.</p>

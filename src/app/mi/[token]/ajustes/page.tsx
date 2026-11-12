@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PinGate } from "@/components/PinGate";
+import { pinUnlocked } from "@/lib/owner-pin";
 import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
 import { CopyButton } from "@/components/CopyButton";
@@ -13,6 +15,7 @@ import { businessByOwnerToken, businessDetail } from "@/lib/data";
 import { formatPhone } from "@/lib/phone";
 import { SITE_URL, salesWhatsAppUrl } from "@/lib/site";
 import { methodName } from "@/lib/receipts";
+import { savePin } from "../actions";
 import { requestCancel, undoCancel } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +41,7 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
   const [{ token }, sp] = await Promise.all([params, searchParams]);
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
+  if (!(await pinUnlocked(b))) return <PinGate b={b} token={token} />;
   const d = await businessDetail(b.id);
   if (!d) notFound();
   const { payments } = d;
@@ -64,7 +68,9 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
 
         {sp.ok === "cancelado" && <p className="alert alert-ok" role="status">Recibimos tu solicitud. No se te volverá a cobrar y te escribiremos para coordinar el retiro de las placas.</p>}
         {sp.ok === "sigue" && <p className="alert alert-ok" role="status">¡Qué bueno que sigues con nosotros! Tu plan continúa igual.</p>}
-        {sp.error && <p className="alert alert-error" role="alert">{sp.error === "motivo" ? "Elige un motivo para continuar." : "No se pudo guardar. Inténtalo otra vez."}</p>}
+        {sp.ok === "pin" && <p className="alert alert-ok" role="status">Listo: FiveTap Business ahora pide tu PIN. Este celular ya lo recuerda.</p>}
+        {sp.ok === "pin-quitado" && <p className="alert alert-ok" role="status">PIN quitado. El enlace privado vuelve a abrir la app directamente.</p>}
+        {sp.error && <p className="alert alert-error" role="alert">{sp.error === "motivo" ? "Elige un motivo para continuar." : sp.error === "pin" ? "El PIN debe tener 4 números." : "No se pudo guardar. Inténtalo otra vez."}</p>}
 
         <AppSetup
           endpoint={`${home}/push`}
@@ -169,6 +175,32 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
           <div className="msg">
             <p className="muted">Elige cómo prefieres ver FiveTap en este celular.</p>
             <ThemeToggle className="btn btn-ghost btn-sm theme-pick" labelled />
+          </div>
+        </section>
+
+        <section className="panel" id="pin">
+          <div className="panel-head">
+            <h2>PIN de acceso</h2>
+            <span className="muted">{b.owner_pin_hash ? "Activado" : "Opcional"}</span>
+          </div>
+          <div className="msg">
+            <p className="muted">
+              {b.owner_pin_hash
+                ? "Cada celular pide el PIN una vez y luego lo recuerda. Si lo cambias, todos lo vuelven a pedir."
+                : "Si compartes el enlace con tu equipo, agrega un PIN de 4 dígitos. Cada celular lo pide una sola vez."}
+            </p>
+            <form action={savePin} className="row">
+              <input type="hidden" name="token" value={token} />
+              <input className="input" name="pin" type="password" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} required placeholder="4 dígitos" aria-label="Nuevo PIN" style={{ maxWidth: 140 }} />
+              <SubmitButton className="btn btn-dark btn-sm" pending="Guardando…">{b.owner_pin_hash ? "Cambiar PIN" : "Activar PIN"}</SubmitButton>
+            </form>
+            {b.owner_pin_hash && (
+              <form action={savePin}>
+                <input type="hidden" name="token" value={token} />
+                <input type="hidden" name="remove" value="1" />
+                <button className="btn btn-ghost btn-sm" type="submit">Quitar PIN</button>
+              </form>
+            )}
           </div>
         </section>
 
