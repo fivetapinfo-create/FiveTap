@@ -70,10 +70,9 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const row = (t: Tag) => ({ id: t.id, label: t.label, active: t.active, scans: tagStats.get(t.id)?.scans_30d ?? 0, reviews: tagStats.get(t.id)?.reviews_30d ?? 0 });
   const byScans = (a: { scans: number }, z: { scans: number }) => z.scans - a.scans;
   const byReviews = (a: { reviews: number; scans: number }, z: { reviews: number; scans: number }) => z.reviews - a.reviews || z.scans - a.scans;
-  const groups = [
-    { title: "Ranking de meseros · quién lleva más clientes a Google", waiters: true, items: tags.filter(isWaiter).map(row).sort(byReviews) },
-    { title: "Placas de mesa", waiters: false, items: tags.filter((t) => !isWaiter(t)).map(row).sort(byScans) },
-  ].filter((g) => g.items.length);
+  // Waiters ranked by guests sent to Google; table plaques by taps.
+  const waiters = tags.filter(isWaiter).map(row).sort(byReviews);
+  const tables = tags.filter((t) => !isWaiter(t)).map(row).sort(byScans);
   const MEDALS = ["🥇", "🥈", "🥉"];
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
@@ -102,66 +101,51 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           </div>
         </div>
       </header>
-      <main className="container admin-main">
+      <main className="container admin-main owner-main" id="inicio">
         <div className="biz">
           <BusinessLogo name={b.name} logoUrl={b.logo_url} color={b.brand_color} className="biz-logo" />
           <div>
             <h1 className="owner-title">{b.name}</h1>
-            <p className="muted"><span className="live-dot" aria-hidden /> En tiempo real · {now!.label}</p>
+            <p className="muted"><span className="live-dot" aria-hidden /> En tiempo real · {role === "owner" ? "Dueño/a" : "Gerente"}</p>
           </div>
         </div>
 
-        {/* At a glance: one number that matters, three that explain it. */}
+        {/* 1. Only what needs you now. */}
+        {pending.length > 0 && (
+          <a className="alert alert-warn glance-alert" href="#mensajes">
+            <b>{pending.length === 1 ? "1 mensaje de un cliente por resolver" : `${pending.length} mensajes de clientes por resolver`}</b> · Ver →
+          </a>
+        )}
+        {billing.kind === "trial" && billing.suspendsOn && (
+          <a className="alert alert-ok glance-alert" href={`/empezar?n=${encodeURIComponent(b.name)}`}>
+            <b>Estás en FiveTap Test</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Elige tu plan para seguir sin pausa →
+          </a>
+        )}
+        {role === "owner" && charge && !charge.auto && b.status === "active" && charge.due <= addDays(today, 3) && (
+          <a className="alert alert-warn glance-alert" href={payHref}>
+            <b>{charge.due < today ? "Tienes un pago pendiente" : `Tu pago vence el ${shortDate(charge.due)}`}</b> · {money(charge.amount)} · Ver cómo pagar →
+          </a>
+        )}
+
+        {/* 2. The result, in one look. */}
         <section className="owner-hero glance">
           <span>Este mes, clientes que fueron a dejarte reseña</span>
           <b className="num">{now!.reviews}</b>
           <p>Mes pasado: {prev!.reviews}{sentSince > now!.reviews ? ` · ${sentSince} desde que tienes FiveTap` : ""}</p>
+          {before && (
+            <div className="glance-rep" aria-label="Tus reseñas en Google">
+              <span>Tus reseñas en Google</span>
+              <b className="num">{before.reviews} <i>→</i> {(latest ?? before).reviews}</b>
+              {gained !== null && gained > 0 ? <em className="num">+{gained} desde FiveTap</em> : <small>Punto de partida · {shortDate(before.taken_on)}</small>}
+              {(latest ?? before).rating ? <small>★ {(latest ?? before).rating!.toFixed(1)}</small> : null}
+            </div>
+          )}
           <div className="glance-row">
             <a href="#placas"><b className="num">{now!.scans}</b><span>Toques</span></a>
             <a href="#mensajes"><b className="num">{now!.feedback}</b><span>Mensajes</span></a>
             <a href="#club"><b className="num">{now!.club}</b><span>Nuevos en el club</span></a>
           </div>
         </section>
-
-        {before && (
-          <section className="rep" aria-label="Tu reputación en Google">
-            <div className="rep-head">
-              <span>Tu reputación en Google</span>
-              <small className="muted">{latest ? `Actualizado el ${shortDate(latest.taken_on)}` : `Medido el ${shortDate(before.taken_on)}`}</small>
-            </div>
-            <div className="rep-nums">
-              <div><small>Antes de FiveTap</small><b className="num">{before.reviews}</b>{before.rating ? <em>★ {before.rating.toFixed(1)}</em> : null}</div>
-              <span className="rep-arrow" aria-hidden>→</span>
-              <div><small>Hoy</small><b className="num">{(latest ?? before).reviews}</b>{(latest ?? before).rating ? <em>★ {(latest ?? before).rating!.toFixed(1)}</em> : null}</div>
-              {gained !== null && gained > 0 && <strong className="rep-gain num">+{gained}</strong>}
-            </div>
-            <p className="muted">
-              {gained !== null && gained > 0
-                ? `${gained} ${gained === 1 ? "reseña nueva" : "reseñas nuevas"} en Google desde que tienes FiveTap.`
-                : "Este es tu punto de partida. Aquí verás cuántas reseñas nuevas sumas cada semana."}
-            </p>
-          </section>
-        )}
-
-        {billing.kind === "trial" && billing.suspendsOn && (
-          <a className="alert alert-ok glance-alert" href={`/empezar?n=${encodeURIComponent(b.name)}`}>
-            <b>Estás en FiveTap Test</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Elige tu plan para seguir sin pausa →
-          </a>
-        )}
-
-        {feedback.some((f) => !f.read_at) && (
-          <a className="alert alert-warn glance-alert" href="#mensajes">
-            <b>Tienes {feedback.filter((f) => !f.read_at).length} {feedback.filter((f) => !f.read_at).length === 1 ? "mensaje nuevo" : "mensajes nuevos"} de clientes</b> · Ver →
-          </a>
-        )}
-
-        <nav className="glance-links" aria-label="Secciones">
-          <a href="#mensajes">Mensajes</a>
-          <a href="#placas">Placas</a>
-          <a href="#club">Club</a>
-          <Link href={`/mi/${token}/reporte`}>Reporte</Link>
-          {role === "owner" && <Link href={`/mi/${token}/pagos`}>Pagos</Link>}
-        </nav>
 
         <AppSetup
           endpoint={`/mi/${token}/push`}
@@ -180,9 +164,10 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           ]}
         />
 
+        {/* 3. Messages from guests: open ones first. */}
         <section className="panel" id="mensajes">
           <div className="panel-head">
-            <h2>Mensajes privados</h2>
+            <h2>Mensajes de clientes</h2>
             {feedback.length > 0 && <span className="muted">{pending.length ? `${pending.length} por resolver` : "Todo resuelto ✓"}</span>}
           </div>
           {feedback.length === 0 ? (
@@ -211,38 +196,52 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           )}
         </section>
 
-        <section className="panel" id="placas">
-          <div className="panel-head"><h2>Tus placas y tarjetas · últimos 30 días</h2></div>
-          {groups.length === 0 ? (
-            <div className="empty"><p>Aquí verás cada placa en cuanto la instalemos.</p></div>
-          ) : (
-            groups.map((g) => (
-              <div key={g.title}>
-                <p className="agenda-day">{g.title} · {g.items.length}</p>
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead><tr><th>Placa</th><th className="right">Toques</th><th className="right">A Google</th></tr></thead>
-                    <tbody>
-                      {g.items.map((t) => (
-                        <tr key={t.id}>
-                          <td>
-                            {g.waiters ? <>{t.reviews > 0 && MEDALS.at(g.items.indexOf(t))} <b>{t.label}</b></> : <><b>{t.label}</b> {best > 0 && t.scans === best && "🏆"}</>}
-                            {!t.active && <span className="muted"> · desactivada</span>}
-                          </td>
-                          <td className="right num">{t.scans}</td>
-                          <td className="right num">{t.reviews}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))
-          )}
-        </section>
+        {/* 4. The team: who brings more guests to Google. */}
+        {waiters.length > 0 && (
+          <section className="panel" id="equipo">
+            <div className="panel-head">
+              <h2>Tu equipo</h2>
+              <span className="muted">Quién lleva más clientes a Google · 30 días</span>
+            </div>
+            <ol className="team">
+              {waiters.map((t, i) => (
+                <li key={t.id}>
+                  <span className="team-medal" aria-hidden>{t.reviews > 0 ? MEDALS.at(i) ?? `${i + 1}.` : `${i + 1}.`}</span>
+                  <b>{t.label}</b>
+                  {!t.active && <span className="muted"> · desactivada</span>}
+                  <span className="team-num num">{t.reviews} <small>a Google</small></span>
+                  <span className="team-num num muted">{t.scans} <small>toques</small></span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
+        {/* 5. The club, with the promotion sender. */}
         <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} business={b.name} />
 
+        {/* 6. Plaques: only when the owner wants the detail. */}
+        {tables.length > 0 && (
+          <details className="panel more" id="placas">
+            <summary>Tus placas de mesa · {tables.length} · {tables.reduce((n, t) => n + t.scans, 0)} toques en 30 días</summary>
+            <div className="table-wrap">
+              <table className="table">
+                <thead><tr><th>Placa</th><th className="right">Toques</th><th className="right">A Google</th></tr></thead>
+                <tbody>
+                  {tables.map((t) => (
+                    <tr key={t.id}>
+                      <td><b>{t.label}</b> {best > 0 && t.scans === best && "🏆"}{!t.active && <span className="muted"> · desactivada</span>}</td>
+                      <td className="right num">{t.scans}</td>
+                      <td className="right num">{t.reviews}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
+
+        {/* 7. The plan: the owner only. */}
         {role === "owner" && charge && b.status !== "canceled" && (
           <section className="panel" id="plan">
             <div className="panel-head">
@@ -268,9 +267,18 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         )}
 
         <p className="muted owner-note" style={{ textAlign: "center" }}>
-          Este enlace es privado. Compártelo solo con quien maneje el local.
+          Acceso privado con código. Si alguien deja el local, cambia su código en Configuración.
         </p>
       </main>
+
+      {/* App-style bar: the four places the owner goes, always at hand. */}
+      <nav className="owner-tabs" aria-label="Secciones">
+        <a href="#inicio"><span aria-hidden>🏠</span>Inicio</a>
+        <a href="#mensajes"><span aria-hidden>💬</span>Mensajes{pending.length > 0 && <i className="num">{pending.length}</i>}</a>
+        <a href="#club"><span aria-hidden>🎁</span>Club</a>
+        <Link href={`/mi/${token}/reporte`}><span aria-hidden>📊</span>Reporte</Link>
+        <Link href={`/mi/${token}/ajustes`}><span aria-hidden>⚙️</span>Ajustes</Link>
+      </nav>
     </div>
   );
 }

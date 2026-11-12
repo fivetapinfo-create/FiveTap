@@ -902,3 +902,24 @@ html[data-theme="dark"] .admin .app-inapp { background: rgba(212, 175, 55, 0.14)
 .home-actions b { font-size: 20px; line-height: 1; }
 @media (hover: hover) and (pointer: fine) { .home-actions a:hover { box-shadow: var(--shadow); } }
 @media (max-width: 760px) { .home-actions { grid-template-columns: repeat(3, 1fr); } }
+
+/* Owner app, simplified: reputation inside the hero, the team, and an app-style bottom bar */
+.owner-main { padding-bottom: 96px; }
+.glance-rep { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-top: 4px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.08); }
+.glance-rep span { width: 100%; font-size: 13px; color: rgba(255, 255, 255, 0.7); }
+.glance-rep b { font-size: 26px; color: #fff; line-height: 1; }
+.glance-rep b i { font-style: normal; color: rgba(255, 255, 255, 0.45); font-weight: 400; }
+.glance-rep em { font-style: normal; color: #7ee2a8; font-weight: 600; font-size: 15px; }
+.glance-rep small { color: rgba(255, 255, 255, 0.7); font-size: 13px; }
+.team { list-style: none; margin: 0; padding: 0; }
+.team li { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-top: 1px solid var(--line); }
+.team-medal { width: 28px; font-size: 18px; text-align: center; }
+.team-num { margin-left: auto; font-weight: 600; }
+.team-num + .team-num { margin-left: 12px; min-width: 64px; text-align: right; font-weight: 400; }
+.team-num small { font-size: 12px; font-weight: 400; color: var(--muted); }
+.owner-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, 1fr); max-width: 560px; margin: 0 auto; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line-strong); box-shadow: 0 -8px 24px rgba(10, 10, 10, 0.06); }
+@media (min-width: 600px) { .owner-tabs { bottom: 12px; border: 1px solid var(--line-strong); border-radius: 20px; } }
+.owner-tabs a { position: relative; display: grid; justify-items: center; gap: 2px; padding: 6px 2px; font-size: 11px; font-weight: 500; color: var(--ink-2); border-radius: 12px; }
+.owner-tabs a span { font-size: 20px; line-height: 1.1; }
+.owner-tabs a i { position: absolute; top: 2px; right: calc(50% - 22px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11px; font-style: normal; display: grid; place-items: center; }
+.admin-main #mensajes, .admin-main #club, .admin-main #inicio, .admin-main #equipo, .admin-main #placas { scroll-margin-top: 12px; }
