@@ -36,7 +36,7 @@ export default async function Terms() {
       <p>Configuramos las placas, las tarjetas de meseros y FiveTap Business, y lo dejamos funcionando. Lo que incluye cada plan (configuración, instalación en el local, capacitación) es lo que se describe en el plan.</p>
 
       <h2>4. Cancelación</h2>
-      <p>El servicio empieza con un contrato de 3 meses. Al terminar, el local decide si sigue mes a mes, si renueva por otro período o si termina el servicio. No hay renovaciones anuales automáticas. Al terminar, retiramos las placas y tarjetas, que son de FiveTap. Si firmaste un contrato, sus condiciones de cancelación son las que aplican.</p>
+      <p>El servicio empieza con un contrato de 3 meses, que es el período mínimo. Si el local lo termina antes sin una causa atribuible a FiveTap, paga las mensualidades que falten para completar los 3 meses. Al terminar ese período, el servicio sigue mes a mes y cualquiera de las partes puede terminarlo avisando con 15 días de anticipación. No hay renovaciones anuales automáticas. Al terminar, el local devuelve las placas y tarjetas, que son de FiveTap, dentro de los 10 días siguientes. Si firmaste un contrato, sus condiciones son las que aplican.</p>
 
       <h2>5. Cambio y reposición de placas</h2>
       <p>Cambiamos gratis las piezas gastadas por el uso. Si una se pierde o se rompe, reponerla cuesta {money(REPLACEMENT_FEE)}. Si el servicio falla por nuestra causa más de 72 horas seguidas, ese mes no se cobra.</p>

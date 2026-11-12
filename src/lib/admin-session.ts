@@ -19,3 +19,15 @@ export function safeEqual(a: string, b: string) {
   for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
   return diff === 0;
 }
+
+/** The founder's passwords: the main one and an optional backup (ADMIN_BACKUP_PASSWORD). */
+export function adminPasswords() {
+  return [process.env.ADMIN_PASSWORD, process.env.ADMIN_BACKUP_PASSWORD].filter((p): p is string => Boolean(p && p.length >= 8));
+}
+
+/** True when the cookie was issued for one of the founder's current passwords. */
+export async function isAdminSession(cookie: string | undefined) {
+  if (!cookie) return false;
+  for (const p of adminPasswords()) if (safeEqual(cookie, await adminSessionValue(p))) return true;
+  return false;
+}

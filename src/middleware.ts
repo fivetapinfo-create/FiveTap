@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ADMIN_COOKIE, ADMIN_HEADER, adminSessionValue, safeEqual } from "@/lib/admin-session";
+import { ADMIN_COOKIE, ADMIN_HEADER, adminPasswords, isAdminSession, safeEqual } from "@/lib/admin-session";
 
 // The internal panel: one founder, no accounts. Signed in with a cookie from
 // /admin/entrar; HTTP Basic auth still works for scripts.
@@ -15,15 +15,15 @@ export async function middleware(req: NextRequest) {
   };
   if (req.nextUrl.pathname === "/admin/entrar") return NextResponse.next({ request: { headers } });
 
-  const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
-  if (cookie && safeEqual(cookie, await adminSessionValue(password))) return pass();
+  // The main password or the backup one (ADMIN_BACKUP_PASSWORD) both open the panel.
+  if (await isAdminSession(req.cookies.get(ADMIN_COOKIE)?.value)) return pass();
 
   const header = req.headers.get("authorization") || "";
   const [scheme, encoded] = header.split(" ");
   if (scheme === "Basic" && encoded) {
     const decoded = atob(encoded);
     const i = decoded.indexOf(":");
-    if (safeEqual(decoded.slice(0, i), process.env.ADMIN_USER || "admin") && safeEqual(decoded.slice(i + 1), password)) return pass();
+    if (safeEqual(decoded.slice(0, i), process.env.ADMIN_USER || "admin") && adminPasswords().some((p) => safeEqual(decoded.slice(i + 1), p))) return pass();
   }
 
   if (req.method !== "GET") return new NextResponse("Acceso restringido", { status: 401 });
