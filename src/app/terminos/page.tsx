@@ -26,7 +26,7 @@ export default async function Terms() {
           </li>
         ))}
         {TEST_PIECES.map((t) => (
-          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)} al mes, {t.detail.replace(" + FiveTap Business", "")} con FiveTap Business.</li>
+          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)} por una prueba de 7 días, {t.detail.replace(" + FiveTap Business", "")} con FiveTap Business. Al terminar, la prueba se cierra y el local elige un plan para seguir.</li>
         ))}
         <li><b>Más de 4 piezas, una cantidad específica, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
       </ul>

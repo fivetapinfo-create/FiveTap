@@ -18,7 +18,7 @@ const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 export default async function Pay({ searchParams }: Props) {
   const [{ n }, plans] = await Promise.all([searchParams, activePlans()]);
   const PLANS = [
-    ...TEST_PIECES.map((t) => ({ name: `FiveTap Test · ${t.name}`, note: `Cada mes · ${t.detail}`, price: `${usd(t.monthly)}/mes` })),
+    ...TEST_PIECES.map((t) => ({ name: `FiveTap Test · ${t.name}`, note: `Prueba de 7 días · ${t.detail}. Luego eliges tu plan`, price: usd(t.monthly) })),
     ...plans.map((p) => ({ name: p.name, note: `Cada mes · ${planPieces(p).join(" · ")} · FiveTap Business`, price: `${usd(p.monthly)}/mes` })),
     { name: "Más de 4 piezas o una cantidad específica", note: `Cotiza con el Founder de FiveTap: ${FOUNDER_PHONE}`, price: "Cotizar" },
   ];

@@ -175,13 +175,13 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
             <div className="test-kit">
               <div className="test-kit-head">
                 <h3>FiveTap Test</h3>
-                <p className="muted">Para empezar con una sola pieza. Pago mensual.</p>
+                <p className="muted">Prueba FiveTap 7 días con una sola pieza. Al terminar, la prueba se cierra y eliges tu plan.</p>
               </div>
               <div className="test-kit-items">
                 {TEST_PIECES.map((t) => (
-                  <a key={t.key} className="test-piece" href={founderWhatsApp(`Hola, quiero FiveTap Test: ${t.name} ($${t.monthly} al mes) para mi ${kind}.`)}>
+                  <a key={t.key} className="test-piece" href={founderWhatsApp(`Hola, quiero FiveTap Test de 7 días: ${t.name} ($${t.monthly}) para mi ${kind}.`)}>
                     <span><b>{t.name}</b><small>{t.detail}</small></span>
-                    <span className="num">{usd(t.monthly)}<small> / mes</small></span>
+                    <span className="num">{usd(t.monthly)}<small> · 7 días</small></span>
                   </a>
                 ))}
               </div>

@@ -29,7 +29,7 @@ export default async function MonthlyReport({ params, searchParams }: Props) {
   if (!d) notFound();
   const billing = billingState(b, d.payments);
   // Paused for a late payment: the home shows how to pay.
-  if (billing.kind === "suspended" || billing.kind === "paused") redirect(`/mi/${token}`);
+  if (billing.kind === "suspended" || billing.kind === "paused" || billing.kind === "ended") redirect(`/mi/${token}`);
   const key = sp.mes === "actual" ? "this" : "prev";
   const p = report.periods.find((x) => x.key === key)!;
   const before = snapshots[0];

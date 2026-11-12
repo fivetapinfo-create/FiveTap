@@ -13,6 +13,7 @@ const money = (n: number) => `$${Number(n).toLocaleString("en-US", { maximumFrac
  */
 export function PausedScreen({ b, billing, token, plan }: { b: Business; billing: Billing; token: string; plan: string }) {
   const unpaid = billing.kind === "suspended";
+  const ended = billing.kind === "ended";
   const help = salesWhatsAppUrl(unpaid ? `Hola, soy de ${b.name}. Quiero ponerme al día con mi pago de FiveTap.` : `Hola, soy de ${b.name}. Mi FiveTap aparece pausado, ¿me ayudas?`);
   return (
     <div className="admin">
@@ -32,19 +33,26 @@ export function PausedScreen({ b, billing, token, plan }: { b: Business; billing
         </div>
 
         <section className="owner-hero">
-          <span>{unpaid ? "Tu servicio está pausado por un pago pendiente" : "Tu servicio está pausado"}</span>
+          <span>{ended ? "Tu prueba de 7 días terminó" : unpaid ? "Tu servicio está pausado por un pago pendiente" : "Tu servicio está pausado"}</span>
           {unpaid && billing.charge && <b className="num">{money(billing.charge.amount)}</b>}
           <p>
-            {unpaid && billing.charge
-              ? `Tu ${billing.charge.label} venció el ${human(billing.charge.due)}. Desde el ${human(billing.suspendsOn!)} tus placas muestran "no disponible" a tus clientes.`
-              : "Tus placas muestran \"no disponible\" a tus clientes por ahora. Escríbenos y lo resolvemos."}
+            {ended
+              ? "Elige tu plan y tus placas vuelven a funcionar el mismo día. Mientras tanto, tus clientes ven \"no disponible\"."
+              : unpaid && billing.charge
+                ? `Tu ${billing.charge.label} venció el ${human(billing.charge.due)}. Desde el ${human(billing.suspendsOn!)} tus placas muestran "no disponible" a tus clientes.`
+                : "Tus placas muestran \"no disponible\" a tus clientes por ahora. Escríbenos y lo resolvemos."}
           </p>
           <p className="owner-hero-note">Tus datos están seguros: placas, mensajes, club y estadísticas siguen guardados y vuelven igual.</p>
         </section>
 
         <section className="panel">
           <div className="msg">
-            {unpaid ? (
+            {ended ? (
+              <div className="row">
+                <a className="btn btn-dark" href={`/empezar?n=${encodeURIComponent(b.name)}`}>Elegir mi plan</a>
+                <a className="btn btn-ghost" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Terminó mi prueba de FiveTap y quiero elegir mi plan.`)}>Hablar con FiveTap</a>
+              </div>
+            ) : unpaid ? (
               <>
                 <p><b>Paga y se reactiva todo el mismo día.</b> En cuanto registramos tu pago, tus placas y esta app vuelven a funcionar solas.</p>
                 <div className="row">

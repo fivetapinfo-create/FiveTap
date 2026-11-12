@@ -6,7 +6,7 @@ import { ClubPanel } from "@/components/ClubPanel";
 import { CopyButton } from "@/components/CopyButton";
 import { MessageActions } from "@/components/MessageActions";
 import { SubmitButton } from "@/components/SubmitButton";
-import { BILLING_LABEL, billingState, human, planLabel } from "@/lib/agenda";
+import { BILLING_LABEL, addDays, billingState, human, planLabel } from "@/lib/agenda";
 import { businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { countSubscriptions } from "@/lib/push";
 import { getPlans, planOf } from "@/lib/plans";
@@ -81,7 +81,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
               <h1>{b.name}</h1>
               <p>
                 {v.label} · <span className={`pill ${b.status}`}>{STATUS_LABEL[b.status]}</span>
-                {(billing.kind === "soon" || billing.kind === "late" || billing.kind === "suspended") && <> <span className={`pill bill-${billing.kind}`}>{BILLING_LABEL[billing.kind]}</span></>}
+                {(billing.kind === "soon" || billing.kind === "late" || billing.kind === "suspended" || billing.kind === "trial" || billing.kind === "ended") && <> <span className={`pill bill-${billing.kind}`}>{BILLING_LABEL[billing.kind]}</span></>}
                 {b.status === "trial" && b.trial_ends_at ? ` hasta ${b.trial_ends_at}` : ""}
               </p>
             </div>
@@ -100,6 +100,14 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <p className="alert alert-warn" role="status">
           <b>Pidió cancelar desde su app</b> el {dateTime(b.cancel_requested_at)}
           {b.cancel_reason ? ` · Motivo: “${b.cancel_reason}”` : ""}. Cuando retires las placas, cámbialo a <b>Cancelado</b> en Editar datos.
+        </p>
+      )}
+
+      {(billing.kind === "trial" || billing.kind === "ended") && billing.suspendsOn && (
+        <p className={`alert ${billing.kind === "ended" ? "alert-error" : "alert-warn"}`} role="status">
+          <b>{billing.kind === "ended" ? "Terminó su prueba de 7 días" : "FiveTap Test · prueba de 7 días"}</b>
+          {" "}· {billing.kind === "ended" ? `Sus placas están pausadas desde el ${human(billing.suspendsOn)}.` : `Último día: ${human(addDays(billing.suspendsOn, -1))}. Al día siguiente se pausa sola.`}
+          {" "}Cuando elija su plan, cámbialo en <b>Editar datos → Plan</b> y registra su primer pago.
         </p>
       )}
 

@@ -760,3 +760,6 @@ a.kpi { color: inherit; }
 .test-piece .num small { font-size: 14px; font-weight: 500; }
 .test-kit-note { font-size: 14px; }
 @media (max-width: 640px) { .test-kit { padding: 22px; } .test-kit-items { grid-template-columns: 1fr; } }
+.pill.bill-trial::before { background: var(--gold); }
+.pill.bill-ended::before { background: var(--danger); }
+.pill.bill-ended { border-color: var(--danger); color: var(--danger); }

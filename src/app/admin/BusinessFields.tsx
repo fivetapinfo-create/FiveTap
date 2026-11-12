@@ -50,7 +50,7 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
 
 /** Defaults that rarely change: type, color, plan. */
 export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[]; planKey?: string }) {
-  const current = b ? planOf(b, plans)?.key ?? "" : planKey ?? "start";
+  const current = b ? (b.status === "trial" && Number(b.monthly_fee) <= 0 ? "test" : planOf(b, plans)?.key ?? "") : planKey ?? "start";
   return (
     <div className="form-section">
       <div className="grid-2">
@@ -60,6 +60,7 @@ export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[
             {plans.filter((p) => p.active || p.key === current).map((p) => (
               <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {p.plaques} placas + {p.cards} tarjetas</option>
             ))}
+            <option value="test">FiveTap Test · 7 días (luego elige su plan)</option>
             <option value="">Personalizado (sin plan)</option>
           </select>
         </label>

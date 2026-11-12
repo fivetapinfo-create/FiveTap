@@ -131,7 +131,7 @@ export function nextCharge(
 /** Days after the due date while everything keeps working. The day after, the service pauses. */
 export const GRACE_DAYS = 5;
 
-export type BillingKind = "none" | "ok" | "soon" | "late" | "suspended" | "paused" | "canceled";
+export type BillingKind = "none" | "trial" | "ended" | "ok" | "soon" | "late" | "suspended" | "paused" | "canceled";
 
 export type Billing = {
   kind: BillingKind;
@@ -146,6 +146,8 @@ export type Billing = {
 
 export const BILLING_LABEL: Record<BillingKind, string> = {
   none: "Sin plan",
+  trial: "En prueba",
+  ended: "Prueba terminada",
   ok: "Activo",
   soon: "Por vencer",
   late: "Vencido",
@@ -168,6 +170,15 @@ export function billingState(
   const charge = b.status === "canceled" ? null : nextCharge(b, pays);
   if (b.status === "canceled") return { kind: "canceled", charge, daysLate: 0, suspendsOn: null, blocked: true };
   if (b.status === "paused") return { kind: "paused", charge, daysLate: charge ? daysBetween(charge.due, today) : 0, suspendsOn: null, blocked: true };
+  // FiveTap Test: a 7-day test with no monthly fee. The day after its last day it pauses by
+  // itself until the venue picks a plan (the founder switches it to a plan in the panel).
+  if (b.status === "trial" && b.trial_ends_at && Number(b.monthly_fee) <= 0) {
+    const last = localDate(b.trial_ends_at);
+    const endsOn = addDays(last, 1);
+    return today >= endsOn
+      ? { kind: "ended", charge: null, daysLate: daysBetween(last, today), suspendsOn: endsOn, blocked: true }
+      : { kind: "trial", charge: null, daysLate: daysBetween(last, today), suspendsOn: endsOn, blocked: false };
+  }
   if (!charge) return { kind: "none", charge, daysLate: 0, suspendsOn: null, blocked: false };
   const daysLate = daysBetween(charge.due, today);
   const graceEnd = addDays(charge.due, GRACE_DAYS);
@@ -246,6 +257,37 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
         businessId: b.id,
         whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Recibimos tu solicitud de cancelación. ¿Me cuentas un poco más? Si hay algo que podamos mejorar, con gusto lo hacemos. 🙏`),
       });
+      continue;
+    }
+    // FiveTap Test (7 days): remind on the last day, and once it ends, offer a plan.
+    if (b.status === "trial" && b.trial_ends_at && fee <= 0) {
+      const last = localDate(b.trial_ends_at);
+      const empezar = `/empezar?n=${encodeURIComponent(b.name)}`;
+      if (inRange(last)) {
+        tasks.push({
+          id: `test-last-${b.id}-${last}`,
+          kind: "prueba",
+          date: last,
+          title: `Hoy es el último día de la prueba de ${b.name}`,
+          detail: "Mañana se pausa sola. Revisa con el dueño sus resultados y ayúdale a elegir su plan.",
+          businessId: b.id,
+          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Hoy es el último día de tu prueba de 7 días. ¿Revisamos tus resultados y eliges el plan que más te conviene? ${SITE_URL}${empezar}`),
+          push: { title: `Hoy termina tu prueba · ${b.name}`, body: "Mira cuántos clientes fueron a dejarte reseña y elige tu plan para seguir mañana sin pausa.", url: empezar },
+        });
+      }
+      const endsOn = addDays(last, 1);
+      if (from >= endsOn && from <= addDays(endsOn, 13)) {
+        tasks.push({
+          id: `test-ended-${b.id}-${last}`,
+          kind: "prueba",
+          date: from,
+          title: `Terminó la prueba de ${b.name}: ofrécele un plan`,
+          detail: `Sus placas están pausadas desde el ${human(endsOn)}. Cuando elija su plan, cámbialo en Editar datos y registra su primer pago.`,
+          businessId: b.id,
+          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Tu prueba de 7 días terminó. Elige tu plan y tus placas vuelven a funcionar el mismo día: ${SITE_URL}${empezar}`),
+          push: from === endsOn ? { title: `Tu prueba terminó · ${b.name}`, body: "Tus placas están en pausa. Elige tu plan y vuelven a funcionar el mismo día.", url: empezar } : undefined,
+        });
+      }
       continue;
     }
     if (!charge) continue; // One-time pieces: nothing recurring.

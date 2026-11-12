@@ -1,5 +1,8 @@
-// FiveTap Test: one piece to start with, monthly, with FiveTap Business. Asked for by
-// WhatsApp to the founder; more than 4 pieces or a specific quantity is quoted.
+// FiveTap Test: one piece for a 7-day test, with FiveTap Business. When it ends the
+// service pauses and the venue picks a plan. Asked for by WhatsApp to the founder; more
+// than 4 pieces or a specific quantity is quoted.
+
+export const TEST_DAYS = 7;
 
 export const TEST_PIECES = [
   { key: "test-placa", name: "Placa de reseñas", detail: "1 placa NFC grande + FiveTap Business", monthly: 40 },

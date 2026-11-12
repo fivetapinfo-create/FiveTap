@@ -8,6 +8,7 @@ import { normalizePhone } from "@/lib/phone";
 import { reviewUrlFrom } from "@/lib/site";
 import { addDays, todayPanama } from "@/lib/agenda";
 import { AGREEMENT_METHODS, SIGNER_ROLES, endOf } from "@/lib/agreement";
+import { TEST_DAYS } from "@/lib/test-kit";
 import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot } from "@/lib/data";
 import { sendPush } from "@/lib/push";
@@ -73,10 +74,12 @@ export async function createBusiness(f: FormData) {
   const kind = VERTICALS.some((v) => v.key === str(f, "kind")) ? str(f, "kind") : "restaurant";
   // The plan sets the price and how many table plaques and waiter cards to create;
   // each one can be changed in the form (an empty field means "the plan's").
-  const plan = await planByKey(str(f, "plan_key", 30));
-  const spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? plan?.plaques ?? 10 : num(f, "spots", 10)), 0), 80);
-  const cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? plan?.cards ?? 0 : num(f, "cards", 0)), 0), 40);
-  const fee = str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
+  // FiveTap Test: 7 days with one piece and no monthly fee; then it pauses until a plan is picked.
+  const isTest = str(f, "plan_key", 30) === "test";
+  const plan = isTest ? null : await planByKey(str(f, "plan_key", 30));
+  const spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? (isTest ? 1 : plan?.plaques ?? 10) : num(f, "spots", 10)), 0), 80);
+  const cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? (isTest ? 0 : plan?.cards ?? 0) : num(f, "cards", 0)), 0), 40);
+  const fee = isTest ? 0 : str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
   const spotLabel = str(f, "spot_label", 30) || verticalByKey(kind).spot;
   if (!name || !review) fail("/admin/new", new Error("Escribe el nombre y el enlace de reseñas de Google."));
 
@@ -103,9 +106,8 @@ export async function createBusiness(f: FormData) {
         monthly_fee: fee,
         plan_key: plan?.key ?? null,
         mode: str(f, "mode", 10) === "google" ? "google" : "full",
-        // No free trial: the plan starts on installation day (30-day guarantee instead).
-        status: "active",
-        trial_ends_at: null,
+        status: isTest ? "trial" : "active",
+        trial_ends_at: isTest ? addDays(todayPanama(), TEST_DAYS - 1) : null,
       })
       .select("id")
       .single();
@@ -140,13 +142,21 @@ export async function updateBusiness(f: FormData) {
       billing_email: email(opt(f, "billing_email", 120)),
       status: str(f, "status", 20),
       setup_fee: num(f, "setup_fee", 0),
-      monthly_fee: str(f, "monthly_fee") === "" ? (await planByKey(str(f, "plan_key", 30)))?.monthly ?? 129 : num(f, "monthly_fee", 129),
+      monthly_fee: str(f, "plan_key", 30) === "test" ? 0 : str(f, "monthly_fee") === "" ? (await planByKey(str(f, "plan_key", 30)))?.monthly ?? 129 : num(f, "monthly_fee", 129),
       plan_key: (await planByKey(str(f, "plan_key", 30)))?.key ?? null,
       mode: str(f, "mode", 10) === "google" ? "google" : "full",
       trial_ends_at: opt(f, "trial_ends_at", 10),
       notes: opt(f, "notes", 2000),
     };
     if (!patch.name || !str(f, "review")) throw new Error("Nombre y Google son obligatorios.");
+    // FiveTap Test ↔ plan: picking a plan ends the test (active); picking Test starts 7 days.
+    if (str(f, "plan_key", 30) === "test") {
+      patch.status = "trial";
+      if (!patch.trial_ends_at) patch.trial_ends_at = addDays(todayPanama(), TEST_DAYS - 1);
+    } else if (patch.status === "trial") {
+      patch.status = "active";
+      patch.trial_ends_at = null;
+    }
     const logo = await uploadLogo(f.get("logo"), id.slice(0, 8));
     if (logo) patch.logo_url = logo;
     const { error } = await db().from("businesses").update(patch).eq("id", id);

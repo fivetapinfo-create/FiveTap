@@ -8,7 +8,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { Logo } from "@/components/Logo";
 import { MessageActions } from "@/components/MessageActions";
 import { PausedScreen } from "@/components/PausedScreen";
-import { billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
+import { addDays, billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail, contactsFor, reportData, reviewSnapshots } from "@/lib/data";
 import { getPlans } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
@@ -45,7 +45,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   if (!d) notFound();
   const { tags, tagStats, feedback, payments } = d;
   const billing = billingState(b, payments);
-  if (billing.kind === "suspended" || billing.kind === "paused") {
+  if (billing.kind === "suspended" || billing.kind === "paused" || billing.kind === "ended") {
     return <PausedScreen b={b} billing={billing} token={token} plan={planLabel(b, billing.charge, tags.filter((t) => t.active).length, await getPlans())} />;
   }
   const [prev, now] = report.periods;
@@ -109,6 +109,12 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <a href="#club"><b className="num">{now!.club}</b><span>Nuevos en el club</span></a>
           </div>
         </section>
+
+        {billing.kind === "trial" && billing.suspendsOn && (
+          <a className="alert alert-ok glance-alert" href={`/empezar?n=${encodeURIComponent(b.name)}`}>
+            <b>Estás en tu prueba de 7 días</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Elige tu plan para seguir sin pausa →
+          </a>
+        )}
 
         {feedback.some((f) => !f.read_at) && (
           <a className="alert alert-warn glance-alert" href="#mensajes">

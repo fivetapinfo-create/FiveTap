@@ -104,7 +104,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
                       {(() => {
                         // Payment status when it matters (due soon, late, paused for it); otherwise the plain status.
                         const k = billOf.get(b.id)?.kind;
-                        return k === "soon" || k === "late" || k === "suspended"
+                        return k === "soon" || k === "late" || k === "suspended" || k === "trial" || k === "ended"
                           ? <Link href="/admin/cobros" className={`pill bill-${k}`}>{BILLING_LABEL[k]}</Link>
                           : <span className={`pill ${b.status}`}>{STATUS_LABEL[b.status]}</span>;
                       })()}
