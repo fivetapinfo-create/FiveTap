@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LINKS: { href: string; label: string; className?: string; badge?: "todo" | "unread" | "late" }[] = [
   { href: "/admin", label: "Negocios", className: "hide-sm" },
@@ -29,6 +30,7 @@ export function AdminNav({ todo, unread, late = 0 }: { todo: number; unread: num
           </Link>
         );
       })}
+      <ThemeToggle className="owner-gear" />
       <Link className="btn btn-light btn-sm" href="/admin/new" aria-label="Nuevo negocio">+<span className="hide-sm"> Nuevo</span></Link>
     </nav>
   );

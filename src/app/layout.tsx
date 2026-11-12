@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { SITE_URL } from "@/lib/site";
+import { THEME_BOOT } from "@/components/ThemeToggle";
 import "./globals.css";
 
 const satoshi = localFont({
@@ -34,7 +35,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={satoshi.variable}>
+    <html lang="es" className={satoshi.variable} suppressHydrationWarning>
+      <head>
+        {/* The panel and FiveTap Business remember light or dark per device. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -8,6 +8,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { Logo } from "@/components/Logo";
 import { MessageActions } from "@/components/MessageActions";
 import { PausedScreen } from "@/components/PausedScreen";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { addDays, billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail, contactsFor, reportData, reviewSnapshots } from "@/lib/data";
 import { getPlans } from "@/lib/plans";
@@ -80,6 +81,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <a className="btn btn-sm owner-help" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Tengo una consulta sobre FiveTap.`)}>
               Ayuda
             </a>
+            <ThemeToggle />
             <Link className="owner-gear" href={`/mi/${token}/ajustes`} aria-label="Configuración">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <circle cx="12" cy="12" r="3" />

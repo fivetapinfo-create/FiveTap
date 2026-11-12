@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
 import { CopyButton } from "@/components/CopyButton";
 import { SecretValue } from "@/components/RevealInput";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
 import { SubmitButton } from "@/components/SubmitButton";
 import { human, nextCharge, todayPanama } from "@/lib/agenda";
@@ -161,6 +162,14 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
               </details>
             )
           )}
+        </section>
+
+        <section className="panel">
+          <div className="panel-head"><h2>Apariencia</h2></div>
+          <div className="msg">
+            <p className="muted">Elige cómo prefieres ver FiveTap en este celular.</p>
+            <ThemeToggle className="btn btn-ghost btn-sm theme-pick" labelled />
+          </div>
         </section>
 
         <section className="panel">

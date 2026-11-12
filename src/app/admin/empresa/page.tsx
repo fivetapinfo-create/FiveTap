@@ -49,18 +49,15 @@ export default async function CompanyPage({ searchParams }: Props) {
         <div className="fin-grid">
           <div className="fin-list">
             {[
-              ["Instalaciones", f.byKind.setup],
               ["Mensualidades", f.byKind.monthly],
-              ["Planes anuales", f.byKind.annual],
-              ["Piezas de pago único", f.byKind.pieces],
-              ["Otros", f.byKind.other],
+              // Older kinds (installation, annual, one-time pieces) are no longer sold: counted as "Otros".
+              ["Otros cobros", f.byKind.other + f.byKind.setup + f.byKind.annual + f.byKind.pieces],
             ].map(([k, v]) => (
               <div key={k as string}><span>{k}</span><b className="num">{money(v as number)}</b></div>
             ))}
             <div className="fin-sep"><span>Locales</span><b className="num">{f.counts.businesses}</b></div>
             <div><span>Con plan activo</span><b className="num">{f.counts.subscribers}</b></div>
-            <div><span>En prueba</span><b className="num">{f.counts.trial}</b></div>
-            <div><span>Solo piezas (pago único)</span><b className="num">{f.counts.oneTime}</b></div>
+            <div><span>En prueba (FiveTap Test)</span><b className="num">{f.counts.trial}</b></div>
             <div className="fin-sep"><span>Costos fijos al mes</span><b className="num">{money(f.fixed)}</b></div>
             <div><span>Comisiones PayPal sobre el MRR</span><b className="num">{money(Math.round(f.mrrFees * 100) / 100)}</b></div>
           </div>
