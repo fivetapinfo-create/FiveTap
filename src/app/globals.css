@@ -738,3 +738,12 @@ a.kpi { color: inherit; }
 .plans-3 .plan { padding-top: 76px; }
 .plans-3 .plan-badge { top: 30px; left: 36px; right: auto; }
 @media (max-width: 900px) { .plans-3 .plan { padding-top: 68px; } .plans-3 .plan-badge { left: 28px; top: 26px; } }
+/* Owner app at a glance */
+.glance { gap: 10px; }
+.glance-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.glance-row a { display: grid; gap: 2px; padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.08); color: #fff; }
+.glance-row b { font-size: 26px; line-height: 1; }
+.glance-row span { font-size: 13px; color: rgba(255, 255, 255, 0.7); }
+.glance-alert { display: block; color: inherit; }
+.glance-links { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.glance-links a { flex: none; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 14px; font-weight: 500; }

@@ -25,7 +25,7 @@ export function ClubPanel({
     .sort((a, b) => a.birthday_day! - b.birthday_day!);
 
   return (
-    <section className="panel">
+    <section className="panel" id="club">
       <div className="panel-head">
         <h2>Club de clientes · {contacts.length}</h2>
         {contacts.length > 0 && (

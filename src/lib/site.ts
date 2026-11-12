@@ -24,6 +24,26 @@ export function salesWhatsAppUrl(text: string): string {
 const writeReview = (placeId: string) => `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
 
 /**
+ * Google's own "ask for reviews" link (g.page/r/…/review), the one an owner copies from
+ * Google Business. It opens the review window directly, also in the Maps app. A
+ * classic Place ID ("ChIJ…") carries the venue's internal number, which is all that link
+ * needs; other IDs fall back to the plain review link.
+ */
+function officialReview(placeId: string) {
+  try {
+    const bin = atob(placeId.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(placeId.length / 4) * 4, "="));
+    const bytes = Array.from(bin, (c) => c.charCodeAt(0));
+    if (bytes.length === 20 && bytes[0] === 0x0a && bytes[1] === 0x12 && bytes[2] === 0x09 && bytes[11] === 0x11) {
+      const id = btoa(String.fromCharCode(0x09, ...bytes.slice(12, 20), 0x10, 0x01)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      return `https://g.page/r/${id}/review`;
+    }
+  } catch {
+    // Not a classic Place ID: use the plain review link.
+  }
+  return writeReview(placeId);
+}
+
+/**
  * Accepts a Place ID or a link that opens the review window (g.page/r/…/review,
  * writereview?placeid=…) and returns the review link. A Maps link that carries the place
  * ID is turned into the review link; any other Maps or search link only opens the map,
@@ -33,7 +53,7 @@ export function reviewUrlFrom(input: string): string {
   const value = input.trim();
   if (!/^https?:\/\//i.test(value)) {
     if (!/^[A-Za-z0-9_-]{10,}$/.test(value)) throw new Error("Pega el enlace de reseñas de Google o el Place ID del local (empieza con ChIJ).");
-    return writeReview(value);
+    return officialReview(value);
   }
   let url: URL;
   try {
@@ -42,11 +62,14 @@ export function reviewUrlFrom(input: string): string {
     throw new Error("El enlace de reseñas no es válido. Cópialo otra vez desde Google.");
   }
   const host = url.hostname.replace(/^www\./, "");
-  if (host === "search.google.com" && url.pathname.includes("writereview")) return value;
+  if (host === "search.google.com" && url.pathname.includes("writereview")) {
+    const pid = url.searchParams.get("placeid");
+    return pid ? officialReview(pid) : value;
+  }
   if (host === "g.page" && /\/review\/?$/.test(url.pathname)) return value;
   // A Maps link with the place's ID: build the review link from it.
   const id = url.searchParams.get("query_place_id") || url.searchParams.get("placeid") || /place_id:([A-Za-z0-9_-]{10,})/.exec(decodeURIComponent(value))?.[1];
-  if (id) return writeReview(id);
+  if (id) return officialReview(id);
   if (host.endsWith("google.com") || host === "maps.app.goo.gl" || host === "goo.gl" || host === "g.page" || host === "g.co") {
     throw new Error("Ese enlace abre el mapa, no la ventana de reseña. Usa el de Google Business → Pedir reseñas → Copiar enlace (g.page/r/…/review), o el Place ID del local.");
   }

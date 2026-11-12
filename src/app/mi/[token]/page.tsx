@@ -13,7 +13,7 @@ import { businessByOwnerToken, businessDetail, contactsFor, reportData, reviewSn
 import { getPlans } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
-import { dateTime, pct } from "../../admin/format";
+import { dateTime } from "../../admin/format";
 
 export const dynamic = "force-dynamic";
 
@@ -56,12 +56,6 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const latest = snapshots.length > 1 ? snapshots.at(-1)! : null;
   const gained = before && latest ? latest.reviews - before.reviews : null;
 
-  const kpis = [
-    { name: "Toques", now: now!.scans, prev: prev!.scans },
-    { name: "Fueron a Google", now: now!.reviews, prev: prev!.reviews },
-    { name: "Mensajes privados", now: now!.feedback, prev: prev!.feedback },
-    { name: "Nuevos en el club", now: now!.club, prev: prev!.club },
-  ];
 
   const row = (t: Tag) => ({ id: t.id, label: t.label, active: t.active, scans: tagStats.get(t.id)?.scans_30d ?? 0, reviews: tagStats.get(t.id)?.reviews_30d ?? 0 });
   const byScans = (a: { scans: number }, z: { scans: number }) => z.scans - a.scans;
@@ -72,6 +66,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
   const charge = nextCharge(b, payments);
+  const planName = planLabel(b, charge, 0, await getPlans());
   const today = todayPanama();
   const payHref = `/pagar?n=${encodeURIComponent(b.name)}`;
 
@@ -103,12 +98,38 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           </div>
         </div>
 
+        {/* At a glance: one number that matters, three that explain it. */}
+        <section className="owner-hero glance">
+          <span>Este mes, clientes que fueron a dejarte reseña</span>
+          <b className="num">{now!.reviews}</b>
+          <p>Mes pasado: {prev!.reviews}{sentSince > now!.reviews ? ` · ${sentSince} desde que tienes FiveTap` : ""}{gained !== null && gained > 0 ? ` · +${gained} reseñas nuevas en Google` : ""}</p>
+          <div className="glance-row">
+            <a href="#placas"><b className="num">{now!.scans}</b><span>Toques</span></a>
+            <a href="#mensajes"><b className="num">{now!.feedback}</b><span>Mensajes</span></a>
+            <a href="#club"><b className="num">{now!.club}</b><span>Nuevos en el club</span></a>
+          </div>
+        </section>
+
+        {feedback.some((f) => !f.read_at) && (
+          <a className="alert alert-warn glance-alert" href="#mensajes">
+            <b>Tienes {feedback.filter((f) => !f.read_at).length} {feedback.filter((f) => !f.read_at).length === 1 ? "mensaje nuevo" : "mensajes nuevos"} de clientes</b> · Ver →
+          </a>
+        )}
+
+        <nav className="glance-links" aria-label="Secciones">
+          <a href="#mensajes">Mensajes</a>
+          <a href="#placas">Placas</a>
+          <a href="#club">Club</a>
+          <Link href={`/mi/${token}/reporte`}>Reporte</Link>
+          <Link href={`/mi/${token}/pagos`}>Pagos</Link>
+        </nav>
+
         <AppSetup
           endpoint={`/mi/${token}/push`}
           benefits={[
             "Te avisamos al instante cuando un cliente deja un mensaje privado.",
-            "Cada mañana: cuántos clientes tocaron tus placas ayer y cuántos fueron a Google.",
-            "Tu recuento de reseñas a fin de mes.",
+            "Cada mañana, tu resumen del día anterior.",
+            "Tu reporte a fin de mes.",
           ]}
           guided={sp.instalar === "1"}
           compactWhenOn
@@ -119,56 +140,26 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           ]}
         />
 
-        <section className="owner-hero">
-          <span>Clientes que fueron a dejarte reseña este mes</span>
-          <b className="num">{now!.reviews}</b>
-          <p>
-            {sentSince > now!.reviews ? `${sentSince} en total desde que tienes FiveTap. ` : ""}
-            Mes pasado: {prev!.reviews}.
-          </p>
-          {before && (
-            <div className="owner-compare">
-              <div>
-                <small>Antes de FiveTap · {shortDate(before.taken_on)}</small>
-                <b className="num">{before.reviews}</b>
-                <small>reseñas{before.rating ? ` · ${before.rating.toFixed(1)} ★` : ""}</small>
+        <section className="panel" id="mensajes">
+          <div className="panel-head"><h2>Mensajes privados</h2></div>
+          {feedback.length === 0 ? (
+            <div className="empty"><p>Sin mensajes por ahora. Aquí te llega lo que un cliente quiera decirte en privado.</p></div>
+          ) : (
+            feedback.slice(0, 10).map((f) => (
+              <div key={f.id} className="msg">
+                <div className="msg-meta">
+                  <b style={{ color: "var(--ink)" }}>{f.name || "Sin nombre"}</b>
+                  <span>{(f.tag_id && label.get(f.tag_id)) || "—"}</span>
+                  <span>{dateTime(f.created_at)}</span>
+                </div>
+                <p>{f.message}</p>
+                <MessageActions business={b.name} spot={(f.tag_id && label.get(f.tag_id)) || null} guestName={f.name} guestPhone={f.phone} message={f.message} />
               </div>
-              <div>
-                <small>{latest ? `Último conteo · ${shortDate(latest.taken_on)}` : "Con FiveTap"}</small>
-                <b className="num">{latest ? latest.reviews : "…"}</b>
-                <small>{latest ? `reseñas${latest.rating ? ` · ${latest.rating.toFixed(1)} ★` : ""}` : "Primer conteo a fin de mes"}</small>
-              </div>
-              {gained !== null && gained > 0 && <p className="owner-gain">+{gained} reseñas nuevas en Google desde que instalaste FiveTap 🎉</p>}
-            </div>
+            ))
           )}
-          <small className="owner-hero-note">Cada fin de mes te enviamos el recuento de las reseñas que conseguiste con FiveTap.</small>
         </section>
 
-        <Link className="report-card" href={`/mi/${token}/reporte`}>
-          <div>
-            <b>📊 Tu reporte de {prev!.label}</b>
-            <span>Todo el mes en un vistazo: reseñas, toques, mensajes y tu acumulado.</span>
-          </div>
-          <span aria-hidden>→</span>
-        </Link>
-
-        <div className="kpis">
-          {kpis.map((k) => (
-            <div key={k.name} className="kpi">
-              <span>{k.name}</span>
-              <b className="num">{k.now}</b>
-              <small className="muted">Mes pasado: {k.prev}</small>
-            </div>
-          ))}
-        </div>
-        {now!.scans > 0 && (
-          <p className="muted owner-note">
-            “Fueron a Google” son los clientes que abrieron tu página de reseñas: {pct(now!.reviews, now!.scans)} de los que tocaron este mes.
-          </p>
-        )}
-
-
-        <section className="panel">
+        <section className="panel" id="placas">
           <div className="panel-head"><h2>Tus placas y tarjetas · últimos 30 días</h2></div>
           {groups.length === 0 ? (
             <div className="empty"><p>Aquí verás cada placa en cuanto la instalemos.</p></div>
@@ -198,32 +189,13 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           )}
         </section>
 
-        <section className="panel" id="mensajes">
-          <div className="panel-head"><h2>Mensajes privados</h2></div>
-          {feedback.length === 0 ? (
-            <div className="empty"><p>Sin mensajes. Cuando un cliente no queda contento, te escribe aquí en vez de dejar una mala reseña.</p></div>
-          ) : (
-            feedback.slice(0, 30).map((f) => (
-              <div key={f.id} className="msg">
-                <div className="msg-meta">
-                  <b style={{ color: "var(--ink)" }}>{f.name || "Sin nombre"}</b>
-                  <span>{(f.tag_id && label.get(f.tag_id)) || "—"}</span>
-                  <span>{dateTime(f.created_at)}</span>
-                </div>
-                <p>{f.message}</p>
-                <MessageActions business={b.name} spot={(f.tag_id && label.get(f.tag_id)) || null} guestName={f.name} guestPhone={f.phone} message={f.message} />
-              </div>
-            ))
-          )}
-        </section>
-
         <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} />
 
         {charge && b.status !== "canceled" && (
           <section className="panel" id="plan">
             <div className="panel-head">
               <h2>Tu plan</h2>
-              <span className={`pill ${b.status}`}>{b.status === "trial" ? "Prueba gratis" : charge.kind === "annual" ? "Plan anual" : "Plan mensual"}</span>
+              <span className={`pill ${b.status}`}>{planName}</span>
             </div>
             <div className="msg">
               {b.status === "trial" && charge.kind === "trial" ? (
@@ -238,21 +210,10 @@ export default async function OwnerPage({ params, searchParams }: Props) {
               <div className="row msg-actions">
                 {!charge.auto && !b.cancel_requested_at && <a className="btn btn-dark btn-sm" href={payHref}>Ver cómo pagar</a>}
                 <Link className="btn btn-ghost btn-sm" href={`/mi/${token}/pagos`}>Facturación y pagos</Link>
-                <Link className="btn btn-ghost btn-sm" href={`/mi/${token}/ajustes#suscripcion`}>Administrar suscripción</Link>
               </div>
             </div>
           </section>
         )}
-
-        <section className="panel">
-          <div className="panel-head"><h2>Cómo funciona</h2></div>
-          <ol className="owner-how">
-            <li><b>El cliente toca la placa</b> con su celular. No descarga nada.</li>
-            <li><b>Si quedó contento</b>, va directo a dejarte su reseña en Google.</li>
-            <li><b>Si algo no le gustó</b>, te escribe un mensaje privado que te llega aquí, antes de que se convierta en una mala reseña.</li>
-            <li><b>Cada fin de mes</b> te enviamos tu recuento de reseñas. Cualquier duda, toca <b>Ayuda</b>.</li>
-          </ol>
-        </section>
 
         <p className="muted owner-note" style={{ textAlign: "center" }}>
           Este enlace es privado. Compártelo solo con quien maneje el local.
