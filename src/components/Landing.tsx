@@ -169,8 +169,8 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
           <div className="container">
             <div className="section-head">
               <span className="kicker eyebrow-caps">Planes</span>
-              <h2>Tres planes. Todos mensuales.</h2>
-              <p className="muted">Precios de lanzamiento. Cada plan incluye placas NFC para mesas, tarjetas NFC para meseros con su cordón y FiveTap Business.</p>
+              <h2>Pruébalo 7 días o elige tu plan.</h2>
+              <p className="muted">Precios de lanzamiento. Los planes son mensuales e incluyen placas NFC para mesas, tarjetas NFC para meseros con su cordón y FiveTap Business.</p>
             </div>
             <div className="test-kit">
               <div className="test-kit-head">
