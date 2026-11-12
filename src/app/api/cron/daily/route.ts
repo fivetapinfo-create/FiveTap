@@ -50,6 +50,29 @@ export async function GET(req: Request) {
     });
   }
 
+  // 1b. Founder, on Mondays and only when there is something: the week's collections
+  // (owed, due in the next 7 days, FiveTap Test ending or ended).
+  if (new Date(`${today}T12:00:00Z`).getUTCDay() === 1) {
+    const usd = (n: number) => `$${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+    const late = billing.filter((r) => r.billing.kind === "late" || r.billing.kind === "suspended");
+    const soon = billing.filter((r) => r.billing.charge && !r.billing.blocked && r.billing.daysLate >= -6 && r.billing.daysLate <= 0);
+    const tests = billing.filter((r) => (r.billing.kind === "trial" && r.billing.daysLate >= -6) || r.billing.kind === "ended");
+    const due = [...late, ...soon];
+    const total = due.reduce((n, r) => n + Number(r.billing.charge?.amount ?? 0), 0);
+    if (due.length || tests.length) {
+      const parts = [
+        late.length ? `${late.length} atrasado${late.length === 1 ? "" : "s"} (${late.map((r) => r.business.name).slice(0, 3).join(", ")})` : "",
+        soon.length ? `${soon.length} vence${soon.length === 1 ? "" : "n"} esta semana` : "",
+        tests.length ? `${tests.length} FiveTap Test por cerrar` : "",
+      ].filter(Boolean);
+      sent.founder += await sendPushOnce(`founder-week-${today}`, { role: "founder" }, {
+        title: due.length ? `💰 Cobros de la semana: ${usd(total)}` : "Cobros de la semana",
+        body: parts.join(" · "),
+        url: "/admin/cobros",
+      });
+    }
+  }
+
   // 2. Whoever pays: reminders, due day, renewals, the final notice and the pause.
   // The agenda only attaches a notification on the days it has to go out.
   for (const t of tasks) {
