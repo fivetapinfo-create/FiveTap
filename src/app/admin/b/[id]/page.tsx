@@ -92,12 +92,23 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             </div>
           </div>
           <div className="row">
-            <a className="btn btn-ghost btn-sm" href="#app">App del dueño</a>
             {preview && <a className="btn btn-ghost btn-sm" href={preview} target="_blank" rel="noreferrer">Ver página del cliente</a>}
-            <a className="btn btn-dark btn-sm" href="#placas">Placas NFC</a>
+            <a className="btn btn-dark btn-sm" href="#pagos">Registrar pago</a>
           </div>
         </div>
       </div>
+
+      {/* Every section of the venue, one tap away; stays at the top while scrolling. */}
+      <nav className="biz-tabs" aria-label="Secciones del negocio">
+        <a href="#mensajes">Mensajes{feedback.some((f) => !f.read_at) ? " •" : ""}</a>
+        <a href="#pagos">Pagos</a>
+        <a href="#resenas">Reseñas</a>
+        <a href="#app">Accesos</a>
+        <a href="#placas">Placas</a>
+        <a href="#contrato">Contrato</a>
+        <a href="#club">Club</a>
+        <a href="#datos">Datos</a>
+      </nav>
 
       <Flash ok={sp.ok} error={sp.error} />
 
@@ -164,131 +175,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <div className="kpi"><span>Mensajes privados</span><b className="num">{stats?.feedback_30d ?? 0}</b></div>
       </div>
 
-      <Report business={b.name} periods={periods} snapshots={snapshots} />
-
-      <section className="panel" id="resenas">
-        <div className="panel-head">
-          <h2>Reseñas en Google · antes y después</h2>
-        </div>
-        <div className="msg">
-          <p className="muted">
-            {snapshots.length
-              ? "El primer conteo es el de antes de FiveTap. Agrega uno nuevo cada fin de mes: el dueño lo ve en su app y sale en el reporte."
-              : "Antes de instalar, mira en Google Maps cuántas reseñas y estrellas tiene el local y anótalo aquí. Es tu “antes” para mostrarle el crecimiento."}
-          </p>
-          {snapshots.length > 0 && (
-            <div className="table-wrap">
-              <table className="table">
-                <thead><tr><th>Fecha</th><th className="right">Reseñas</th><th className="right">Estrellas</th><th className="right">Cambio</th><th /></tr></thead>
-                <tbody>
-                  {snapshots.map((s, i) => (
-                    <tr key={s.id}>
-                      <td>{s.taken_on}{i === 0 && <span className="muted"> · antes de FiveTap</span>}{s.source === "google" && <span className="muted"> · leído de Google</span>}</td>
-                      <td className="right num">{s.reviews}</td>
-                      <td className="right num">{s.rating?.toFixed(1) ?? "—"}</td>
-                      <td className="right num">{i === 0 ? "—" : `${s.reviews - snapshots[0]!.reviews >= 0 ? "+" : ""}${s.reviews - snapshots[0]!.reviews}`}</td>
-                      <td className="right">
-                        <form action={removeSnapshot}>
-                          <input type="hidden" name="business_id" value={b.id} />
-                          <input type="hidden" name="snapshot_id" value={s.id} />
-                          <button className="btn btn-ghost btn-sm" type="submit" aria-label={`Borrar conteo del ${s.taken_on}`}>Borrar</button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {b.google_place_id && placesReady() ? (
-            <form action={countFromGoogle} className="row">
-              <input type="hidden" name="business_id" value={b.id} />
-              <SubmitButton className="btn btn-dark btn-sm" pending="Leyendo Google…">Contar ahora desde Google</SubmitButton>
-              <small className="muted">También se cuenta solo cada lunes.</small>
-            </form>
-          ) : (
-            <small className="muted">
-              {b.google_place_id
-                ? "Para contarlas solas cada semana, falta configurar GOOGLE_PLACES_API_KEY. Mientras, anótalas aquí."
-                : "Agrega el Place ID en Editar datos y FiveTap podrá contarlas solo cada semana. Mientras, anótalas aquí."}
-            </small>
-          )}
-          <form action={addSnapshot} className="snapshot-form">
-            <input type="hidden" name="business_id" value={b.id} />
-            <label className="field">
-              <span>Fecha</span>
-              <input className="input" type="date" name="taken_on" defaultValue={new Date(Date.now() - 5 * 3600_000).toISOString().slice(0, 10)} required />
-            </label>
-            <label className="field">
-              <span>Reseñas</span>
-              <input className="input" name="reviews" inputMode="numeric" placeholder="120" required />
-            </label>
-            <label className="field">
-              <span>Estrellas</span>
-              <input className="input" name="rating" inputMode="decimal" placeholder="4.5" />
-            </label>
-            <SubmitButton className="btn btn-dark btn-sm" pending="Guardando…">{snapshots.length ? "Agregar conteo" : "Guardar el “antes”"}</SubmitButton>
-          </form>
-        </div>
-      </section>
-
-      <section className="panel" id="app">
-        <div className="panel-head">
-          <h2>App del dueño</h2>
-          <span className="muted">{phonesOwner + phonesManager ? `${phonesOwner} dueño · ${phonesManager} gerente con avisos` : "Ningún celular con avisos todavía"}</span>
-        </div>
-        <div className="msg">
-          <p className="muted">Es su FiveTap: reseñas en tiempo real, el antes y después, sus placas, los mensajes privados, el club y su plan. Se instala como app y le llegan los avisos. Envíale el acceso y, el día de la instalación, actívalo con él en su celular.</p>
-          <div className="row msg-actions">
-            <Link className="btn btn-dark btn-sm" href={`/admin/b/${b.id}/instalar`}>📲 Instalar en persona (QR)</Link>
-            {accessFor.map((a) => (
-              <span key={a.phone} className="row" style={{ gap: 6 }}>
-                <a className="btn btn-ghost btn-sm" href={a.href} target="_blank" rel="noopener noreferrer">1 · Enviar enlace a {a.who}</a>
-                <a className="btn btn-ghost btn-sm" href={a.codeHref} target="_blank" rel="noopener noreferrer">2 · Enviar su código</a>
-              </span>
-            ))}
-            <CopyButton value={ownerLink} label="Copiar enlace" />
-            <a className="btn btn-ghost btn-sm" href={ownerLink} target="_blank" rel="noreferrer">Ver como el dueño</a>
-            {phonesOwner + phonesManager > 0 && (
-              <form action={testOwnerPush}>
-                <input type="hidden" name="business_id" value={b.id} />
-                <SubmitButton className="btn btn-ghost btn-sm" pending="Enviando…">Enviar notificación de prueba</SubmitButton>
-              </form>
-            )}
-          </div>
-          {!accessFor.length && <small className="muted">Agrega el WhatsApp del gerente o de quien paga (Editar datos) para enviarle el acceso con un toque.</small>}
-          <div className="access-codes">
-            <div>
-              <small className="muted">Código del dueño/a</small>
-              <b className="num">{codes.owner}</b>
-              <form action={renewAccessCode}>
-                <input type="hidden" name="business_id" value={b.id} />
-                <input type="hidden" name="role" value="owner" />
-                <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar</SubmitButton>
-              </form>
-            </div>
-            <div>
-              <small className="muted">Código del gerente</small>
-              <b className="num">{codes.manager}</b>
-              <form action={renewAccessCode}>
-                <input type="hidden" name="business_id" value={b.id} />
-                <input type="hidden" name="role" value="manager" />
-                <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar</SubmitButton>
-              </form>
-            </div>
-          </div>
-          <small className="muted">FiveTap Business pide uno de estos códigos la primera vez en cada celular: el enlace solo no basta. El del gerente no ve pagos ni la suscripción. Si cambias un código, los celulares que lo usaban lo vuelven a pedir.</small>
-          <form action={resetOwnerLink} className="row">
-            <input type="hidden" name="business_id" value={b.id} />
-            <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar enlace privado</SubmitButton>
-            <small className="muted">Si alguien que tenía acceso ya no trabaja ahí: el enlace viejo deja de funcionar y se borran los avisos de todos los celulares del local. Luego reenvía el acceso.</small>
-          </form>
-        </div>
-      </section>
-
-      <ClubPanel contacts={contacts} tags={tags} csvHref={`/admin/b/${b.id}/clientes.csv`} remove={removeContact} />
-
-      <section className="panel">
+      <section className="panel" id="mensajes">
         <div className="panel-head">
           <h2>Mensajes privados</h2>
         </div>
@@ -316,115 +203,6 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             </div>
           ))
         )}
-      </section>
-
-      <section className="panel" id="contrato">
-        <div className="panel-head">
-          <h2>Contrato</h2>
-          <Link className="btn btn-ghost btn-sm" href={`/admin/contratos?b=${b.id}#nuevo`}>{agreements.length ? "Nuevo contrato" : "Crear contrato de 3 meses"}</Link>
-        </div>
-        {agreements.length === 0 ? (
-          <div className="msg"><p className="muted">Sin contrato todavía. Créalo antes de la instalación para firmarlo ese día.</p></div>
-        ) : (
-          <div className="table-wrap">
-            <table className="table">
-              <tbody>
-                {agreements.map((a) => (
-                  <tr key={a.id}>
-                    <td><b>{a.number}</b><br /><small className="muted">{a.plan_name} · {money2(a.monthly_fee)}/mes</small></td>
-                    <td>{longDay(a.start_date)} al {longDay(a.end_date)}<br /><small className="muted">Firma: {a.signer_name}</small></td>
-                    <td className="right">
-                      <div className="row" style={{ justifyContent: "flex-end" }}>
-                        <a className="btn btn-ghost btn-sm" href={`/admin/contratos/${a.id}/pdf`} target="_blank" rel="noreferrer">Ver</a>
-                        <a className="btn btn-ghost btn-sm" href={`/admin/contratos/${a.id}/pdf?dl=1`}>PDF</a>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="panel" id="placas">
-        <div className="panel-head">
-          <h2>Placas y tarjetas · {tables.length} de mesa · {waiters.length} de meseros</h2>
-          <form action={addTags} className="row">
-            <input type="hidden" name="business_id" value={b.id} />
-            <input className="input" name="count" type="number" min={1} max={80} defaultValue={1} style={{ width: 70, minHeight: 36, padding: "6px 10px" }} aria-label="Cantidad" />
-            <select className="select" name="kind" defaultValue="table" style={{ minHeight: 36, padding: "6px 10px", width: "auto" }} aria-label="Tipo">
-              <option value="table">Placas de mesa</option>
-              <option value="waiter">Tarjetas de meseros</option>
-            </select>
-            <input className="input" name="label" placeholder={`${v.spot} / Mesero`} style={{ width: 120, minHeight: 36, padding: "6px 10px" }} aria-label="Nombre" />
-            <SubmitButton className="btn btn-ghost btn-sm" pending="…">+ Agregar</SubmitButton>
-          </form>
-        </div>
-        {currentPlan && (
-          <div className="msg">
-            <p className="muted">
-              {currentPlan.name} incluye {currentPlan.plaques} placas de mesa, {currentPlan.cards} tarjetas de meseros y {currentPlan.lanyards} cordones.
-              {tables.length !== currentPlan.plaques || waiters.length !== currentPlan.cards ? ` Hoy tiene ${tables.length} placas y ${waiters.length} tarjetas.` : " Ya tiene todo lo del plan."}
-            </p>
-          </div>
-        )}
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Placa</th>
-                <th>Enlace para grabar en el NFC</th>
-                <th className="right">Toques</th>
-                <th className="right">A Google</th>
-                <th>QR de respaldo</th>
-                <th />
-              </tr>
-            </thead>
-            {[{ title: "Placas de mesa", list: tables }, { title: "Tarjetas de meseros", list: waiters }].filter((g) => g.list.length).map((g) => (
-            <tbody key={g.title}>
-              <tr className="group-row"><th colSpan={6}>{g.title} · {g.list.length}</th></tr>
-              {g.list.map((t) => {
-                const ts = tagStats.get(t.id);
-                return (
-                  <tr key={t.id} style={t.active ? undefined : { opacity: 0.45 }}>
-                    <td>
-                      <form action={renameTag} className="rename">
-                        <input type="hidden" name="business_id" value={b.id} />
-                        <input type="hidden" name="tag_id" value={t.id} />
-                        <input className="input" name="label" defaultValue={t.label} maxLength={40} aria-label="Nombre de la placa" />
-                        <SubmitButton className="btn btn-ghost btn-sm" pending="…">✓</SubmitButton>
-                      </form>
-                    </td>
-                    <td>
-                      <div className="row">
-                        <span className="code muted">{nfcUrl(t.code)}</span>
-                        <CopyButton value={nfcUrl(t.code)} />
-                      </div>
-                    </td>
-                    <td className="right num">{ts?.scans_30d ?? 0}</td>
-                    <td className="right num">{ts?.reviews_30d ?? 0}</td>
-                    <td>
-                      <div className="row">
-                        <a className="btn btn-ghost btn-sm" href={`/admin/qr/${t.code}?format=png`} download>PNG</a>
-                        <a className="btn btn-ghost btn-sm" href={`/admin/qr/${t.code}?format=svg`} download>SVG</a>
-                      </div>
-                    </td>
-                    <td>
-                      <form action={setTagActive}>
-                        <input type="hidden" name="business_id" value={b.id} />
-                        <input type="hidden" name="tag_id" value={t.id} />
-                        <input type="hidden" name="active" value={t.active ? "0" : "1"} />
-                        <SubmitButton className="btn btn-ghost btn-sm">{t.active ? "Desactivar" : "Activar"}</SubmitButton>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            ))}
-          </table>
-        </div>
       </section>
 
       <section className="panel" id="pagos">
@@ -555,7 +333,240 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         )}
       </section>
 
-      <details className="panel more" style={{ borderTop: "1px solid var(--line)" }}>
+      <section className="panel" id="resenas">
+        <div className="panel-head">
+          <h2>Reseñas en Google · antes y después</h2>
+        </div>
+        <div className="msg">
+          <p className="muted">
+            {snapshots.length
+              ? "El primer conteo es el de antes de FiveTap. Agrega uno nuevo cada fin de mes: el dueño lo ve en su app y sale en el reporte."
+              : "Antes de instalar, mira en Google Maps cuántas reseñas y estrellas tiene el local y anótalo aquí. Es tu “antes” para mostrarle el crecimiento."}
+          </p>
+          {snapshots.length > 0 && (
+            <div className="table-wrap">
+              <table className="table">
+                <thead><tr><th>Fecha</th><th className="right">Reseñas</th><th className="right">Estrellas</th><th className="right">Cambio</th><th /></tr></thead>
+                <tbody>
+                  {snapshots.map((s, i) => (
+                    <tr key={s.id}>
+                      <td>{s.taken_on}{i === 0 && <span className="muted"> · antes de FiveTap</span>}{s.source === "google" && <span className="muted"> · leído de Google</span>}</td>
+                      <td className="right num">{s.reviews}</td>
+                      <td className="right num">{s.rating?.toFixed(1) ?? "—"}</td>
+                      <td className="right num">{i === 0 ? "—" : `${s.reviews - snapshots[0]!.reviews >= 0 ? "+" : ""}${s.reviews - snapshots[0]!.reviews}`}</td>
+                      <td className="right">
+                        <form action={removeSnapshot}>
+                          <input type="hidden" name="business_id" value={b.id} />
+                          <input type="hidden" name="snapshot_id" value={s.id} />
+                          <button className="btn btn-ghost btn-sm" type="submit" aria-label={`Borrar conteo del ${s.taken_on}`}>Borrar</button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {b.google_place_id && placesReady() ? (
+            <form action={countFromGoogle} className="row">
+              <input type="hidden" name="business_id" value={b.id} />
+              <SubmitButton className="btn btn-dark btn-sm" pending="Leyendo Google…">Contar ahora desde Google</SubmitButton>
+              <small className="muted">También se cuenta solo cada lunes.</small>
+            </form>
+          ) : (
+            <small className="muted">
+              {b.google_place_id
+                ? "Para contarlas solas cada semana, falta configurar GOOGLE_PLACES_API_KEY. Mientras, anótalas aquí."
+                : "Agrega el Place ID en Editar datos y FiveTap podrá contarlas solo cada semana. Mientras, anótalas aquí."}
+            </small>
+          )}
+          <form action={addSnapshot} className="snapshot-form">
+            <input type="hidden" name="business_id" value={b.id} />
+            <label className="field">
+              <span>Fecha</span>
+              <input className="input" type="date" name="taken_on" defaultValue={new Date(Date.now() - 5 * 3600_000).toISOString().slice(0, 10)} required />
+            </label>
+            <label className="field">
+              <span>Reseñas</span>
+              <input className="input" name="reviews" inputMode="numeric" placeholder="120" required />
+            </label>
+            <label className="field">
+              <span>Estrellas</span>
+              <input className="input" name="rating" inputMode="decimal" placeholder="4.5" />
+            </label>
+            <SubmitButton className="btn btn-dark btn-sm" pending="Guardando…">{snapshots.length ? "Agregar conteo" : "Guardar el “antes”"}</SubmitButton>
+          </form>
+        </div>
+      </section>
+
+      <Report business={b.name} periods={periods} snapshots={snapshots} />
+
+      <section className="panel" id="app">
+        <div className="panel-head">
+          <h2>App del dueño</h2>
+          <span className="muted">{phonesOwner + phonesManager ? `${phonesOwner} dueño · ${phonesManager} gerente con avisos` : "Ningún celular con avisos todavía"}</span>
+        </div>
+        <div className="msg">
+          <p className="muted">Es su FiveTap: reseñas en tiempo real, el antes y después, sus placas, los mensajes privados, el club y su plan. Se instala como app y le llegan los avisos. Envíale el acceso y, el día de la instalación, actívalo con él en su celular.</p>
+          <div className="row msg-actions">
+            <Link className="btn btn-dark btn-sm" href={`/admin/b/${b.id}/instalar`}>📲 Instalar en persona (QR)</Link>
+            {accessFor.map((a) => (
+              <span key={a.phone} className="row" style={{ gap: 6 }}>
+                <a className="btn btn-ghost btn-sm" href={a.href} target="_blank" rel="noopener noreferrer">1 · Enviar enlace a {a.who}</a>
+                <a className="btn btn-ghost btn-sm" href={a.codeHref} target="_blank" rel="noopener noreferrer">2 · Enviar su código</a>
+              </span>
+            ))}
+            <CopyButton value={ownerLink} label="Copiar enlace" />
+            <a className="btn btn-ghost btn-sm" href={ownerLink} target="_blank" rel="noreferrer">Ver como el dueño</a>
+            {phonesOwner + phonesManager > 0 && (
+              <form action={testOwnerPush}>
+                <input type="hidden" name="business_id" value={b.id} />
+                <SubmitButton className="btn btn-ghost btn-sm" pending="Enviando…">Enviar notificación de prueba</SubmitButton>
+              </form>
+            )}
+          </div>
+          {!accessFor.length && <small className="muted">Agrega el WhatsApp del gerente o de quien paga (Editar datos) para enviarle el acceso con un toque.</small>}
+          <div className="access-codes">
+            <div>
+              <small className="muted">Código del dueño/a</small>
+              <b className="num">{codes.owner}</b>
+              <form action={renewAccessCode}>
+                <input type="hidden" name="business_id" value={b.id} />
+                <input type="hidden" name="role" value="owner" />
+                <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar</SubmitButton>
+              </form>
+            </div>
+            <div>
+              <small className="muted">Código del gerente</small>
+              <b className="num">{codes.manager}</b>
+              <form action={renewAccessCode}>
+                <input type="hidden" name="business_id" value={b.id} />
+                <input type="hidden" name="role" value="manager" />
+                <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar</SubmitButton>
+              </form>
+            </div>
+          </div>
+          <small className="muted">FiveTap Business pide uno de estos códigos la primera vez en cada celular: el enlace solo no basta. El del gerente no ve pagos ni la suscripción. Si cambias un código, los celulares que lo usaban lo vuelven a pedir.</small>
+          <form action={resetOwnerLink} className="row">
+            <input type="hidden" name="business_id" value={b.id} />
+            <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar enlace privado</SubmitButton>
+            <small className="muted">Si alguien que tenía acceso ya no trabaja ahí: el enlace viejo deja de funcionar y se borran los avisos de todos los celulares del local. Luego reenvía el acceso.</small>
+          </form>
+        </div>
+      </section>
+
+      <section className="panel" id="placas">
+        <div className="panel-head">
+          <h2>Placas y tarjetas · {tables.length} de mesa · {waiters.length} de meseros</h2>
+          <form action={addTags} className="row">
+            <input type="hidden" name="business_id" value={b.id} />
+            <input className="input" name="count" type="number" min={1} max={80} defaultValue={1} style={{ width: 70, minHeight: 36, padding: "6px 10px" }} aria-label="Cantidad" />
+            <select className="select" name="kind" defaultValue="table" style={{ minHeight: 36, padding: "6px 10px", width: "auto" }} aria-label="Tipo">
+              <option value="table">Placas de mesa</option>
+              <option value="waiter">Tarjetas de meseros</option>
+            </select>
+            <input className="input" name="label" placeholder={`${v.spot} / Mesero`} style={{ width: 120, minHeight: 36, padding: "6px 10px" }} aria-label="Nombre" />
+            <SubmitButton className="btn btn-ghost btn-sm" pending="…">+ Agregar</SubmitButton>
+          </form>
+        </div>
+        {currentPlan && (
+          <div className="msg">
+            <p className="muted">
+              {currentPlan.name} incluye {currentPlan.plaques} placas de mesa, {currentPlan.cards} tarjetas de meseros y {currentPlan.lanyards} cordones.
+              {tables.length !== currentPlan.plaques || waiters.length !== currentPlan.cards ? ` Hoy tiene ${tables.length} placas y ${waiters.length} tarjetas.` : " Ya tiene todo lo del plan."}
+            </p>
+          </div>
+        )}
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Placa</th>
+                <th>Enlace para grabar en el NFC</th>
+                <th className="right">Toques</th>
+                <th className="right">A Google</th>
+                <th>QR de respaldo</th>
+                <th />
+              </tr>
+            </thead>
+            {[{ title: "Placas de mesa", list: tables }, { title: "Tarjetas de meseros", list: waiters }].filter((g) => g.list.length).map((g) => (
+            <tbody key={g.title}>
+              <tr className="group-row"><th colSpan={6}>{g.title} · {g.list.length}</th></tr>
+              {g.list.map((t) => {
+                const ts = tagStats.get(t.id);
+                return (
+                  <tr key={t.id} style={t.active ? undefined : { opacity: 0.45 }}>
+                    <td>
+                      <form action={renameTag} className="rename">
+                        <input type="hidden" name="business_id" value={b.id} />
+                        <input type="hidden" name="tag_id" value={t.id} />
+                        <input className="input" name="label" defaultValue={t.label} maxLength={40} aria-label="Nombre de la placa" />
+                        <SubmitButton className="btn btn-ghost btn-sm" pending="…">✓</SubmitButton>
+                      </form>
+                    </td>
+                    <td>
+                      <div className="row">
+                        <span className="code muted">{nfcUrl(t.code)}</span>
+                        <CopyButton value={nfcUrl(t.code)} />
+                      </div>
+                    </td>
+                    <td className="right num">{ts?.scans_30d ?? 0}</td>
+                    <td className="right num">{ts?.reviews_30d ?? 0}</td>
+                    <td>
+                      <div className="row">
+                        <a className="btn btn-ghost btn-sm" href={`/admin/qr/${t.code}?format=png`} download>PNG</a>
+                        <a className="btn btn-ghost btn-sm" href={`/admin/qr/${t.code}?format=svg`} download>SVG</a>
+                      </div>
+                    </td>
+                    <td>
+                      <form action={setTagActive}>
+                        <input type="hidden" name="business_id" value={b.id} />
+                        <input type="hidden" name="tag_id" value={t.id} />
+                        <input type="hidden" name="active" value={t.active ? "0" : "1"} />
+                        <SubmitButton className="btn btn-ghost btn-sm">{t.active ? "Desactivar" : "Activar"}</SubmitButton>
+                      </form>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            ))}
+          </table>
+        </div>
+      </section>
+
+      <section className="panel" id="contrato">
+        <div className="panel-head">
+          <h2>Contrato</h2>
+          <Link className="btn btn-ghost btn-sm" href={`/admin/contratos?b=${b.id}#nuevo`}>{agreements.length ? "Nuevo contrato" : "Crear contrato de 3 meses"}</Link>
+        </div>
+        {agreements.length === 0 ? (
+          <div className="msg"><p className="muted">Sin contrato todavía. Créalo antes de la instalación para firmarlo ese día.</p></div>
+        ) : (
+          <div className="table-wrap">
+            <table className="table">
+              <tbody>
+                {agreements.map((a) => (
+                  <tr key={a.id}>
+                    <td><b>{a.number}</b><br /><small className="muted">{a.plan_name} · {money2(a.monthly_fee)}/mes</small></td>
+                    <td>{longDay(a.start_date)} al {longDay(a.end_date)}<br /><small className="muted">Firma: {a.signer_name}</small></td>
+                    <td className="right">
+                      <div className="row" style={{ justifyContent: "flex-end" }}>
+                        <a className="btn btn-ghost btn-sm" href={`/admin/contratos/${a.id}/pdf`} target="_blank" rel="noreferrer">Ver</a>
+                        <a className="btn btn-ghost btn-sm" href={`/admin/contratos/${a.id}/pdf?dl=1`}>PDF</a>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <ClubPanel contacts={contacts} tags={tags} csvHref={`/admin/b/${b.id}/clientes.csv`} remove={removeContact} />
+
+      <details className="panel more" id="datos" style={{ borderTop: "1px solid var(--line)" }}>
         <summary>Editar datos del negocio</summary>
         <form action={updateBusiness}>
           <input type="hidden" name="id" value={b.id} />
