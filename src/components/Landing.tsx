@@ -6,6 +6,7 @@ import { Bell, Chart, Check, Gift, Pin, Reply, Shield, Tap } from "./Icons";
 import { COPY } from "@/lib/i18n";
 import { salesWhatsAppUrl } from "@/lib/site";
 import { activePlans, planPieces } from "@/lib/plans";
+import { FOUNDER_PHONE, TEST_PIECES, founderWhatsApp } from "@/lib/test-kit";
 import { VERTICALS, type Vertical } from "@/lib/verticals";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
@@ -171,6 +172,25 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
               <h2>Tres planes. Todos mensuales.</h2>
               <p className="muted">Precios de lanzamiento. Cada plan incluye placas NFC para mesas, tarjetas NFC para meseros con su cordón y FiveTap Business.</p>
             </div>
+            <div className="test-kit">
+              <div className="test-kit-head">
+                <h3>FiveTap Test</h3>
+                <p className="muted">Para empezar con una sola pieza. Pago mensual.</p>
+              </div>
+              <div className="test-kit-items">
+                {TEST_PIECES.map((t) => (
+                  <a key={t.key} className="test-piece" href={founderWhatsApp(`Hola, quiero FiveTap Test: ${t.name} ($${t.monthly} al mes) para mi ${kind}.`)}>
+                    <span><b>{t.name}</b><small>{t.detail}</small></span>
+                    <span className="num">{usd(t.monthly)}<small> / mes</small></span>
+                  </a>
+                ))}
+              </div>
+              <p className="muted test-kit-note">
+                ¿Necesitas más de 4 piezas o una cantidad específica? Cotiza con el Founder de FiveTap:{" "}
+                <a href={founderWhatsApp(`Hola, quiero cotizar FiveTap para mi ${kind}. Necesito ___ piezas.`)} style={{ textDecoration: "underline" }}><b>{FOUNDER_PHONE}</b></a>
+              </p>
+            </div>
+
             <div className="plans plans-3">
               {plans.map((p, n) => (
                 <div key={p.key} className={`plan${n === 1 ? " plan-dark" : ""}`}>

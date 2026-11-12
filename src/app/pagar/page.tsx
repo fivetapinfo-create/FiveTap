@@ -4,6 +4,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
 import { AcceptedPayments, Amex, Bank, Mastercard, PayPal, Visa, Yappy } from "@/components/PaymentBadges";
 import { activePlans, planPieces } from "@/lib/plans";
+import { FOUNDER_PHONE, TEST_PIECES } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Pagar — FiveTap", robots: { index: false } };
@@ -17,8 +18,9 @@ const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 export default async function Pay({ searchParams }: Props) {
   const [{ n }, plans] = await Promise.all([searchParams, activePlans()]);
   const PLANS = [
+    ...TEST_PIECES.map((t) => ({ name: `FiveTap Test · ${t.name}`, note: `Cada mes · ${t.detail}`, price: `${usd(t.monthly)}/mes` })),
     ...plans.map((p) => ({ name: p.name, note: `Cada mes · ${planPieces(p).join(" · ")} · FiveTap Business`, price: `${usd(p.monthly)}/mes` })),
-    { name: "Piezas adicionales o necesidades especiales", note: "Te enviamos tu propuesta", price: "Cotizar" },
+    { name: "Más de 4 piezas o una cantidad específica", note: `Cotiza con el Founder de FiveTap: ${FOUNDER_PHONE}`, price: "Cotizar" },
   ];
   const business = n?.slice(0, 80);
   const env = process.env;

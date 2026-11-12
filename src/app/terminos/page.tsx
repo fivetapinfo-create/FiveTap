@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { REPLACEMENT_FEE, money } from "@/lib/contract";
 import { activePlans, planPieces } from "@/lib/plans";
+import { FOUNDER_PHONE, TEST_PIECES } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
@@ -24,7 +25,10 @@ export default async function Terms() {
             <b>{p.name}:</b> {money(p.monthly)} al mes, con {planPieces(p).join(" y ")}, y FiveTap Business.
           </li>
         ))}
-        <li><b>Piezas adicionales, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito.</li>
+        {TEST_PIECES.map((t) => (
+          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)} al mes, {t.detail.replace(" + FiveTap Business", "")} con FiveTap Business.</li>
+        ))}
+        <li><b>Más de 4 piezas, una cantidad específica, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
       </ul>
       <p>Todos los planes son mensuales. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>
       <p>Todo FiveTap es un servicio por suscripción: las placas y tarjetas son propiedad de FiveTap y funcionan mientras el plan esté activo. Cada plan incluye solo lo descrito; cualquier ampliación se cotiza aparte.</p>
