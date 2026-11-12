@@ -20,7 +20,7 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
         <span>3. Enlace de reseñas de Google</span>
         <input className="input" name="review" required defaultValue={b?.google_review_url} placeholder="https://g.page/r/…/review  o  Place ID" />
         <small>
-          En Google Business: <b>Pedir reseñas</b> → copiar enlace. O el Place ID desde{" "}
+          Tiene que abrir la ventana de reseña, no el mapa. Lo mejor: en Google Business, <b>Pedir reseñas</b> → copiar enlace (g.page/r/…/review). O el Place ID (empieza con ChIJ) desde{" "}
           <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>
             Place ID Finder
           </a>.
