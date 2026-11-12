@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { CANCEL_REASONS } from "@/lib/cancel";
+import { accessRole } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { sendPush } from "@/lib/push";
 import { db } from "@/lib/supabase";
@@ -11,7 +12,7 @@ import { db } from "@/lib/supabase";
 export async function requestCancel(f: FormData) {
   const token = String(f.get("token") ?? "");
   const b = await businessByOwnerToken(token);
-  if (!b) redirect("/");
+  if (!b || (await accessRole(b)) !== "owner") redirect("/");
   const back = `/mi/${token}/ajustes`;
   const reason = String(f.get("reason") ?? "");
   const detail = String(f.get("detail") ?? "").trim().slice(0, 300);
@@ -28,7 +29,7 @@ export async function requestCancel(f: FormData) {
 export async function undoCancel(f: FormData) {
   const token = String(f.get("token") ?? "");
   const b = await businessByOwnerToken(token);
-  if (!b) redirect("/");
+  if (!b || (await accessRole(b)) !== "owner") redirect("/");
   await db().from("businesses").update({ cancel_requested_at: null, cancel_reason: null }).eq("id", b.id);
   await sendPush({ role: "founder" }, { title: `${b.name} sigue con FiveTap 🎉`, body: "Retiró su solicitud de cancelación.", url: `/admin/b/${b.id}` });
   revalidatePath(`/mi/${token}/ajustes`);

@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, addDays, billingState, human, planLabel } from "@/lib/agenda";
 import { businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { placesReady } from "@/lib/places";
+import { accessCodes } from "@/lib/access";
 import { countSubscriptions } from "@/lib/push";
 import { getPlans, planOf } from "@/lib/plans";
 import { agreementsFor } from "@/lib/agreements-db";
@@ -16,7 +17,7 @@ import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
-import { addSnapshot, addTags, clearOwnerPin, countFromGoogle, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
+import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
 import { Flash } from "../../Flash";
@@ -46,19 +47,22 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const { business: b, tags, stats, tagStats, feedback, payments } = d;
   const periods = report.periods;
   const ownerLink = `${SITE_URL}/mi/${b.owner_token}`;
+  const codes = await accessCodes(b);
   const v = verticalByKey(b.kind);
   const firstActive = tags.find((t) => t.active);
   const preview = firstActive ? `/t/${firstActive.code}?preview=1` : null;
   const payLink = `${SITE_URL}/pagar?n=${encodeURIComponent(b.name)}`;
   const access = (name: string | null, rol: "dueno" | "gerente") =>
-    `Hola${name ? ` ${name.split(" ")[0]}` : ""} 👋 Este es tu acceso privado a FiveTap de *${b.name}*:\n${ownerLink}?instalar=1&rol=${rol}\n\nAhí ves en tiempo real cuántos clientes tocan tus placas y van a dejarte reseña en Google, tus mensajes privados y tu club.\n\n📲 Para tenerlo como app: ábrelo en Safari (iPhone) o Chrome (Android) y sigue los 3 pasos que salen arriba. Al final toca “Activar avisos”.\n\nEs privado: compártelo solo con tu equipo de confianza. — FiveTap`;
+    `Hola${name ? ` ${name.split(" ")[0]}` : ""} 👋 Este es tu acceso privado a FiveTap de *${b.name}*:\n${ownerLink}?instalar=1&rol=${rol}\n\nAhí ves en tiempo real cuántos clientes tocan tus placas y van a dejarte reseña en Google, tus mensajes privados y tu club.\n\n📲 Para tenerlo como app: ábrelo en Safari (iPhone) o Chrome (Android) y sigue los 3 pasos que salen arriba. Al final toca “Activar avisos”.\n\n🔒 Es privado: la primera vez te pide tu código de acceso, que te envío en el siguiente mensaje. Sin el código nadie más puede entrar. — FiveTap`;
+  const codeText = (name: string | null, rol: "dueno" | "gerente") =>
+    `${name ? `${name.split(" ")[0]}, este` : "Este"} es tu código de acceso a FiveTap Business de *${b.name}* (${rol === "dueno" ? "dueño/a" : "gerente"}):\n\n*${rol === "dueno" ? codes.owner : codes.manager}*\n\nNo lo compartas: es solo para ti. — FiveTap`;
   const accessFor = [
     b.billing_phone && { who: b.billing_name ? b.billing_name.split(" ")[0]! : "quien paga", phone: b.billing_phone, name: b.billing_name, rol: "dueno" as const },
     b.manager_phone && { who: b.manager_name ? b.manager_name.split(" ")[0]! : "el gerente", phone: b.manager_phone, name: b.manager_name, rol: b.billing_phone ? ("gerente" as const) : ("dueno" as const) },
   ]
     .filter((x): x is { who: string; phone: string; name: string | null; rol: "dueno" | "gerente" } => Boolean(x))
     .filter((x, i, all) => all.findIndex((y) => y.phone === x.phone) === i)
-    .map((x) => ({ ...x, href: `https://wa.me/${x.phone}?text=${encodeURIComponent(access(x.name, x.rol))}` }));
+    .map((x) => ({ ...x, href: `https://wa.me/${x.phone}?text=${encodeURIComponent(access(x.name, x.rol))}`, codeHref: `https://wa.me/${x.phone}?text=${encodeURIComponent(codeText(x.name, x.rol))}` }));
   const isNew = sp.ok === "creado" || !stats?.scans_30d;
   const billing = billingState(b, payments);
   const plan = planLabel(b, billing.charge, tags.filter((t) => t.active).length, plans);
@@ -238,7 +242,10 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <div className="row msg-actions">
             <Link className="btn btn-dark btn-sm" href={`/admin/b/${b.id}/instalar`}>📲 Instalar en persona (QR)</Link>
             {accessFor.map((a) => (
-              <a key={a.phone} className="btn btn-ghost btn-sm" href={a.href} target="_blank" rel="noopener noreferrer">Enviar acceso a {a.who}</a>
+              <span key={a.phone} className="row" style={{ gap: 6 }}>
+                <a className="btn btn-ghost btn-sm" href={a.href} target="_blank" rel="noopener noreferrer">1 · Enviar enlace a {a.who}</a>
+                <a className="btn btn-ghost btn-sm" href={a.codeHref} target="_blank" rel="noopener noreferrer">2 · Enviar su código</a>
+              </span>
             ))}
             <CopyButton value={ownerLink} label="Copiar enlace" />
             <a className="btn btn-ghost btn-sm" href={ownerLink} target="_blank" rel="noreferrer">Ver como el dueño</a>
@@ -250,13 +257,27 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             )}
           </div>
           {!accessFor.length && <small className="muted">Agrega el WhatsApp del gerente o de quien paga (Editar datos) para enviarle el acceso con un toque.</small>}
-          {b.owner_pin_hash && (
-            <form action={clearOwnerPin} className="row">
-              <input type="hidden" name="business_id" value={b.id} />
-              <SubmitButton className="btn btn-ghost btn-sm" pending="Quitando…">Quitar PIN del dueño</SubmitButton>
-              <small className="muted">El local activó un PIN en su app. Quítalo solo si lo olvidaron.</small>
-            </form>
-          )}
+          <div className="access-codes">
+            <div>
+              <small className="muted">Código del dueño/a</small>
+              <b className="num">{codes.owner}</b>
+              <form action={renewAccessCode}>
+                <input type="hidden" name="business_id" value={b.id} />
+                <input type="hidden" name="role" value="owner" />
+                <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar</SubmitButton>
+              </form>
+            </div>
+            <div>
+              <small className="muted">Código del gerente</small>
+              <b className="num">{codes.manager}</b>
+              <form action={renewAccessCode}>
+                <input type="hidden" name="business_id" value={b.id} />
+                <input type="hidden" name="role" value="manager" />
+                <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar</SubmitButton>
+              </form>
+            </div>
+          </div>
+          <small className="muted">FiveTap Business pide uno de estos códigos la primera vez en cada celular: el enlace solo no basta. El del gerente no ve pagos ni la suscripción. Si cambias un código, los celulares que lo usaban lo vuelven a pedir.</small>
           <form action={resetOwnerLink} className="row">
             <input type="hidden" name="business_id" value={b.id} />
             <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar enlace privado</SubmitButton>

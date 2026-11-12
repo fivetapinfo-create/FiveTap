@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PinGate } from "@/components/PinGate";
-import { pinUnlocked } from "@/lib/owner-pin";
+import { AccessGate } from "@/components/AccessGate";
+import { accessRole } from "@/lib/access";
 import { notFound, redirect } from "next/navigation";
 import { BusinessLogo } from "@/components/BusinessLogo";
 import { Logo } from "@/components/Logo";
@@ -26,7 +26,8 @@ export default async function MonthlyReport({ params, searchParams }: Props) {
   const [{ token }, sp] = await Promise.all([params, searchParams]);
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
-  if (!(await pinUnlocked(b))) return <PinGate b={b} token={token} />;
+  const role = await accessRole(b);
+  if (!role) return <AccessGate b={b} token={token} />;
   const detail = businessDetail(b.id);
   const [d, report, snapshots] = await Promise.all([detail, reportData(b.id, detail.then((x) => x?.tags ?? [])), reviewSnapshots(b.id)]);
   if (!d) notFound();

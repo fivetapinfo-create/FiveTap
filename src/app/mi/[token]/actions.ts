@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { PIN_RE, hashPin, pinMatches, pinUnlocked, rememberPin } from "@/lib/owner-pin";
+import { accessRole, renewCode, unlock } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { db } from "@/lib/supabase";
 
@@ -11,7 +11,7 @@ export async function setMessageResolved(f: FormData) {
   const token = String(f.get("token") ?? "");
   const id = String(f.get("feedback_id") ?? "");
   const b = await businessByOwnerToken(token);
-  if (!b || !/^[0-9a-f-]{36}$/i.test(id) || !(await pinUnlocked(b))) return;
+  if (!b || !/^[0-9a-f-]{36}$/i.test(id) || !(await accessRole(b))) return;
   const now = new Date().toISOString();
   const resolved = f.get("resolved") === "1";
   const { error } = await db()
@@ -23,35 +23,23 @@ export async function setMessageResolved(f: FormData) {
   revalidatePath(`/mi/${token}`);
 }
 
-/** Checks the PIN and remembers it on this phone. A short pause slows down guessing. */
-export async function unlockPin(f: FormData) {
+/** Checks the access code and remembers it on this phone (as owner or manager). */
+export async function unlockAccess(f: FormData) {
   const token = String(f.get("token") ?? "");
-  const pin = String(f.get("pin") ?? "");
+  const code = String(f.get("code") ?? "").replace(/\D/g, "");
   const b = await businessByOwnerToken(token);
   if (!b) redirect("/");
-  if (!b.owner_pin_hash || pinMatches(pin, b.owner_pin_hash)) {
-    await rememberPin(b);
-    redirect(`/mi/${token}`);
-  }
-  await new Promise((r) => setTimeout(r, 1200));
-  redirect(`/mi/${token}?pin=mal`);
+  const r = await unlock(b, code);
+  if (r.ok) redirect(`/mi/${token}?rol=${r.role === "manager" ? "gerente" : "dueno"}${f.get("instalar") === "1" ? "&instalar=1" : ""}`);
+  await new Promise((res) => setTimeout(res, 1000));
+  redirect(`/mi/${token}?acceso=${r.locked ? "bloqueado" : "mal"}${f.get("instalar") === "1" ? "&instalar=1" : ""}`);
 }
 
-/** Sets, changes or removes the app's PIN from Configuración (only reachable once unlocked). */
-export async function savePin(f: FormData) {
+/** The owner gives the manager a new code (e.g. the manager left). Only the owner can. */
+export async function renewManagerCode(f: FormData) {
   const token = String(f.get("token") ?? "");
   const b = await businessByOwnerToken(token);
-  if (!b || !(await pinUnlocked(b))) redirect("/");
-  const back = `/mi/${token}/ajustes`;
-  if (f.get("remove") === "1") {
-    await db().from("businesses").update({ owner_pin_hash: null }).eq("id", b.id);
-    redirect(`${back}?ok=pin-quitado#pin`);
-  }
-  const pin = String(f.get("pin") ?? "");
-  if (!PIN_RE.test(pin)) redirect(`${back}?error=pin#pin`);
-  const owner_pin_hash = hashPin(pin);
-  const { error } = await db().from("businesses").update({ owner_pin_hash }).eq("id", b.id);
-  if (error) redirect(`${back}?error=guardar#pin`);
-  await rememberPin({ ...b, owner_pin_hash });
-  redirect(`${back}?ok=pin#pin`);
+  if (!b || (await accessRole(b)) !== "owner") redirect("/");
+  await renewCode(b, "manager");
+  redirect(`/mi/${token}/ajustes?ok=codigo#acceso`);
 }

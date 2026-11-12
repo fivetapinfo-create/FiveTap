@@ -30,8 +30,12 @@ export type Business = {
   mode: "full" | "google";
   /** Google Place ID ("ChIJ…"), used to read the review count from Google. */
   google_place_id: string | null;
-  /** Optional PIN for the owner app (hash); null means the private link is enough. */
-  owner_pin_hash: string | null;
+  /** FiveTap Business access codes (owner and manager), encrypted. */
+  owner_code_enc: string | null;
+  manager_code_enc: string | null;
+  /** Wrong codes in a row, and until when the app is locked after too many. */
+  access_fails: number;
+  access_locked_until: string | null;
   created_at: string;
 };
 

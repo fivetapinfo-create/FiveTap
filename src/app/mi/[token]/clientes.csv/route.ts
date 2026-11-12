@@ -1,4 +1,4 @@
-import { pinUnlocked } from "@/lib/owner-pin";
+import { accessRole } from "@/lib/access";
 import { billingState } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail, contactsFor } from "@/lib/data";
 import { contactsCsv } from "@/lib/contacts-csv";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
   const b = await businessByOwnerToken((await params).token);
   if (!b) return new Response("No encontrado", { status: 404 });
-  if (!(await pinUnlocked(b))) return new Response("Abre FiveTap Business y escribe tu PIN para descargar tu club.", { status: 403 });
+  if (!(await accessRole(b))) return new Response("Abre FiveTap Business y escribe tu código de acceso para descargar tu club.", { status: 403 });
   const [d, contacts] = await Promise.all([businessDetail(b.id), contactsFor(b.id)]);
   const billing = billingState(b, d?.payments ?? []);
   if (billing.kind === "suspended" || billing.kind === "paused" || billing.kind === "ended") return new Response("Servicio pausado: ponte al día con tu pago para descargar tu club.", { status: 403 });

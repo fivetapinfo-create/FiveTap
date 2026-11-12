@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PinGate } from "@/components/PinGate";
-import { pinUnlocked } from "@/lib/owner-pin";
+import { AccessGate } from "@/components/AccessGate";
+import { accessRole } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
 import { BusinessLogo } from "@/components/BusinessLogo";
@@ -22,7 +22,7 @@ import { dateTime } from "../../admin/format";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ rol?: string; instalar?: string; app?: string; pin?: string }> };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ rol?: string; instalar?: string; app?: string; acceso?: string }> };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const [{ token }, sp] = await Promise.all([params, searchParams]);
@@ -45,7 +45,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const [{ token }, sp] = await Promise.all([params, searchParams]);
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
-  if (!(await pinUnlocked(b))) return <PinGate b={b} token={token} wrong={sp.pin === "mal"} />;
+  const role = await accessRole(b);
+  if (!role) return <AccessGate b={b} token={token} error={sp.acceso} install={sp.instalar === "1"} />;
   // Everything at once: one round trip after finding the venue.
   const [d, contacts, snapshots, report] = await Promise.all([businessDetail(b.id), contactsFor(b.id), reviewSnapshots(b.id), reportData(b.id)]);
   if (!d) notFound();
@@ -159,7 +160,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           <a href="#placas">Placas</a>
           <a href="#club">Club</a>
           <Link href={`/mi/${token}/reporte`}>Reporte</Link>
-          <Link href={`/mi/${token}/pagos`}>Pagos</Link>
+          {role === "owner" && <Link href={`/mi/${token}/pagos`}>Pagos</Link>}
         </nav>
 
         <AppSetup
@@ -171,10 +172,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           ]}
           guided={sp.instalar === "1"}
           compactWhenOn
-          initialRole={sp.rol === "gerente" ? "manager" : sp.rol === "dueno" ? "owner" : undefined}
+          initialRole={role}
           roles={[
-            { value: "owner", label: "Soy dueño/a", hint: "Recibes todo, incluidos los recordatorios de pago." },
-            { value: "manager", label: "Gerente, supervisor/a o encargado/a", hint: "Recibes los mensajes de clientes y el resumen diario. Sin recordatorios de pago." },
+            role === "owner"
+              ? { value: "owner", label: "Dueño/a", hint: "Recibes todo, incluidos los recordatorios de pago." }
+              : { value: "manager", label: "Gerente", hint: "Recibes los mensajes de clientes y el resumen diario. Sin recordatorios de pago." },
           ]}
         />
 
@@ -241,7 +243,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
 
         <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} business={b.name} />
 
-        {charge && b.status !== "canceled" && (
+        {role === "owner" && charge && b.status !== "canceled" && (
           <section className="panel" id="plan">
             <div className="panel-head">
               <h2>Tu plan</h2>

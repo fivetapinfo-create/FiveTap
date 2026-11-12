@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PinGate } from "@/components/PinGate";
-import { pinUnlocked } from "@/lib/owner-pin";
-import { notFound } from "next/navigation";
+import { AccessGate } from "@/components/AccessGate";
+import { accessRole } from "@/lib/access";
+import { notFound, redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { BILLING_LABEL, billingState, human, planLabel } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail } from "@/lib/data";
@@ -32,7 +32,10 @@ export default async function OwnerBilling({ params }: Props) {
   const { token } = await params;
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
-  if (!(await pinUnlocked(b))) return <PinGate b={b} token={token} />;
+  const role = await accessRole(b);
+  if (!role) return <AccessGate b={b} token={token} />;
+  // Payments are the owner's: the manager goes back to the summary.
+  if (role !== "owner") redirect(`/mi/${token}`);
   const [d, receipts, plans] = await Promise.all([businessDetail(b.id), receiptsForBusiness(b.id), getPlans()]);
   if (!d) notFound();
   const billing = billingState(b, d.payments);

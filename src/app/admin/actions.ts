@@ -12,6 +12,7 @@ import { TEST_ACTIVE_DAYS } from "@/lib/test-kit";
 import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot, snapshotFromGoogle } from "@/lib/data";
 import { placesReady } from "@/lib/places";
+import { renewCode } from "@/lib/access";
 import { sendPush } from "@/lib/push";
 import { audit, deliverReceipt, issueReceipt } from "@/lib/receipts";
 import { db } from "@/lib/supabase";
@@ -456,13 +457,15 @@ export async function testOwnerPush(f: FormData) {
 }
 
 /** New private link for the venue: the old one stops working and its phones stop getting notifications. */
-/** The owner forgot their PIN: the private link opens the app directly again. */
-export async function clearOwnerPin(f: FormData) {
+/** A new access code for the owner or the manager; phones that used the old one ask again. */
+export async function renewAccessCode(f: FormData) {
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
-    const { error } = await db().from("businesses").update({ owner_pin_hash: null }).eq("id", id);
+    const { data, error } = await db().from("businesses").select("id, owner_token, owner_code_enc, manager_code_enc").eq("id", id).single();
     if (error) throw new Error(error.message);
+    await renewCode(data, str(f, "role", 10) === "owner" ? "owner" : "manager");
+    await audit("access.code_renewed", { businessId: id, entity: "business", entityId: id, details: { role: str(f, "role", 10) } });
   } catch (e) {
     fail(back, e);
   }

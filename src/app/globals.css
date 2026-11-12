@@ -868,3 +868,11 @@ html[data-theme="dark"] .admin .app-inapp { background: rgba(212, 175, 55, 0.14)
 .promo { display: grid; gap: 12px; }
 .promo-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 340px; overflow-y: auto; }
 .promo-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+
+/* Founder panel: the venue's two access codes */
+.access-codes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.access-codes > div { display: grid; gap: 4px; justify-items: start; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 12px 14px; }
+.access-codes b { font-size: 24px; letter-spacing: 0.12em; }
+.install-access { font-size: 18px; }
+.install-access b { letter-spacing: 0.12em; font-size: 24px; }
+@media (max-width: 480px) { .access-codes { grid-template-columns: 1fr; } }

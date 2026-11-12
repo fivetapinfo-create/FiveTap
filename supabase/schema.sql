@@ -508,5 +508,10 @@ alter table review_snapshots drop constraint if exists review_snapshots_source_c
 alter table review_snapshots add constraint review_snapshots_source_check check (source in ('manual', 'google'));
 -- A private message is new (read_at null), seen, or resolved.
 alter table feedback add column if not exists resolved_at timestamptz;
--- Optional 4-digit PIN for the owner app (scrypt hash); null means no PIN.
-alter table businesses add column if not exists owner_pin_hash text;
+-- FiveTap Business is private: an owner code and a manager code (6 digits, AES-GCM
+-- encrypted with a key derived from the service-role key), and a lock after 5 wrong tries.
+alter table businesses add column if not exists owner_code_enc text;
+alter table businesses add column if not exists manager_code_enc text;
+alter table businesses add column if not exists access_fails int not null default 0;
+alter table businesses add column if not exists access_locked_until timestamptz;
+alter table businesses drop column if exists owner_pin_hash;
