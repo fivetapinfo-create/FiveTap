@@ -60,7 +60,7 @@ export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[
             {plans.filter((p) => p.active || p.key === current).map((p) => (
               <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {p.plaques} placas + {p.cards} tarjetas</option>
             ))}
-            <option value="test">FiveTap Test · 7 días (luego elige su plan)</option>
+            <option value="test">FiveTap Test · 30 días, se cierra solo el día 29</option>
             <option value="">Personalizado (sin plan)</option>
           </select>
         </label>

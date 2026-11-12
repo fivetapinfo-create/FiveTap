@@ -114,7 +114,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
 
         {billing.kind === "trial" && billing.suspendsOn && (
           <a className="alert alert-ok glance-alert" href={`/empezar?n=${encodeURIComponent(b.name)}`}>
-            <b>Estás en tu prueba de 7 días</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Elige tu plan para seguir sin pausa →
+            <b>Estás en FiveTap Test</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Elige tu plan para seguir sin pausa →
           </a>
         )}
 

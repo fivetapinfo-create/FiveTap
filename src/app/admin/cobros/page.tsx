@@ -15,8 +15,8 @@ const HINT: Partial<Record<BillingKind, string>> = {
   late: "En los 5 días de gracia: todo sigue funcionando hasta la fecha de pausa.",
   soon: "Vencen en 3 días o menos.",
   paused: "Pausados a mano en Editar datos. No reciben recordatorios.",
-  trial: "FiveTap Test: prueba de 7 días. Al terminar se pausan hasta que elijan un plan.",
-  ended: "Terminó su prueba de 7 días: ofréceles un plan.",
+  trial: "FiveTap Test: válido 30 días, se cierra solo el día 29. Luego se pausan hasta que elijan un plan.",
+  ended: "Terminó su FiveTap Test: ofréceles un plan.",
   ok: "Al día.",
 };
 

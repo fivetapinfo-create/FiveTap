@@ -105,7 +105,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
 
       {(billing.kind === "trial" || billing.kind === "ended") && billing.suspendsOn && (
         <p className={`alert ${billing.kind === "ended" ? "alert-error" : "alert-warn"}`} role="status">
-          <b>{billing.kind === "ended" ? "Terminó su prueba de 7 días" : "FiveTap Test · prueba de 7 días"}</b>
+          <b>{billing.kind === "ended" ? "Terminó su FiveTap Test" : "FiveTap Test · válido 30 días"}</b>
           {" "}· {billing.kind === "ended" ? `Sus placas están pausadas desde el ${human(billing.suspendsOn)}.` : `Último día: ${human(addDays(billing.suspendsOn, -1))}. Al día siguiente se pausa sola.`}
           {" "}Cuando elija su plan, cámbialo en <b>Editar datos → Plan</b> y registra su primer pago.
         </p>

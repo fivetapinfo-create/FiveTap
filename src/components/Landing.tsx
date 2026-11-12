@@ -6,7 +6,7 @@ import { Bell, Chart, Check, Gift, Pin, Reply, Shield, Tap } from "./Icons";
 import { COPY } from "@/lib/i18n";
 import { salesWhatsAppUrl } from "@/lib/site";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_PIECES, founderWhatsApp } from "@/lib/test-kit";
+import { FOUNDER_PHONE, MINI_EXTRA_CARD, MINI_INCLUDES, MINI_KITS, TEST_PIECES, founderWhatsApp } from "@/lib/test-kit";
 import { VERTICALS, type Vertical } from "@/lib/verticals";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
@@ -169,19 +169,19 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
           <div className="container">
             <div className="section-head">
               <span className="kicker eyebrow-caps">Planes</span>
-              <h2>Pruébalo 7 días o elige tu plan.</h2>
+              <h2>Pruébalo 30 días o elige tu plan.</h2>
               <p className="muted">Precios de lanzamiento. Los planes son mensuales e incluyen placas NFC para mesas, tarjetas NFC para meseros con su cordón y FiveTap Business.</p>
             </div>
             <div className="test-kit">
               <div className="test-kit-head">
                 <h3>FiveTap Test</h3>
-                <p className="muted">Prueba FiveTap 7 días con una sola pieza. Al terminar, la prueba se cierra y eliges tu plan.</p>
+                <p className="muted">Una sola pieza, válida por 30 días. Se cierra sola al terminar y eliges tu plan, sin cobros sorpresa.</p>
               </div>
               <div className="test-kit-items">
                 {TEST_PIECES.map((t) => (
-                  <a key={t.key} className="test-piece" href={founderWhatsApp(`Hola, quiero FiveTap Test de 7 días: ${t.name} ($${t.monthly}) para mi ${kind}.`)}>
+                  <a key={t.key} className="test-piece" href={founderWhatsApp(`Hola, quiero FiveTap Test de 30 días: ${t.name} ($${t.monthly}) para mi ${kind}.`)}>
                     <span><b>{t.name}</b><small>{t.detail}</small></span>
-                    <span className="num">{usd(t.monthly)}<small> · 7 días</small></span>
+                    <span className="num">{usd(t.monthly)}<small> · 30 días</small></span>
                   </a>
                 ))}
               </div>
@@ -210,6 +210,29 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
               ))}
             </div>
             {plans.length === 0 && <a className="btn btn-dark" href={talk}>Pide tu plan por WhatsApp</a>}
+            <div className="mini-kit" id="mini">
+              <div className="mini-head">
+                <span className="mini-tag">Exclusivo</span>
+                <h3>FiveTap Mini</h3>
+                <p className="muted">Para cafeterías, barras, mostradores y locales con pocas mesas: de 1 a 5 placas NFC con FiveTap Business. Pago mensual.</p>
+              </div>
+              <div className="mini-kits">
+                {MINI_KITS.map((k) => (
+                  <a key={k.key} className={`mini-card${"best" in k && k.best ? " best" : ""}`} href={founderWhatsApp(`Hola, quiero FiveTap ${k.name} (${k.plaques} ${k.plaques === 1 ? "placa" : "placas"}, $${k.monthly} al mes) para mi ${kind}.`)}>
+                    <span className="mini-name">{k.name}{"best" in k && k.best ? <em>Mejor precio</em> : null}</span>
+                    <b className="num">{usd(k.monthly)}<small> / mes</small></b>
+                    <small>{k.plaques === 1 ? "1 placa NFC" : `${k.plaques} placas · $${(k.monthly / k.plaques).toFixed(2)} c/u`}</small>
+                  </a>
+                ))}
+              </div>
+              <ul className="ticks mini-includes">
+                {MINI_INCLUDES.map((t) => <li key={t}><Check />{t}</li>)}
+              </ul>
+              <p className="muted mini-note">
+                Tarjeta NFC para mesero con cordón: +{usd(MINI_EXTRA_CARD)} al mes cada una, hasta 2 por local. ¿6 mesas o más? Te conviene FiveTap Start.
+              </p>
+            </div>
+
             <p className="muted pieces-note">
               Empiezas con un contrato de 3 meses para comprobar los resultados; luego sigues mes a mes, sin permanencia anual. Las placas y tarjetas son de FiveTap y funcionan mientras tu plan esté activo. ¿Necesitas más piezas o algo especial? <a href={talk} style={{ textDecoration: "underline" }}>Te lo cotizamos</a>.
             </p>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { REPLACEMENT_FEE, money } from "@/lib/contract";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_PIECES } from "@/lib/test-kit";
+import { FOUNDER_PHONE, MINI_EXTRA_CARD, MINI_KITS, TEST_PIECES } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
@@ -26,8 +26,12 @@ export default async function Terms() {
           </li>
         ))}
         {TEST_PIECES.map((t) => (
-          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)} por una prueba de 7 días, {t.detail.replace(" + FiveTap Business", "")} con FiveTap Business. Al terminar, la prueba se cierra y el local elige un plan para seguir.</li>
+          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)}, válido por 30 días, {t.detail.replace(" + FiveTap Business", "")} con FiveTap Business. Se cancela solo al terminar el día 29 y el local elige un plan para seguir.</li>
         ))}
+        <li>
+          <b>FiveTap Mini</b> (locales pequeños, con FiveTap Business):{" "}
+          {MINI_KITS.map((k) => `${k.name} ${money(k.monthly)}`).join(" · ")} al mes. Tarjeta de mesero con cordón: +{money(MINI_EXTRA_CARD)} al mes cada una.
+        </li>
         <li><b>Más de 4 piezas, una cantidad específica, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
       </ul>
       <p>Todos los planes son mensuales. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>

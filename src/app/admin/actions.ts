@@ -8,7 +8,7 @@ import { normalizePhone } from "@/lib/phone";
 import { reviewUrlFrom } from "@/lib/site";
 import { addDays, todayPanama } from "@/lib/agenda";
 import { AGREEMENT_METHODS, SIGNER_ROLES, endOf } from "@/lib/agreement";
-import { TEST_DAYS } from "@/lib/test-kit";
+import { TEST_ACTIVE_DAYS } from "@/lib/test-kit";
 import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot } from "@/lib/data";
 import { sendPush } from "@/lib/push";
@@ -107,7 +107,7 @@ export async function createBusiness(f: FormData) {
         plan_key: plan?.key ?? null,
         mode: str(f, "mode", 10) === "google" ? "google" : "full",
         status: isTest ? "trial" : "active",
-        trial_ends_at: isTest ? addDays(todayPanama(), TEST_DAYS - 1) : null,
+        trial_ends_at: isTest ? addDays(todayPanama(), TEST_ACTIVE_DAYS - 1) : null,
       })
       .select("id")
       .single();
@@ -152,7 +152,7 @@ export async function updateBusiness(f: FormData) {
     // FiveTap Test ↔ plan: picking a plan ends the test (active); picking Test starts 7 days.
     if (str(f, "plan_key", 30) === "test") {
       patch.status = "trial";
-      if (!patch.trial_ends_at) patch.trial_ends_at = addDays(todayPanama(), TEST_DAYS - 1);
+      if (!patch.trial_ends_at) patch.trial_ends_at = addDays(todayPanama(), TEST_ACTIVE_DAYS - 1);
     } else if (patch.status === "trial") {
       patch.status = "active";
       patch.trial_ends_at = null;

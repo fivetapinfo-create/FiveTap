@@ -44,7 +44,7 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
   const charge = nextCharge(b, payments);
   const today = todayPanama();
   const home = `/mi/${token}`;
-  const planName = b.mode === "google" ? "Piezas sin plan (directo a Google)" : charge?.kind === "annual" ? "Plan anual" : b.status === "trial" ? "Prueba gratis 7 días" : "Plan mensual";
+  const planName = b.mode === "google" ? "Piezas sin plan (directo a Google)" : charge?.kind === "annual" ? "Plan anual" : b.status === "trial" ? "FiveTap Test" : "Plan mensual";
   const canceled = b.status === "canceled";
   const help = (msg: string) => salesWhatsAppUrl(`Hola, soy de ${b.name}. ${msg}`);
 

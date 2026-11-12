@@ -271,7 +271,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
           title: `Hoy es el último día de la prueba de ${b.name}`,
           detail: "Mañana se pausa sola. Revisa con el dueño sus resultados y ayúdale a elegir su plan.",
           businessId: b.id,
-          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Hoy es el último día de tu prueba de 7 días. ¿Revisamos tus resultados y eliges el plan que más te conviene? ${SITE_URL}${empezar}`),
+          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Hoy es el último día de tu FiveTap Test. ¿Revisamos tus resultados y eliges el plan que más te conviene? ${SITE_URL}${empezar}`),
           push: { title: `Hoy termina tu prueba · ${b.name}`, body: "Mira cuántos clientes fueron a dejarte reseña y elige tu plan para seguir mañana sin pausa.", url: empezar },
         });
       }
@@ -284,7 +284,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
           title: `Terminó la prueba de ${b.name}: ofrécele un plan`,
           detail: `Sus placas están pausadas desde el ${human(endsOn)}. Cuando elija su plan, cámbialo en Editar datos y registra su primer pago.`,
           businessId: b.id,
-          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Tu prueba de 7 días terminó. Elige tu plan y tus placas vuelven a funcionar el mismo día: ${SITE_URL}${empezar}`),
+          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Tu FiveTap Test terminó. Elige tu plan y tus placas vuelven a funcionar el mismo día: ${SITE_URL}${empezar}`),
           push: from === endsOn ? { title: `Tu prueba terminó · ${b.name}`, body: "Tus placas están en pausa. Elige tu plan y vuelven a funcionar el mismo día.", url: empezar } : undefined,
         });
       }

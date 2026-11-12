@@ -33,7 +33,7 @@ export function PausedScreen({ b, billing, token, plan }: { b: Business; billing
         </div>
 
         <section className="owner-hero">
-          <span>{ended ? "Tu prueba de 7 días terminó" : unpaid ? "Tu servicio está pausado por un pago pendiente" : "Tu servicio está pausado"}</span>
+          <span>{ended ? "Tu prueba de FiveTap Test terminó" : unpaid ? "Tu servicio está pausado por un pago pendiente" : "Tu servicio está pausado"}</span>
           {unpaid && billing.charge && <b className="num">{money(billing.charge.amount)}</b>}
           <p>
             {ended

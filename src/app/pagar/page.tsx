@@ -4,7 +4,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
 import { AcceptedPayments, Amex, Bank, Mastercard, PayPal, Visa, Yappy } from "@/components/PaymentBadges";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_PIECES } from "@/lib/test-kit";
+import { FOUNDER_PHONE, MINI_KITS, TEST_PIECES } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Pagar — FiveTap", robots: { index: false } };
@@ -18,8 +18,9 @@ const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 export default async function Pay({ searchParams }: Props) {
   const [{ n }, plans] = await Promise.all([searchParams, activePlans()]);
   const PLANS = [
-    ...TEST_PIECES.map((t) => ({ name: `FiveTap Test · ${t.name}`, note: `Prueba de 7 días · ${t.detail}. Luego eliges tu plan`, price: usd(t.monthly) })),
+    ...TEST_PIECES.map((t) => ({ name: `FiveTap Test · ${t.name}`, note: `Válido 30 días · ${t.detail}. Se cierra solo y eliges tu plan`, price: usd(t.monthly) })),
     ...plans.map((p) => ({ name: p.name, note: `Cada mes · ${planPieces(p).join(" · ")} · FiveTap Business`, price: `${usd(p.monthly)}/mes` })),
+    ...MINI_KITS.map((k) => ({ name: `FiveTap ${k.name}`, note: `Cada mes · ${k.plaques === 1 ? "1 placa NFC" : `${k.plaques} placas NFC`} + FiveTap Business`, price: `${usd(k.monthly)}/mes` })),
     { name: "Más de 4 piezas o una cantidad específica", note: `Cotiza con el Founder de FiveTap: ${FOUNDER_PHONE}`, price: "Cotizar" },
   ];
   const business = n?.slice(0, 80);
