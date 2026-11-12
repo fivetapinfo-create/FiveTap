@@ -9,7 +9,8 @@ export type InstallRole = "dueno" | "gerente";
 export const installUrl = (ownerToken: string, role: InstallRole) => `${SITE_URL}/mi/${ownerToken}?instalar=1&rol=${role}`;
 
 /**
- * The install QR with the FiveTap mark in the middle. High error correction (30%) keeps it
+ * The install QR with the FiveTap Business mark in the middle (black on white, like the
+ * venue app's icon, not the founder's black one). High error correction (30%) keeps it
  * readable with the mark covering the center, and a 4-module quiet zone lets any phone
  * camera (iPhone and Android) find it fast. Black on white, as scanners expect.
  */
@@ -29,7 +30,7 @@ export async function installQrSvg(url: string) {
 <rect width="${size}" height="${size}" fill="#ffffff"/>
 <path d="${dots}" fill="#0a0a0a"/>
 <rect x="${bx - 0.6}" y="${bx - 0.6}" width="${badge + 1.2}" height="${badge + 1.2}" rx="${badge * 0.26}" fill="#ffffff" shape-rendering="geometricPrecision"/>
-<rect x="${bx}" y="${bx}" width="${badge}" height="${badge}" rx="${badge * 0.22}" fill="#0a0a0a" shape-rendering="geometricPrecision"/>
-<svg x="${mx}" y="${mx}" width="${mark}" height="${mark}" viewBox="0 0 100 100" shape-rendering="geometricPrecision"><path d="${MARK_PATH}" fill="#ffffff"/></svg>
+<rect x="${bx + 0.25}" y="${bx + 0.25}" width="${badge - 0.5}" height="${badge - 0.5}" rx="${badge * 0.22}" fill="#ffffff" stroke="#0a0a0a" stroke-width="0.5" shape-rendering="geometricPrecision"/>
+<svg x="${mx}" y="${mx}" width="${mark}" height="${mark}" viewBox="0 0 100 100" shape-rendering="geometricPrecision"><path d="${MARK_PATH}" fill="#0a0a0a"/></svg>
 </svg>`;
 }

@@ -39,8 +39,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     (
       <div style={{ width: "100%", height: "100%", background: "#f6f5f1", display: "flex", flexDirection: "column", padding: 64, fontFamily: "Satoshi" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 14, background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg viewBox="0 0 100 100" width={34} height={34}><path d={MARK_PATH} fill="#ffffff" /></svg>
+          <div style={{ width: 56, height: 56, borderRadius: 14, background: "#ffffff", border: "2px solid #0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg viewBox="0 0 100 100" width={32} height={32}><path d={MARK_PATH} fill="#0a0a0a" /></svg>
           </div>
           <div style={{ fontSize: 36, fontWeight: 700, color: "#0a0a0a", letterSpacing: -1 }}>FiveTap Business</div>
         </div>
