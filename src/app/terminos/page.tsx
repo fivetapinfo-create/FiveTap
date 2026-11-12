@@ -26,7 +26,7 @@ export default async function Terms() {
           </li>
         ))}
         {TEST_PIECES.map((t) => (
-          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)}, válido por 30 días, {t.detail.replace(" + FiveTap Business", "")} con FiveTap Business. Se cancela solo al terminar el día 29 y el local elige un plan para seguir.</li>
+          <li key={t.key}><b>FiveTap Test · {t.name}:</b> {money(t.monthly)}, válido por 30 días: {t.detail}. Se cancela solo al terminar el día 29 y el local elige un plan para seguir.</li>
         ))}
         <li>
           <b>FiveTap Mini</b> (locales pequeños, con FiveTap Business):{" "}

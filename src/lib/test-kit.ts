@@ -8,8 +8,9 @@ export const TEST_DAYS = 30;
 export const TEST_ACTIVE_DAYS = 29;
 
 export const TEST_PIECES = [
-  { key: "test-placa", name: "Placa de reseñas", detail: "1 placa NFC grande + FiveTap Business", monthly: 40 },
-  { key: "test-mesero", name: "Tarjeta de mesero", detail: "1 tarjeta NFC con cordón + FiveTap Business", monthly: 25 },
+  { key: "test-placa-sola", name: "Placa de reseñas", detail: "1 placa NFC grande, directo a tu Google · sin FiveTap Business", monthly: 35, business: false },
+  { key: "test-placa", name: "Placa de reseñas + app", detail: "1 placa NFC grande + FiveTap Business", monthly: 40, business: true },
+  { key: "test-mesero", name: "Tarjeta de mesero", detail: "1 tarjeta NFC con cordón + FiveTap Business", monthly: 30, business: true },
 ] as const;
 
 /** The founder's WhatsApp for quotes, as people read it and as wa.me needs it. */

@@ -751,7 +751,8 @@ a.kpi { color: inherit; }
 .test-kit { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 28px; padding: 28px; display: grid; gap: 16px; margin-bottom: 20px; }
 .test-kit-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 .test-kit-head h3 { font-size: 22px; }
-.test-kit-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.test-kit-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 960px) { .test-kit-items { grid-template-columns: 1fr; } }
 .test-piece { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid var(--line-strong); border-radius: 18px; color: inherit; transition: border-color 150ms ease; }
 .test-piece:hover { border-color: var(--ink); }
 .test-piece > span:first-child { display: grid; gap: 2px; min-width: 0; }

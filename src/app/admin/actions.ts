@@ -75,7 +75,8 @@ export async function createBusiness(f: FormData) {
   // The plan sets the price and how many table plaques and waiter cards to create;
   // each one can be changed in the form (an empty field means "the plan's").
   // FiveTap Test: 7 days with one piece and no monthly fee; then it pauses until a plan is picked.
-  const isTest = str(f, "plan_key", 30) === "test";
+  const isTest = str(f, "plan_key", 30).startsWith("test");
+  const noApp = str(f, "plan_key", 30) === "test-google";
   const plan = isTest ? null : await planByKey(str(f, "plan_key", 30));
   const spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? (isTest ? 1 : plan?.plaques ?? 10) : num(f, "spots", 10)), 0), 80);
   const cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? (isTest ? 0 : plan?.cards ?? 0) : num(f, "cards", 0)), 0), 40);
@@ -105,7 +106,8 @@ export async function createBusiness(f: FormData) {
         setup_fee: num(f, "setup_fee", 0),
         monthly_fee: fee,
         plan_key: plan?.key ?? null,
-        mode: str(f, "mode", 10) === "google" ? "google" : "full",
+        // Without FiveTap Business the plaque goes straight to Google.
+        mode: noApp || str(f, "mode", 10) === "google" ? "google" : "full",
         status: isTest ? "trial" : "active",
         trial_ends_at: isTest ? addDays(todayPanama(), TEST_ACTIVE_DAYS - 1) : null,
       })
@@ -142,7 +144,7 @@ export async function updateBusiness(f: FormData) {
       billing_email: email(opt(f, "billing_email", 120)),
       status: str(f, "status", 20),
       setup_fee: num(f, "setup_fee", 0),
-      monthly_fee: str(f, "plan_key", 30) === "test" ? 0 : str(f, "monthly_fee") === "" ? (await planByKey(str(f, "plan_key", 30)))?.monthly ?? 129 : num(f, "monthly_fee", 129),
+      monthly_fee: str(f, "plan_key", 30).startsWith("test") ? 0 : str(f, "monthly_fee") === "" ? (await planByKey(str(f, "plan_key", 30)))?.monthly ?? 129 : num(f, "monthly_fee", 129),
       plan_key: (await planByKey(str(f, "plan_key", 30)))?.key ?? null,
       mode: str(f, "mode", 10) === "google" ? "google" : "full",
       trial_ends_at: opt(f, "trial_ends_at", 10),
@@ -150,12 +152,17 @@ export async function updateBusiness(f: FormData) {
     };
     if (!patch.name || !str(f, "review")) throw new Error("Nombre y Google son obligatorios.");
     // FiveTap Test ↔ plan: picking a plan ends the test (active); picking Test starts 7 days.
-    if (str(f, "plan_key", 30) === "test") {
+    if (str(f, "plan_key", 30).startsWith("test")) {
+      patch.mode = str(f, "plan_key", 30) === "test-google" ? "google" : "full";
       patch.status = "trial";
       if (!patch.trial_ends_at) patch.trial_ends_at = addDays(todayPanama(), TEST_ACTIVE_DAYS - 1);
-    } else if (patch.status === "trial") {
-      patch.status = "active";
-      patch.trial_ends_at = null;
+    } else {
+      // A real plan always comes with FiveTap Business.
+      if (patch.plan_key) patch.mode = "full";
+      if (patch.status === "trial") {
+        patch.status = "active";
+        patch.trial_ends_at = null;
+      }
     }
     const logo = await uploadLogo(f.get("logo"), id.slice(0, 8));
     if (logo) patch.logo_url = logo;
