@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BusinessLogo } from "@/components/BusinessLogo";
+import { FileText, Globe, Layers, Plus, ReceiptIcon, Wallet } from "@/components/Icons";
 import { BILLING_LABEL, agenda, billingAll, todayPanama } from "@/lib/agenda";
 import { listBusinesses, unreadCount } from "@/lib/data";
 import { getPlans, planOf } from "@/lib/plans";
@@ -76,12 +77,12 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       </section>
 
       <nav className="home-actions" aria-label="Acciones rápidas">
-        <Link href="/admin/new"><b>＋</b>Nuevo negocio</Link>
-        <Link href="/admin/cobros"><b>💵</b>Cobros</Link>
-        <Link href="/admin/contratos"><b>📝</b>Contratos</Link>
-        <Link href="/admin/comprobantes"><b>🧾</b>Comprobantes</Link>
-        <Link href="/admin/planes"><b>📦</b>Planes</Link>
-        <a href={SITE_URL} target="_blank" rel="noreferrer"><b>🌐</b>Ver mi web</a>
+        <Link href="/admin/new"><Plus />Nuevo negocio</Link>
+        <Link href="/admin/cobros"><Wallet />Cobros</Link>
+        <Link href="/admin/contratos"><FileText />Contratos</Link>
+        <Link href="/admin/comprobantes"><ReceiptIcon />Comprobantes</Link>
+        <Link href="/admin/planes"><Layers />Planes</Link>
+        <a href={SITE_URL} target="_blank" rel="noreferrer"><Globe />Ver mi web</a>
       </nav>
 
       <section className="panel" id="negocios">

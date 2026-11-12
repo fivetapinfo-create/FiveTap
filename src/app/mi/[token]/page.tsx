@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AccessGate } from "@/components/AccessGate";
+import { Chart, Chat, Gear, Home, Users } from "@/components/Icons";
 import { accessRole } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
@@ -73,7 +74,6 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   // Waiters ranked by guests sent to Google; table plaques by taps.
   const waiters = tags.filter(isWaiter).map(row).sort(byReviews);
   const tables = tags.filter((t) => !isWaiter(t)).map(row).sort(byScans);
-  const MEDALS = ["🥇", "🥈", "🥉"];
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
   const charge = nextCharge(b, payments);
@@ -206,7 +206,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <ol className="team">
               {waiters.map((t, i) => (
                 <li key={t.id}>
-                  <span className="team-medal" aria-hidden>{t.reviews > 0 ? MEDALS.at(i) ?? `${i + 1}.` : `${i + 1}.`}</span>
+                  <span className={`team-rank num${t.reviews > 0 && i < 3 ? " top" : ""}`} aria-label={`Puesto ${i + 1}`}>{i + 1}</span>
                   <b>{t.label}</b>
                   {!t.active && <span className="muted"> · desactivada</span>}
                   <span className="team-num num">{t.reviews} <small>a Google</small></span>
@@ -230,7 +230,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
                 <tbody>
                   {tables.map((t) => (
                     <tr key={t.id}>
-                      <td><b>{t.label}</b> {best > 0 && t.scans === best && "🏆"}{!t.active && <span className="muted"> · desactivada</span>}</td>
+                      <td><b>{t.label}</b>{best > 0 && t.scans === best && <span className="msg-state seen" style={{ marginLeft: 8 }}>Más usada</span>}{!t.active && <span className="muted"> · desactivada</span>}</td>
                       <td className="right num">{t.scans}</td>
                       <td className="right num">{t.reviews}</td>
                     </tr>
@@ -273,11 +273,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
 
       {/* App-style bar: the four places the owner goes, always at hand. */}
       <nav className="owner-tabs" aria-label="Secciones">
-        <a href="#inicio"><span aria-hidden>🏠</span>Inicio</a>
-        <a href="#mensajes"><span aria-hidden>💬</span>Mensajes{pending.length > 0 && <i className="num">{pending.length}</i>}</a>
-        <a href="#club"><span aria-hidden>🎁</span>Club</a>
-        <Link href={`/mi/${token}/reporte`}><span aria-hidden>📊</span>Reporte</Link>
-        <Link href={`/mi/${token}/ajustes`}><span aria-hidden>⚙️</span>Ajustes</Link>
+        <a href="#inicio"><Home />Inicio</a>
+        <a href="#mensajes"><Chat />Mensajes{pending.length > 0 && <i className="num">{pending.length}</i>}</a>
+        <a href="#club"><Users />Club</a>
+        <Link href={`/mi/${token}/reporte`}><Chart />Reporte</Link>
+        <Link href={`/mi/${token}/ajustes`}><Gear />Ajustes</Link>
       </nav>
     </div>
   );

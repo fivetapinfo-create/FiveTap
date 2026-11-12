@@ -76,3 +76,72 @@ export const Gift = (p: P) => (
     <path d="M12 7.5c-1.5-3-5-3.5-5-1.25C7 7.5 9.5 7.5 12 7.5zM12 7.5c1.5-3 5-3.5 5-1.25C17 7.5 14.5 7.5 12 7.5z" />
   </svg>
 );
+
+export const Home = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M4 10.5L12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1v-8.5z" />
+  </svg>
+);
+
+export const Users = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <circle cx="9" cy="8.5" r="3.25" />
+    <path d="M3.5 19.5c.6-3.1 2.9-5 5.5-5s4.9 1.9 5.5 5" />
+    <path d="M15.5 5.6a3.25 3.25 0 0 1 0 5.8M17.5 14.8c1.6.6 2.7 2.2 3 4.7" />
+  </svg>
+);
+
+export const Gear = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6L18 18M6 18l1.4-1.4M16.6 7.4L18 6" />
+  </svg>
+);
+
+export const Plus = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+export const Wallet = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <rect x="3.5" y="6" width="17" height="13" rx="2.5" />
+    <path d="M3.5 10h17M15.5 14.5h2" />
+  </svg>
+);
+
+export const FileText = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M14 3.5H7a1.5 1.5 0 0 0-1.5 1.5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8L14 3.5z" />
+    <path d="M14 3.5V8h4.5M9 12.5h6M9 16h4" />
+  </svg>
+);
+
+export const ReceiptIcon = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M6 3.5h12v17l-2.5-1.5-2 1.5-1.5-1.2-1.5 1.2-2-1.5L6 20.5v-17z" />
+    <path d="M9 8h6M9 11.5h6M9 15h3.5" />
+  </svg>
+);
+
+export const Layers = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M12 4l8.5 4.5L12 13 3.5 8.5 12 4z" />
+    <path d="M3.5 12.5L12 17l8.5-4.5M3.5 16.5L12 21l8.5-4.5" />
+  </svg>
+);
+
+export const Globe = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M3.5 12h17M12 3.5c2.3 2.4 3.4 5.2 3.4 8.5s-1.1 6.1-3.4 8.5c-2.3-2.4-3.4-5.2-3.4-8.5S9.7 5.9 12 3.5z" />
+  </svg>
+);
+
+export const Megaphone = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M4 10v4a1 1 0 0 0 1 1h2.5L14 19V5L7.5 9H5a1 1 0 0 0-1 1z" />
+    <path d="M17.5 9a4 4 0 0 1 0 6M7.5 15l1 4.5" />
+  </svg>
+);

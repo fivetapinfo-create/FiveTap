@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Megaphone } from "./Icons";
 
 type Person = { id: string; name: string; phone: string; birthday?: boolean };
 
@@ -20,7 +21,7 @@ export function PromoSender({ business, people }: { business: string; people: Pe
   if (!open) {
     return (
       <div className="promo-start">
-        <button className="btn btn-dark btn-sm" type="button" onClick={() => setOpen(true)}>📣 Enviar una promoción</button>
+        <button className="btn btn-dark btn-sm btn-icon" type="button" onClick={() => setOpen(true)}><Megaphone />Enviar una promoción</button>
         <small className="muted">Escríbela una vez y envíala por WhatsApp a cada cliente con un toque.</small>
       </div>
     );
@@ -35,7 +36,7 @@ export function PromoSender({ business, people }: { business: string; people: Pe
       <div className="row">
         {people.some((p) => p.birthday) && (
           <button className="btn btn-ghost btn-sm" type="button" onClick={() => setOnlyBirthdays((v) => !v)} aria-pressed={onlyBirthdays}>
-            {onlyBirthdays ? "Ver todos" : "🎂 Solo cumpleaños del mes"}
+            {onlyBirthdays ? "Ver todos" : "Solo cumpleaños del mes"}
           </button>
         )}
         <span className="muted">{sent.size} de {list.length} enviados</span>

@@ -50,7 +50,7 @@ export function ClubPanel({
           )}
           {birthdays.length > 0 && (
             <div className="club-bdays">
-              <b>🎂 Cumpleaños este mes</b>
+              <b>Cumpleaños este mes</b>
               <p>{birthdays.map((c) => `${c.name} (${c.birthday_day})`).join(" · ")}</p>
             </div>
           )}
