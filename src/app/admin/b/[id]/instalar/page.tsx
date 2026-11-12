@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import QRCode from "qrcode";
 import { BusinessLogo } from "@/components/BusinessLogo";
 import { CopyButton } from "@/components/CopyButton";
 import { db } from "@/lib/supabase";
-import { SITE_URL } from "@/lib/site";
+import { installQrSvg, installUrl } from "@/lib/install-qr";
 import type { Business } from "@/lib/types";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ para?: string }> };
@@ -21,8 +20,8 @@ export default async function InstallQr({ params, searchParams }: Props) {
   const b = data as Pick<Business, "id" | "name" | "logo_url" | "brand_color" | "owner_token"> | null;
   if (!b) notFound();
   const para = sp.para === "gerente" ? "gerente" : "dueno";
-  const url = `${SITE_URL}/mi/${b.owner_token}?instalar=1&rol=${para}`;
-  const svg = await QRCode.toString(url, { type: "svg", errorCorrectionLevel: "M", margin: 1 });
+  const url = installUrl(b.owner_token, para);
+  const svg = await installQrSvg(url);
 
   return (
     <main className="container admin-main install-qr">
@@ -40,6 +39,11 @@ export default async function InstallQr({ params, searchParams }: Props) {
         <p className="install-title">Escanea con la cámara</p>
         <div className="install-code" dangerouslySetInnerHTML={{ __html: svg }} />
         <p className="muted">{WHO[para].gets}</p>
+        <div className="row" style={{ justifyContent: "center" }}>
+          <a className="btn btn-dark btn-sm" href={`/admin/b/${b.id}/instalar/tarjeta?para=${para}&dl=1`}>Descargar tarjeta con QR</a>
+          <a className="btn btn-ghost btn-sm" href={`/admin/b/${b.id}/instalar/tarjeta?para=${para}`} target="_blank" rel="noreferrer">Ver tarjeta</a>
+        </div>
+        <small className="muted">La tarjeta es una imagen para enviar por WhatsApp o imprimir. Es el acceso privado del local: no la publiques.</small>
       </section>
       <section className="panel">
         <div className="panel-head"><h2>Qué decirle (30 segundos)</h2></div>
