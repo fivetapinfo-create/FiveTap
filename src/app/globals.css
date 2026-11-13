@@ -974,3 +974,22 @@ html[data-theme="dark"] .admin .app-inapp { background: rgba(212, 175, 55, 0.14)
 .founder-tap { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: grid; gap: 2px; padding: 10px 16px; background: #0a0a0a; color: #fff; font-size: 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25); }
 .founder-tap b { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #d4af37; }
 .founder-tap em { font-style: normal; color: rgba(255, 255, 255, 0.7); }
+
+/* Opening animation: the mark draws itself, the name rises, a curtain lifts (about 2 s). */
+.intro { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: #0a0a0a; color: #fff; will-change: transform; animation: intro-up 0.65s cubic-bezier(0.77, 0, 0.18, 1) 1.4s forwards; }
+.intro-business { background: #fff; color: #0a0a0a; }
+html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="skip"] .intro-business { display: none; }
+.intro-inner { display: flex; align-items: center; gap: 14px; }
+.intro-mark { width: 58px; height: 58px; overflow: visible; }
+.intro-mark path { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: intro-draw 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards, intro-fill 0.35s ease 0.75s forwards; }
+.intro-word { display: grid; gap: 2px; overflow: hidden; padding-bottom: 2px; }
+.intro-word b { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; transform: translateY(110%); animation: intro-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.7s forwards; }
+.intro-word small { font-size: 11px; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0; animation: intro-fade 0.4s ease 1s forwards; }
+.intro-founder .intro-word small { color: #d4af37; }
+.intro-business .intro-word small { color: #5c5b57; }
+@keyframes intro-draw { to { stroke-dashoffset: 0; } }
+@keyframes intro-fill { to { fill-opacity: 1; stroke-opacity: 0; } }
+@keyframes intro-rise { to { transform: none; } }
+@keyframes intro-fade { to { opacity: 1; } }
+@keyframes intro-up { to { transform: translateY(-100%); } }
+@media (prefers-reduced-motion: reduce) { .intro { display: none; } }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
+import { IntroSplash } from "@/components/IntroSplash";
 import { Logo } from "@/components/Logo";
 import { ADMIN_HEADER } from "@/lib/admin-session";
 import { agenda, billingAll, todayPanama } from "@/lib/agenda";
@@ -27,6 +28,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ]);
   return (
     <div className="admin">
+      <IntroSplash variant="founder" />
       <header className="admin-top no-print">
         <div className="container">
           <Link href="/admin"><Logo size={20} /></Link>
