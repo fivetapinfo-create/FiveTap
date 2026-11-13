@@ -978,12 +978,11 @@ html[data-theme="dark"] .admin .app-inapp { background: rgba(212, 175, 55, 0.14)
 /* Opening animation (about 2.5 s, once per session). Founder: black and gold. Business: white and black.
    0.00 the mark is traced · 0.80 it fills · 1.00 "FiveTap" rises from its mask · 1.30 the product line
    · 0.20–1.70 a hairline loads · 1.80 the content lifts · 1.95 the curtain rises and reveals the app. */
-.intro { --intro-bg: #0a0a0a; --intro-ink: #ffffff; --intro-accent: #d4af37; --intro-glow: rgba(212, 175, 55, 0.10);
+.intro { --intro-bg: #0a0a0a; --intro-ink: #ffffff; --intro-accent: #d4af37;
   position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; overflow: hidden;
-  background: radial-gradient(60% 45% at 50% 50%, var(--intro-glow), transparent 70%), var(--intro-bg); color: var(--intro-ink);
+  background: var(--intro-bg); color: var(--intro-ink);
   will-change: transform; animation: intro-curtain 0.75s cubic-bezier(0.76, 0, 0.24, 1) 1.95s both; }
-.intro::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--intro-accent); opacity: 0.6; }
-.intro-business { --intro-bg: #ffffff; --intro-ink: #0a0a0a; --intro-accent: #0a0a0a; --intro-glow: rgba(10, 10, 10, 0.05); }
+.intro-business { --intro-bg: #ffffff; --intro-ink: #0a0a0a; --intro-accent: #0a0a0a; }
 html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="skip"] .intro-business { display: none; }
 .intro-inner { display: flex; align-items: center; gap: 16px; animation: intro-lift 0.45s cubic-bezier(0.55, 0, 0.45, 1) 1.8s both; }
 .intro-mark { width: 60px; height: 60px; overflow: visible; animation: intro-settle 1.1s cubic-bezier(0.22, 1, 0.36, 1) both; }
