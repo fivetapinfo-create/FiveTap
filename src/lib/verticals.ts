@@ -24,8 +24,21 @@ export const VERTICALS: Vertical[] = [
 
 export const DEFAULT_VERTICAL = VERTICALS[0]!;
 
+/** Other kinds of venue the founder can register (no landing page of their own). */
+const OTHER_KINDS: Vertical[] = [
+  { key: "auto", slug: "talleres", label: "Taller o servicio automotriz", plural: "talleres", spot: "Placa", where: "en tu local", guests: "clientes" },
+  { key: "beauty", slug: "salones", label: "Barbería, salón o spa", plural: "salones", spot: "Placa", where: "en tu local", guests: "clientes" },
+  { key: "clinic", slug: "clinicas", label: "Clínica o consultorio", plural: "clínicas", spot: "Placa", where: "en la recepción", guests: "pacientes" },
+  { key: "hotel", slug: "hoteles", label: "Hotel u hospedaje", plural: "hoteles", spot: "Placa", where: "en la recepción", guests: "huéspedes" },
+  { key: "store", slug: "tiendas", label: "Tienda", plural: "tiendas", spot: "Placa", where: "junto a la caja", guests: "clientes" },
+  { key: "other", slug: "negocios", label: "Otro negocio", plural: "negocios", spot: "Placa", where: "en tu local", guests: "clientes" },
+];
+
+/** Every kind the panel offers: the landing's verticals first, then the rest. */
+export const PANEL_KINDS: Vertical[] = [...VERTICALS, ...OTHER_KINDS];
+
 export const verticalByKey = (key: string | null | undefined) =>
-  VERTICALS.find((v) => v.key === key) ?? DEFAULT_VERTICAL;
+  PANEL_KINDS.find((v) => v.key === key) ?? DEFAULT_VERTICAL;
 
 export const verticalBySlug = (slug: string) => VERTICALS.find((v) => v.slug === slug);
 

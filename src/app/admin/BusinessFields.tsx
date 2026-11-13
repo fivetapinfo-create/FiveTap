@@ -1,6 +1,6 @@
 import { type Plan, planOf } from "@/lib/plans";
 import type { Business } from "@/lib/types";
-import { VERTICALS } from "@/lib/verticals";
+import { PANEL_KINDS } from "@/lib/verticals";
 
 /** The essentials of a business. Everything else has a sensible default. */
 export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partial<Business> }) {
@@ -54,11 +54,12 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
 }
 
 /** Defaults that rarely change: type, color, plan. */
-export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[]; planKey?: string }) {
+export function OptionFields({ b, plans, planKey, compact }: { b?: Business; plans: Plan[]; planKey?: string; compact?: boolean }) {
   const current = b ? (b.status === "trial" && Number(b.monthly_fee) <= 0 ? (b.mode === "google" ? "test-google" : "test") : planOf(b, plans)?.key ?? "") : planKey ?? "start";
   return (
     <div className="form-section">
       <div className="grid-2">
+        {!compact && (<>
         <label className="field">
           <span>Plan</span>
           <select className="select" name="plan_key" defaultValue={current}>
@@ -67,7 +68,7 @@ export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[
             ))}
             <option value="test">FiveTap Test con FiveTap Business · 1 a 4 piezas ($40 placa, $30 tarjeta) · 30 días</option>
             <option value="test-google">FiveTap Test sin FiveTap Business (directo a Google) · 30 días</option>
-            <option value="">Personalizado (sin plan)</option>
+            <option value="custom">Personalizado (sin plan)</option>
           </select>
         </label>
         <label className="field">
@@ -78,11 +79,19 @@ export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[
         <label className="field">
           <span>Tipo de negocio</span>
           <select className="select" name="kind" defaultValue={b?.kind ?? "restaurant"}>
-            {VERTICALS.map((v) => (
+            {PANEL_KINDS.map((v) => (
               <option key={v.key} value={v.key}>{v.label}</option>
             ))}
           </select>
         </label>
+        </>)}
+        {compact && (
+          <label className="field">
+            <span>Mensualidad (USD)</span>
+            <input className="input" type="number" min={0} step="0.01" name="monthly_fee" placeholder="La del plan" />
+            <small>Vacío: el precio del plan elegido arriba.</small>
+          </label>
+        )}
         <label className="field">
           <span>Color del botón principal</span>
           <input className="input" type="color" name="brand_color" defaultValue={b?.brand_color ?? "#0a0a0a"} />
@@ -100,7 +109,7 @@ export function BaselineFields({ auto }: { auto: boolean }) {
   return (
     <div className="form-section">
       <div className="field">
-        <span>6. Reseñas en Google hoy (el “antes”)</span>
+        <span>8. Reseñas en Google hoy (el “antes”)</span>
         <div className="grid-2">
           <input className="input" name="reviews_start" inputMode="numeric" pattern="[0-9]*" required={!auto} placeholder="Reseñas: 84" aria-label="Reseñas en Google hoy" />
           <input className="input" name="rating_start" inputMode="decimal" placeholder="Estrellas: 4.3" aria-label="Estrellas en Google hoy" />
@@ -111,6 +120,48 @@ export function BaselineFields({ auto }: { auto: boolean }) {
             : "Míralo en Google Maps: el número entre paréntesis junto a las estrellas. Es lo que le mostrarás al dueño a los 3 meses."}
         </small>
       </div>
+    </div>
+  );
+}
+
+/**
+ * What the venue bought, always visible when creating: plan (no default, so a FiveTap Test
+ * is never saved as a monthly plan by mistake), type of business and how many pieces.
+ */
+export function PlanFields({ plans, planKey }: { plans: Plan[]; planKey?: string }) {
+  return (
+    <div className="form-section">
+      <div className="grid-2">
+        <label className="field">
+          <span>6. ¿Qué contrató?</span>
+          <select className="select" name="plan_key" defaultValue={planKey ?? ""} required>
+            <option value="" disabled>Elige…</option>
+            <option value="test">FiveTap Test · 30 días · $40 por placa, $30 por tarjeta</option>
+            {plans.filter((p) => p.active).map((p) => (
+              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {p.plaques} placas + {p.cards} tarjetas</option>
+            ))}
+            <option value="test-google">FiveTap Test sin app (directo a Google) · 30 días</option>
+            <option value="custom">Personalizado (precio y piezas a mano)</option>
+          </select>
+        </label>
+        <label className="field">
+          <span>7. Tipo de negocio</span>
+          <select className="select" name="kind" defaultValue="restaurant">
+            {PANEL_KINDS.map((v) => (
+              <option key={v.key} value={v.key}>{v.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>Placas</span>
+          <input className="input" type="number" name="spots" min={0} max={80} placeholder="Las del plan (Test: 1)" />
+        </label>
+        <label className="field">
+          <span>Tarjetas de meseros</span>
+          <input className="input" type="number" name="cards" min={0} max={40} placeholder="Las del plan (Test: 0)" />
+        </label>
+      </div>
+      <small className="muted">Vacío: las piezas del plan. En el FiveTap Test escribe cuántas placas y tarjetas lleva (de 1 a 4 en total).</small>
     </div>
   );
 }

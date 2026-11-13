@@ -72,8 +72,9 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const byScans = (a: { scans: number }, z: { scans: number }) => z.scans - a.scans;
   const byReviews = (a: { reviews: number; scans: number }, z: { reviews: number; scans: number }) => z.reviews - a.reviews || z.scans - a.scans;
   // Waiters ranked by guests sent to Google; table plaques by taps.
-  const waiters = tags.filter(isWaiter).map(row).sort(byReviews);
-  const tables = tags.filter((t) => !isWaiter(t)).map(row).sort(byScans);
+  // Only pieces in use: deactivated ones stay in the founder's panel, not in the owner's app.
+  const waiters = tags.filter((t) => t.active && isWaiter(t)).map(row).sort(byReviews);
+  const tables = tags.filter((t) => t.active && !isWaiter(t)).map(row).sort(byScans);
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
   const charge = nextCharge(b, payments);

@@ -16,7 +16,7 @@ import { renewCode } from "@/lib/access";
 import { sendPush } from "@/lib/push";
 import { audit, deliverReceipt, issueReceipt } from "@/lib/receipts";
 import { db } from "@/lib/supabase";
-import { VERTICALS, verticalByKey } from "@/lib/verticals";
+import { PANEL_KINDS, verticalByKey } from "@/lib/verticals";
 
 const str = (f: FormData, k: string, max = 200) => String(f.get(k) ?? "").trim().slice(0, max);
 const opt = (f: FormData, k: string, max = 200) => str(f, k, max) || null;
@@ -73,10 +73,11 @@ function fail(path: string, e: unknown): never {
 export async function createBusiness(f: FormData) {
   const name = str(f, "name", 80);
   const review = str(f, "review", 500);
-  const kind = VERTICALS.some((v) => v.key === str(f, "kind")) ? str(f, "kind") : "restaurant";
+  const kind = PANEL_KINDS.some((v) => v.key === str(f, "kind")) ? str(f, "kind") : "restaurant";
   // The plan sets the price and how many table plaques and waiter cards to create;
   // each one can be changed in the form (an empty field means "the plan's").
   // FiveTap Test: 7 days with one piece and no monthly fee; then it pauses until a plan is picked.
+  if (!str(f, "plan_key", 30)) fail("/admin/new", new Error("Elige qué contrató el local: FiveTap Test o un plan."));
   const isTest = str(f, "plan_key", 30).startsWith("test");
   const noApp = str(f, "plan_key", 30) === "test-google";
   const plan = isTest ? null : await planByKey(str(f, "plan_key", 30));

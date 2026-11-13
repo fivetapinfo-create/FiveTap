@@ -4,7 +4,7 @@ import { getPlans } from "@/lib/plans";
 import { db } from "@/lib/supabase";
 import { createBusiness } from "../actions";
 import { placesReady } from "@/lib/places";
-import { BaselineFields, EssentialFields, OptionFields } from "../BusinessFields";
+import { BaselineFields, EssentialFields, OptionFields, PlanFields } from "../BusinessFields";
 import { Flash } from "../Flash";
 
 type Props = { searchParams: Promise<{ error?: string; signup?: string }> };
@@ -35,22 +35,13 @@ export default async function NewBusiness({ searchParams }: Props) {
       <form action={createBusiness} className="panel">
         {signup && <input type="hidden" name="signup_id" value={signup.id} />}
         <EssentialFields prefill={prefill} />
+        <PlanFields plans={plans} planKey={chosen?.key} />
         <BaselineFields auto={placesReady()} />
         <details className="more">
-          <summary>Más opciones (plan, precio, cantidad de placas y tarjetas, color)</summary>
-          <OptionFields plans={plans} planKey={chosen?.key ?? "start"} />
+          <summary>Más opciones (precio especial, nombre de las placas, color)</summary>
+          <OptionFields plans={plans} compact />
           <div className="form-section">
             <div className="grid-2">
-              <label className="field">
-                <span>Placas de mesa</span>
-                <input className="input" type="number" name="spots" min={0} max={80} placeholder="Las del plan" />
-                <small>Vacío: las del plan elegido.</small>
-              </label>
-              <label className="field">
-                <span>Tarjetas de meseros</span>
-                <input className="input" type="number" name="cards" min={0} max={40} placeholder="Las del plan" />
-                <small>Vacío: las del plan elegido.</small>
-              </label>
               <label className="field">
                 <span>Nombre de cada placa</span>
                 <input className="input" name="spot_label" placeholder="Mesa, Barra, Caja…" />
