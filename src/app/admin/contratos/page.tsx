@@ -37,7 +37,13 @@ export default async function Contracts({ searchParams }: Props) {
         </div>
       </div>
       <Flash ok={sp.ok} error={sp.error} />
-      <p className="alert alert-warn">Es un modelo sencillo redactado sin asesoría legal. Haz que un abogado lo revise antes de usarlo con clientes.</p>
+      <p className="alert alert-warn">Redactado con criterio legal y en palabras simples, pero no sustituye a un abogado: haz que uno de Panamá lo revise antes de firmar con clientes.</p>
+      <div className="row">
+        <span className="muted">Contrato de ejemplo para mostrar:</span>
+        <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=start" target="_blank" rel="noreferrer">Start</a>
+        <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=pro" target="_blank" rel="noreferrer">Pro</a>
+        <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=enterprise" target="_blank" rel="noreferrer">Enterprise</a>
+      </div>
 
       <section className="panel" id="nuevo">
         <div className="panel-head"><h2>Nuevo contrato de 3 meses</h2></div>
