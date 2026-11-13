@@ -16,11 +16,11 @@ const satoshi = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "FiveTap — Más reseñas. Más clientes.",
-  description: "Un toque en la mesa y tu cliente deja su reseña en Google en segundos. Para restaurantes y cafés.",
+  title: "FiveTap — Plataforma de reputación y clientes",
+  description: "Convierte cada cliente en reputación: más reseñas auténticas en Google, mensajes privados al instante y resultados medidos en una sola plataforma.",
   openGraph: {
-    title: "FiveTap — Más reseñas. Más clientes.",
-    description: "Un toque en la mesa y tu cliente deja su reseña en Google en segundos.",
+    title: "FiveTap — Plataforma de reputación y clientes",
+    description: "Convierte cada cliente en reputación: más reseñas auténticas en Google, mensajes privados al instante y resultados medidos en una sola plataforma.",
     type: "website",
     locale: "es_PA",
   },

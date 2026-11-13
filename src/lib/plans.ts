@@ -51,9 +51,9 @@ export function planOf(b: { plan_key?: string | null; monthly_fee: number }, pla
   return plans.find((p) => p.key === b.plan_key) ?? plans.find((p) => p.monthly === Number(b.monthly_fee)) ?? null;
 }
 
-/** "10 placas NFC para mesas · 2 tarjetas NFC para meseros con su cordón". */
+/** "10 placas FiveTap · 2 tarjetas de equipo con cordón": the same pieces, in words for any business. */
 export function planPieces(p: Pick<Plan, "plaques" | "cards" | "lanyards">) {
-  const parts = [`${p.plaques} ${p.plaques === 1 ? "placa NFC" : "placas NFC"} para mesas`];
-  if (p.cards) parts.push(`${p.cards} ${p.cards === 1 ? "tarjeta NFC" : "tarjetas NFC"} para meseros${p.lanyards ? ` con ${p.lanyards === p.cards ? (p.cards === 1 ? "su cordón" : "sus cordones") : `${p.lanyards} cordones`}` : ""}`);
+  const parts = [`${p.plaques} ${p.plaques === 1 ? "placa FiveTap" : "placas FiveTap"}`];
+  if (p.cards) parts.push(`${p.cards} ${p.cards === 1 ? "tarjeta de equipo" : "tarjetas de equipo"}${p.lanyards ? " con cordón" : ""}`);
   return parts;
 }

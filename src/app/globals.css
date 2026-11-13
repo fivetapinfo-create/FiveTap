@@ -1006,3 +1006,20 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 @keyframes intro-lift { from { transform: none; opacity: 1; } to { transform: translateY(-18px); opacity: 0; } }
 @keyframes intro-curtain { from { transform: none; } to { transform: translateY(-100%); } }
 @media (prefers-reduced-motion: reduce) { .intro { display: none; } }
+
+/* Landing: four steps and the comparison with a generic NFC plaque */
+.steps-4 { grid-template-columns: repeat(4, 1fr); gap: 32px; }
+@media (max-width: 1000px) { .steps-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .steps-4 { grid-template-columns: 1fr; } }
+.steps-note { margin-top: 28px; font-size: 16px; }
+.compare { border: 1px solid var(--line-strong); border-radius: 24px; overflow: hidden; background: var(--surface); }
+.compare-row { display: grid; grid-template-columns: 0.8fr 1fr 1.2fr; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--line); align-items: baseline; }
+.compare-row:first-child { border-top: 0; }
+.compare-head { background: var(--paper); font-size: 13px; font-weight: 600; color: var(--muted); }
+.compare-head span:last-child { color: var(--ink); display: inline-flex; align-items: center; gap: 6px; }
+.compare-row span:last-child { font-weight: 500; }
+@media (max-width: 640px) {
+  .compare-row { grid-template-columns: 1fr 1fr; padding: 14px 16px; }
+  .compare-row b { grid-column: 1 / -1; }
+  .compare-head span:first-child { display: none; }
+}

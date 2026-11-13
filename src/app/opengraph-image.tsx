@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { MARK_PATH } from "@/components/Logo";
 
-export const alt = "FiveTap — Más reseñas. Más clientes.";
+export const alt = "FiveTap — Plataforma de reputación y clientes";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -20,7 +20,7 @@ export default async function OpenGraph() {
           <span style={{ fontSize: 132, letterSpacing: "-0.03em" }}>FiveTap</span>
         </div>
         <div style={{ marginTop: 36, fontSize: 30, letterSpacing: "0.32em", color: "rgba(255,255,255,0.72)" }}>
-          MÁS RESEÑAS. MÁS CLIENTES.
+          REPUTACIÓN QUE SE MIDE.
         </div>
       </div>
     ),

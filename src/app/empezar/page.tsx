@@ -8,7 +8,7 @@ import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Empieza con FiveTap",
-  description: "Elige FiveTap Start, Pro o Enterprise: placas NFC para mesas, tarjetas NFC para meseros y FiveTap Business. Pago mensual con tarjeta o PayPal.",
+  description: "Elige FiveTap Start, Pro o Enterprise: placas FiveTap, tarjetas de equipo y FiveTap Business, con instalación incluida. Pago mensual con tarjeta o PayPal.",
 };
 export const dynamic = "force-dynamic";
 
@@ -78,7 +78,7 @@ export default async function Start({ searchParams }: Props) {
         <h3>Cómo funciona</h3>
         <ol className="trial-steps">
           <li><b>Hoy</b> Te registras y activas tu plan. Te escribimos para elegir el día de la instalación.</li>
-          <li><b>Día de la instalación</b> Dejamos tus {plan.plaques} placas para mesas, las {plan.cards} tarjetas de tus meseros y FiveTap Business en tu celular.</li>
+          <li><b>Día de la instalación</b> Instalamos tus {plan.plaques} placas FiveTap, las {plan.cards} tarjetas de tu equipo y FiveTap Business en tu celular, y anotamos tus reseñas actuales en Google.</li>
           <li><b>Desde ese día</b> Ves en tu app cuántos clientes van a dejarte su reseña, y cada mes te llega tu reporte.</li>
         </ol>
       </section>

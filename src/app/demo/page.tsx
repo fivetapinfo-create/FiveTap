@@ -12,7 +12,7 @@ type Props = { searchParams: Promise<{ n?: string; c?: string; enviado?: string 
 
 export default async function Demo({ searchParams }: Props) {
   const sp = await searchParams;
-  const name = (sp.n || "Tu restaurante").slice(0, 60);
+  const name = (sp.n || "Tu negocio").slice(0, 60);
   const color = safeColor(sp.c, "#0b0b0f");
   const self = `/demo?n=${encodeURIComponent(name)}&c=${encodeURIComponent(color)}`;
 

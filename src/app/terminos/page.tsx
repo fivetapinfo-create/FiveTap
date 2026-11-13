@@ -16,7 +16,7 @@ export default async function Terms() {
       <p>Estos términos explican cómo funciona FiveTap para los negocios que lo contratan. Si firmaste un contrato con nosotros, el contrato manda sobre esta página.</p>
 
       <h2>1. Qué es FiveTap</h2>
-      <p>FiveTap instala placas y tarjetas NFC en tu local. Tus clientes las tocan con el celular y pueden dejar una reseña en Google, escribirle en privado al gerente o unirse a tu club de clientes. Incluye FiveTap Business, la app del local con tus resultados en tiempo real, avisos al celular y un reporte mensual.</p>
+      <p>FiveTap es una plataforma de reputación y relación con clientes. Instala placas y tarjetas NFC en tu negocio; tus clientes las tocan con el celular y pueden dejar una reseña en Google, escribirte en privado o unirse a tu club de clientes. Incluye FiveTap Business, la app privada del negocio con tus resultados en tiempo real, avisos al celular y un reporte mensual.</p>
 
       <h2>2. Planes y precios</h2>
       <ul>
@@ -25,7 +25,7 @@ export default async function Terms() {
             <b>{p.name}:</b> {money(p.monthly)} al mes, con {planPieces(p).join(" y ")}, y FiveTap Business.
           </li>
         ))}
-        <li><b>{TEST_OFFER.name}:</b> de 1 a {TEST_MAX_PIECES} piezas con FiveTap Business, válido por 30 días: {money(TEST_OFFER.plaque)} cada placa de reseñas y {money(TEST_OFFER.card)} cada tarjeta de mesero con cordón. Se cancela solo al terminar el día 29 y el local elige un plan para seguir. Si el local contrata un plan al terminar, lo pagado por el Test se descuenta de su primer mes.</li>
+        <li><b>{TEST_OFFER.name}:</b> de 1 a {TEST_MAX_PIECES} piezas con FiveTap Business, válido por 30 días: {money(TEST_OFFER.plaque)} cada placa FiveTap y {money(TEST_OFFER.card)} cada tarjeta de equipo con cordón. Se cancela solo al terminar el día 29 y el local elige un plan para seguir. Si el local contrata un plan al terminar, lo pagado por el Test se descuenta de su primer mes.</li>
         <li><b>Una cantidad específica de placas o tarjetas, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
       </ul>
       <p>Todos los planes son mensuales. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>
@@ -33,7 +33,7 @@ export default async function Terms() {
       <p>Los planes se cobran de forma automática por PayPal, o por Yappy o transferencia si así lo acordamos.</p>
 
       <h2>3. Instalación</h2>
-      <p>Configuramos las placas, las tarjetas de meseros y FiveTap Business, y lo dejamos funcionando. Lo que incluye cada plan (configuración, instalación en el local, capacitación) es lo que se describe en el plan.</p>
+      <p>Configuramos las placas, las tarjetas de equipo y FiveTap Business, y lo dejamos funcionando. Lo que incluye cada plan (configuración, instalación en el local, capacitación) es lo que se describe en el plan.</p>
 
       <h2>4. Cancelación</h2>
       <p>El servicio empieza con un contrato de 3 meses, que es el período mínimo. Si el local lo termina antes sin una causa atribuible a FiveTap, paga las mensualidades que falten para completar los 3 meses. Al terminar ese período, el servicio sigue mes a mes y cualquiera de las partes puede terminarlo avisando con 15 días de anticipación. No hay renovaciones anuales automáticas. Al terminar, el local devuelve las placas y tarjetas, que son de FiveTap, dentro de los 10 días siguientes. Si firmaste un contrato, sus condiciones son las que aplican.</p>
