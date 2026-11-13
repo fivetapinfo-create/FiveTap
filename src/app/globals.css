@@ -942,8 +942,8 @@ html[data-theme="dark"] .admin .app-inapp { background: rgba(212, 175, 55, 0.14)
 .piece-filters a[aria-current="page"] b { color: inherit; opacity: 0.7; }
 .piece-search { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; }
 @media (max-width: 760px) { .piece-search { grid-template-columns: 1fr 1fr; } .piece-search .input { grid-column: 1 / -1; } }
-.pieces { list-style: none; margin: 0; padding: 0; }
-.piece { border-top: 1px solid var(--line); padding: 12px 20px; }
+.inv-list { list-style: none; margin: 0; padding: 0; }
+.inv-item { border-top: 1px solid var(--line); padding: 12px 20px; }
 .piece-main { display: grid; grid-template-columns: 104px 1fr auto auto; gap: 14px; align-items: center; }
 .piece-name { display: grid; gap: 2px; min-width: 0; }
 .piece-name small { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }

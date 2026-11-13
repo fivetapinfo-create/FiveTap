@@ -110,13 +110,13 @@ export default async function Pieces({ searchParams }: Props) {
             <h2><Link href={`/admin/b/${g.id}#placas`}>{g.name}</Link></h2>
             <span className="muted">{g.items.length} {g.items.length === 1 ? "pieza" : "piezas"} · {g.items.filter((t) => t.status === "delivered").length} entregadas</span>
           </div>
-          <ul className="pieces">
+          <ul className="inv-list">
             {g.items.map((t) => {
               const state = pieceState(t);
               const step = nextStep(state);
               const history = logs.get(t.id) ?? [];
               return (
-                <li key={t.id} className="piece">
+                <li key={t.id} className="inv-item">
                   <div className="piece-main">
                     <span className={`piece-state ${state}`}>{PIECE_LABEL[state]}</span>
                     <div className="piece-name">
