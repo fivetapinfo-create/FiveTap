@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { REPLACEMENT_FEE, money } from "@/lib/contract";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_OFFER } from "@/lib/test-kit";
+import { FOUNDER_PHONE, TEST_MAX_PIECES, TEST_OFFER } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
@@ -25,7 +25,7 @@ export default async function Terms() {
             <b>{p.name}:</b> {money(p.monthly)} al mes, con {planPieces(p).join(" y ")}, y FiveTap Business.
           </li>
         ))}
-        <li><b>{TEST_OFFER.name}:</b> {money(TEST_OFFER.price)}, válido por 30 días: {TEST_OFFER.detail}. Se cancela solo al terminar el día 29 y el local elige un plan para seguir. Si el local contrata un plan al terminar, el precio del Test se descuenta de su primer mes.</li>
+        <li><b>{TEST_OFFER.name}:</b> de 1 a {TEST_MAX_PIECES} piezas con FiveTap Business, válido por 30 días: {money(TEST_OFFER.plaque)} cada placa de reseñas y {money(TEST_OFFER.card)} cada tarjeta de mesero con cordón. Se cancela solo al terminar el día 29 y el local elige un plan para seguir. Si el local contrata un plan al terminar, lo pagado por el Test se descuenta de su primer mes.</li>
         <li><b>Una cantidad específica de placas o tarjetas, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
       </ul>
       <p>Todos los planes son mensuales. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>

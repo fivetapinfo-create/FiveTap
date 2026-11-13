@@ -4,7 +4,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
 import { AcceptedPayments, Amex, Bank, Mastercard, PayPal, Visa, Yappy } from "@/components/PaymentBadges";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_OFFER } from "@/lib/test-kit";
+import { FOUNDER_PHONE, TEST_MAX_PIECES, TEST_OFFER } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Pagar — FiveTap", robots: { index: false } };
@@ -19,7 +19,8 @@ export default async function Pay({ searchParams }: Props) {
   const [{ n }, plans] = await Promise.all([searchParams, activePlans()]);
   const PLANS = [
     ...plans.map((p) => ({ name: p.name, note: `Cada mes · ${planPieces(p).join(" · ")} · FiveTap Business`, price: `${usd(p.monthly)}/mes` })),
-    { name: TEST_OFFER.name, note: `30 días · ${TEST_OFFER.detail}. Si eliges un plan, se descuenta de tu primer mes`, price: usd(TEST_OFFER.price) },
+    { name: `${TEST_OFFER.name} · placa de reseñas`, note: `30 días · con FiveTap Business · por pieza, de 1 a ${TEST_MAX_PIECES}. Si eliges un plan, se descuenta de tu primer mes`, price: usd(TEST_OFFER.plaque) },
+    { name: `${TEST_OFFER.name} · tarjeta de mesero`, note: `30 días · con cordón y FiveTap Business · por pieza`, price: usd(TEST_OFFER.card) },
     { name: "¿Necesitas una cantidad específica?", note: `Cotiza con el Founder de FiveTap: ${FOUNDER_PHONE}`, price: "Cotizar" },
   ];
   const business = n?.slice(0, 80);

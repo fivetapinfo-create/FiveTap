@@ -65,7 +65,7 @@ export function OptionFields({ b, plans, planKey }: { b?: Business; plans: Plan[
             {plans.filter((p) => p.active || p.key === current).map((p) => (
               <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {p.plaques} placas + {p.cards} tarjetas</option>
             ))}
-            <option value="test">FiveTap Test con FiveTap Business · 30 días, se cierra solo el día 29</option>
+            <option value="test">FiveTap Test con FiveTap Business · 1 a 4 piezas ($40 placa, $30 tarjeta) · 30 días</option>
             <option value="test-google">FiveTap Test sin FiveTap Business (directo a Google) · 30 días</option>
             <option value="">Personalizado (sin plan)</option>
           </select>

@@ -6,7 +6,7 @@ import { Bell, Chart, Check, Gift, Pin, Reply, Shield, Tap } from "./Icons";
 import { COPY } from "@/lib/i18n";
 import { salesWhatsAppUrl } from "@/lib/site";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_OFFER, founderWhatsApp } from "@/lib/test-kit";
+import { FOUNDER_PHONE, TEST_MAX_PIECES, TEST_OFFER, founderWhatsApp } from "@/lib/test-kit";
 import { VERTICALS, type Vertical } from "@/lib/verticals";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
@@ -241,10 +241,10 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
             </div>
             {plans.length === 0 && <a className="btn btn-dark" href={talk}>Pide tu plan por WhatsApp</a>}
             <div className="offer-row">
-              <a className="offer-card" href={founderWhatsApp(`Hola, quiero ${TEST_OFFER.name} de 30 días (${usd(TEST_OFFER.price)}) para mi ${kind}.`)}>
+              <a className="offer-card" href={founderWhatsApp(`Hola, quiero ${TEST_OFFER.name} de 30 días para mi ${kind}: ___ placas y ___ tarjetas de meseros.`)}>
                 <span className="offer-kicker">¿Quieres probar primero?</span>
-                <h3>{TEST_OFFER.name} · <span className="num">{usd(TEST_OFFER.price)}</span></h3>
-                <p>{TEST_OFFER.detail}, por 30 días. Si luego eliges un plan, los {usd(TEST_OFFER.price)} se descuentan de tu primer mes.</p>
+                <h3>{TEST_OFFER.name} · <span className="num">desde {usd(TEST_OFFER.price)}</span></h3>
+                <p>De 1 a {TEST_MAX_PIECES} piezas con FiveTap Business, por 30 días: cada placa de reseñas {usd(TEST_OFFER.plaque)} y cada tarjeta de mesero {usd(TEST_OFFER.card)}. Si luego eliges un plan, lo que pagaste se descuenta de tu primer mes.</p>
                 <span className="offer-link">Pedir mi Test →</span>
               </a>
               <a className="offer-card" id="cotizar" href={founderWhatsApp(`Hola, quiero cotizar FiveTap para mi ${kind}. Necesito ___ placas y ___ tarjetas de meseros.`)}>
