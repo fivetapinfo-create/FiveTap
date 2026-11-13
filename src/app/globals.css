@@ -933,3 +933,44 @@ html[data-theme="dark"] .admin .app-inapp { background: rgba(212, 175, 55, 0.14)
 .btn-icon svg { width: 17px; height: 17px; }
 .team-rank { width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 13px; font-weight: 600; color: var(--muted); }
 .team-rank.top { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+/* Founder panel: NFC inventory (Placas) */
+.piece-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.piece-filters a { flex: none; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 14px; font-weight: 500; }
+.piece-filters a b { margin-left: 4px; color: var(--muted); font-weight: 600; }
+.piece-filters a[aria-current="page"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.piece-filters a[aria-current="page"] b { color: inherit; opacity: 0.7; }
+.piece-search { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; }
+@media (max-width: 760px) { .piece-search { grid-template-columns: 1fr 1fr; } .piece-search .input { grid-column: 1 / -1; } }
+.pieces { list-style: none; margin: 0; padding: 0; }
+.piece { border-top: 1px solid var(--line); padding: 12px 20px; }
+.piece-main { display: grid; grid-template-columns: 104px 1fr auto auto; gap: 14px; align-items: center; }
+.piece-name { display: grid; gap: 2px; min-width: 0; }
+.piece-name small { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.piece-use { display: grid; justify-items: end; }
+.piece-use b { font-size: 18px; line-height: 1; }
+.piece-use small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.piece-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.piece-state { justify-self: start; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+.piece-state.entregada { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: color-mix(in srgb, var(--ok) 8%, transparent); }
+.piece-state.grabada { color: #1d5fd1; border-color: color-mix(in srgb, #1d5fd1 40%, transparent); }
+.piece-state.sin-grabar { color: #9a6700; border-color: color-mix(in srgb, #d4a017 50%, transparent); background: color-mix(in srgb, #d4a017 8%, transparent); }
+.piece-state.retirada, .piece-state.desactivada { opacity: 0.75; }
+.piece-more summary { cursor: pointer; font-size: 13px; color: var(--muted); margin-top: 8px; width: fit-content; }
+.piece-detail { display: grid; gap: 12px; margin-top: 10px; padding: 14px; border-radius: var(--radius-sm); background: var(--paper); }
+.piece-edit { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 10px; align-items: end; }
+.piece-url { font-size: 13px; overflow-wrap: anywhere; }
+.piece-history { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.piece-history span { display: inline-block; min-width: 110px; color: var(--muted); }
+.piece-retire { display: grid; gap: 8px; justify-items: start; }
+@media (max-width: 760px) {
+  .piece-main { grid-template-columns: 1fr auto; }
+  .piece-state { grid-column: 1 / -1; }
+  .piece-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .piece-edit { grid-template-columns: 1fr; }
+}
+
+/* Founder tapping a plaque: which piece is this (never shown to guests) */
+.founder-tap { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: grid; gap: 2px; padding: 10px 16px; background: #0a0a0a; color: #fff; font-size: 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25); }
+.founder-tap b { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #d4af37; }
+.founder-tap em { font-style: normal; color: rgba(255, 255, 255, 0.7); }

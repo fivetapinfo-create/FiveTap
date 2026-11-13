@@ -215,9 +215,71 @@ export async function addTags(f: FormData) {
 
 export async function setTagActive(f: FormData) {
   const id = str(f, "business_id", 60);
-  const { error } = await db().from("tags").update({ active: str(f, "active") === "1" }).eq("id", str(f, "tag_id", 60));
-  if (error) fail(`/admin/b/${id}`, new Error(error.message));
+  const tagId = str(f, "tag_id", 60);
+  const on = str(f, "active") === "1";
+  try {
+    const { data: t, error } = await db().from("tags").select("label, status").eq("id", tagId).single();
+    if (error) throw new Error(error.message);
+    // A piece the client already has is retired from Placas, with a confirmation.
+    if (!on && t.status === "delivered") throw new Error(`“${t.label}” está entregada a un cliente. Para quitarla, usa Retirar en Placas.`);
+    const patch = on && t.status === "retired" ? { active: true, status: "delivered", retired_at: null } : { active: on };
+    const up = await db().from("tags").update(patch).eq("id", tagId);
+    if (up.error) throw new Error(up.error.message);
+    await audit(on ? "tag.activated" : "tag.deactivated", { businessId: id, entity: "tag", entityId: tagId, details: { label: t.label } });
+  } catch (e) {
+    fail(`/admin/b/${id}`, e);
+  }
   revalidatePath(`/admin/b/${id}`);
+  revalidatePath("/admin/placas");
+}
+
+const TAG_STATUS = ["written", "delivered", "retired"] as const;
+const STATUS_WORD = { written: "Grabada", delivered: "Entregada", retired: "Retirada" } as const;
+
+/** Moves a piece along created → written → delivered → retired, and keeps the date. */
+export async function setTagStatus(f: FormData) {
+  const tagId = str(f, "tag_id", 60);
+  const back = str(f, "back", 300).startsWith("/admin") ? str(f, "back", 300) : "/admin/placas";
+  const to = TAG_STATUS.find((x) => x === str(f, "status", 12));
+  try {
+    if (!to) throw new Error("Estado no válido.");
+    const { data: t, error } = await db().from("tags").select("label, status, business_id, written_at").eq("id", tagId).single();
+    if (error) throw new Error(error.message);
+    if (to === "retired" && t.status === "delivered" && str(f, "confirm") !== "1") throw new Error("Confirma que retiraste la pieza: su enlace dejará de funcionar.");
+    const now = new Date().toISOString();
+    const patch =
+      to === "written" ? { status: to, written_at: now, active: true }
+      : to === "delivered" ? { status: to, delivered_at: now, written_at: t.written_at ?? now, active: true, retired_at: null }
+      : { status: to, retired_at: now, active: false };
+    const up = await db().from("tags").update(patch).eq("id", tagId);
+    if (up.error) throw new Error(up.error.message);
+    await audit("tag.status", { businessId: t.business_id, entity: "tag", entityId: tagId, details: { label: t.label, from: t.status, to } });
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath("/admin/placas");
+  redirect(`${back}${back.includes("?") ? "&" : "?"}ok=${encodeURIComponent(STATUS_WORD[to!] ?? "guardado")}`);
+}
+
+/** The founder's name and note for a piece. Never touches the link written on the chip. */
+export async function saveTagInfo(f: FormData) {
+  const tagId = str(f, "tag_id", 60);
+  const back = str(f, "back", 300).startsWith("/admin") ? str(f, "back", 300) : "/admin/placas";
+  try {
+    const label = str(f, "label", 60);
+    if (!label) throw new Error("Ponle un nombre a la pieza.");
+    const note = opt(f, "note", 500);
+    const { data: t, error } = await db().from("tags").select("label, note, business_id").eq("id", tagId).single();
+    if (error) throw new Error(error.message);
+    const up = await db().from("tags").update({ label, note }).eq("id", tagId);
+    if (up.error) throw new Error(up.error.message);
+    if (t.label !== label) await audit("tag.renamed", { businessId: t.business_id, entity: "tag", entityId: tagId, details: { from: t.label, to: label } });
+    if ((t.note ?? null) !== note) await audit("tag.note", { businessId: t.business_id, entity: "tag", entityId: tagId, details: { label } });
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath("/admin/placas");
+  redirect(`${back}${back.includes("?") ? "&" : "?"}ok=guardado`);
 }
 
 const METHODS = ["paypal", "card", "ach", "yappy", "cash", "other"] as const;
@@ -498,12 +560,16 @@ export async function markWebPaymentHandled(f: FormData) {
 
 export async function renameTag(f: FormData) {
   const id = str(f, "business_id", 60);
-  const label = str(f, "label", 40);
+  const tagId = str(f, "tag_id", 60);
+  const label = str(f, "label", 60);
   if (label) {
-    const { error } = await db().from("tags").update({ label }).eq("id", str(f, "tag_id", 60));
+    const { data: t } = await db().from("tags").select("label").eq("id", tagId).maybeSingle();
+    const { error } = await db().from("tags").update({ label }).eq("id", tagId);
     if (error) fail(`/admin/b/${id}`, new Error(error.message));
+    if (t && t.label !== label) await audit("tag.renamed", { businessId: id, entity: "tag", entityId: tagId, details: { from: t.label, to: label } });
   }
   revalidatePath(`/admin/b/${id}`);
+  revalidatePath("/admin/placas");
 }
 
 export async function removeContact(f: FormData) {
@@ -522,6 +588,9 @@ export async function deleteBusiness(f: FormData) {
     if (error) throw new Error(error.message);
     if (!b) throw new Error("El negocio no existe.");
     if (str(f, "confirm", 80) !== b.name) throw new Error("Escribe el nombre exacto del negocio para eliminarlo.");
+    // Pieces a client has would stop working: they must be retired first (or the venue canceled).
+    const { count: delivered } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", id).eq("status", "delivered");
+    if (delivered) throw new Error(`No se puede eliminar: tiene ${delivered} ${delivered === 1 ? "pieza entregada" : "piezas entregadas"} a un cliente. Retíralas primero en Placas, o cambia el negocio a Cancelado en Editar datos.`);
     const del = await db().from("businesses").delete().eq("id", id);
     if (del.error) throw new Error(del.error.message);
     const logo = b.logo_url?.split("/logos/")[1];

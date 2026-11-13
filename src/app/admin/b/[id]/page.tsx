@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, addDays, billingState, human, planLabel } from "@/lib/agenda";
 import { businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { placesReady } from "@/lib/places";
+import { PIECE_LABEL, nextStep, pieceState } from "@/lib/pieces";
 import { accessCodes } from "@/lib/access";
 import { countSubscriptions } from "@/lib/push";
 import { getPlans, planOf } from "@/lib/plans";
@@ -17,6 +18,7 @@ import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
+import { setTagStatus } from "../../actions";
 import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
@@ -457,7 +459,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
 
       <section className="panel" id="placas">
         <div className="panel-head">
-          <h2>Placas y tarjetas · {tables.length} de mesa · {waiters.length} de meseros</h2>
+          <h2>Placas y tarjetas · {tables.length} de mesa · {waiters.length} de meseros <Link className="muted" href={`/admin/placas?b=${b.id}&estado=todas`} style={{ fontSize: 14, fontWeight: 500 }}>· Ver en inventario →</Link></h2>
           <form action={addTags} className="row">
             <input type="hidden" name="business_id" value={b.id} />
             <input className="input" name="count" type="number" min={1} max={80} defaultValue={1} style={{ width: 70, minHeight: 36, padding: "6px 10px" }} aria-label="Cantidad" />
@@ -482,6 +484,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             <thead>
               <tr>
                 <th>Placa</th>
+                <th>Estado</th>
                 <th>Enlace para grabar en el NFC</th>
                 <th className="right">Toques</th>
                 <th className="right">A Google</th>
@@ -491,7 +494,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             </thead>
             {[{ title: "Placas de mesa", list: tables }, { title: "Tarjetas de meseros", list: waiters }].filter((g) => g.list.length).map((g) => (
             <tbody key={g.title}>
-              <tr className="group-row"><th colSpan={6}>{g.title} · {g.list.length}</th></tr>
+              <tr className="group-row"><th colSpan={7}>{g.title} · {g.list.length}</th></tr>
               {g.list.map((t) => {
                 const ts = tagStats.get(t.id);
                 return (
@@ -504,6 +507,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                         <SubmitButton className="btn btn-ghost btn-sm" pending="…">✓</SubmitButton>
                       </form>
                     </td>
+                    <td><span className={`piece-state ${pieceState(t)}`}>{PIECE_LABEL[pieceState(t)]}</span></td>
                     <td>
                       <div className="row">
                         <span className="code muted">{nfcUrl(t.code)}</span>
@@ -519,12 +523,23 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                       </div>
                     </td>
                     <td>
-                      <form action={setTagActive}>
-                        <input type="hidden" name="business_id" value={b.id} />
-                        <input type="hidden" name="tag_id" value={t.id} />
-                        <input type="hidden" name="active" value={t.active ? "0" : "1"} />
-                        <SubmitButton className="btn btn-ghost btn-sm">{t.active ? "Desactivar" : "Activar"}</SubmitButton>
-                      </form>
+                      {nextStep(pieceState(t)) ? (
+                        <form action={setTagStatus}>
+                          <input type="hidden" name="tag_id" value={t.id} />
+                          <input type="hidden" name="status" value={nextStep(pieceState(t))!.to} />
+                          <input type="hidden" name="back" value={`/admin/b/${b.id}#placas`} />
+                          <SubmitButton className="btn btn-dark btn-sm" pending="…">{nextStep(pieceState(t))!.label}</SubmitButton>
+                        </form>
+                      ) : t.status === "delivered" ? (
+                        <Link className="btn btn-ghost btn-sm" href={`/admin/placas?q=${t.code}&estado=todas`}>Retirar…</Link>
+                      ) : (
+                        <form action={setTagActive}>
+                          <input type="hidden" name="business_id" value={b.id} />
+                          <input type="hidden" name="tag_id" value={t.id} />
+                          <input type="hidden" name="active" value={t.active ? "0" : "1"} />
+                          <SubmitButton className="btn btn-ghost btn-sm">{t.active ? "Desactivar" : "Activar"}</SubmitButton>
+                        </form>
+                      )}
                     </td>
                   </tr>
                 );

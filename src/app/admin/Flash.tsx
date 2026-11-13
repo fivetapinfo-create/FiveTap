@@ -24,6 +24,9 @@ const OK: Record<string, string> = {
   resenas: "Conteo de reseñas guardado.",
   push: "Notificación de prueba enviada. Revisa el celular.",
   enlace: "Enlace privado cambiado. Reenvía el acceso al dueño y al gerente.",
+  Grabada: "Listo: marcada como grabada. Cuando la dejes en el local, márcala como entregada.",
+  Entregada: "Listo: marcada como entregada. Ya está protegida contra borrados.",
+  Retirada: "Pieza retirada. Su enlace ya no funciona; su historial queda guardado.",
 };
 
 export function Flash({ ok, error }: { ok?: string; error?: string }) {

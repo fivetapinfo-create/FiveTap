@@ -47,6 +47,13 @@ export type Tag = {
   kind: "table" | "waiter";
   code: string;
   active: boolean;
+  /** Inventory state: created → written (on the chip) → delivered (at the venue) → retired. */
+  status: "created" | "written" | "delivered" | "retired";
+  written_at: string | null;
+  delivered_at: string | null;
+  retired_at: string | null;
+  /** The founder's own note; never written on the chip. */
+  note: string | null;
   created_at: string;
 };
 

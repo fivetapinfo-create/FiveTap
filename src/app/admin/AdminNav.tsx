@@ -12,6 +12,7 @@ const MAIN: { href: string; label: string; badge?: "todo" | "unread" | "late" }[
   { href: "/admin/mensajes", label: "Mensajes", badge: "unread" },
 ];
 const MORE: { href: string; label: string; hint: string }[] = [
+  { href: "/admin/placas", label: "Placas", hint: "Inventario de placas y tarjetas NFC" },
   { href: "/admin/agenda", label: "Agenda", hint: "La semana y el calendario" },
   { href: "/admin/comprobantes", label: "Comprobantes", hint: "Pagos recibidos y PDFs" },
   { href: "/admin/contratos", label: "Contratos", hint: "Contratos de 3 meses" },

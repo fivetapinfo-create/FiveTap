@@ -515,3 +515,20 @@ alter table businesses add column if not exists manager_code_enc text;
 alter table businesses add column if not exists access_fails int not null default 0;
 alter table businesses add column if not exists access_locked_until timestamptz;
 alter table businesses drop column if exists owner_pin_hash;
+
+-- ---------- NFC inventory: state of every plaque and card ----------
+-- created (in the panel) → written (link recorded on the chip) → delivered (at the venue)
+-- → retired (taken back; the link stops working). Names and notes are only for the
+-- founder: they never change what is written on the chip (/t/<code>).
+alter table tags add column if not exists status text not null default 'created';
+alter table tags drop constraint if exists tags_status_check;
+alter table tags add constraint tags_status_check check (status in ('created', 'written', 'delivered', 'retired'));
+alter table tags add column if not exists written_at timestamptz;
+alter table tags add column if not exists delivered_at timestamptz;
+alter table tags add column if not exists retired_at timestamptz;
+alter table tags add column if not exists note text;
+
+create or replace view tag_last_tap with (security_invoker = true) as
+select e.tag_id, max(e.created_at) as last_at, count(*) filter (where e.type = 'scan') as scans_total
+from events e where e.tag_id is not null group by e.tag_id;
+create index if not exists events_tag_idx on events (tag_id, created_at);
