@@ -1045,8 +1045,5 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 @media (prefers-reduced-motion: reduce) { .rating-star.picked { animation: none; } }
 .guest-reply summary { cursor: pointer; font-size: 15px; color: var(--muted); font-weight: 500; min-height: 44px; display: flex; align-items: center; }
 .guest-reply-fields { display: grid; gap: 16px; padding-top: 4px; }
-.guest-wa { margin-top: 32px; gap: 8px; }
-.guest-wa .choice { background: #1f7a4d; color: #fff; border-color: transparent; }
-.guest-note { font-size: 13px; color: var(--muted); }
 .msg-stars { color: var(--gold); letter-spacing: 1px; font-size: 14px; }
 .msg-stars i { font-style: normal; color: var(--line-strong); }
