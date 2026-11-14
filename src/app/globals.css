@@ -1132,3 +1132,9 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .order-pack { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: inherit; cursor: pointer; }
 .order-pack.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .order-saved { color: var(--ok); font-weight: 600; }
+.team-board .team-num { white-space: nowrap; }
+@media (max-width: 560px) {
+  .team-board .team-who small { white-space: normal; }
+  .team-board .team-num small { display: block; font-size: 11px; }
+  .team-board .team-num { text-align: right; line-height: 1.1; }
+}
