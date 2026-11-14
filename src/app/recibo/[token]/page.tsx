@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { human } from "@/lib/agenda";
 import { receiptByToken, receiptMoney } from "@/lib/receipts";
+import { FOUNDER_PHONE, founderWhatsApp } from "@/lib/test-kit";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Comprobante de pago — FiveTap", robots: { index: false, follow: false }, referrer: "no-referrer" };
+export const metadata: Metadata = { title: "Recibo de pago — FiveTap", robots: { index: false, follow: false }, referrer: "no-referrer" };
 
 type Props = { params: Promise<{ token: string }> };
 
@@ -15,11 +16,12 @@ export default async function ReceiptPage({ params }: Props) {
   if (!r) notFound();
   const paid = r.status === "paid";
   const rows: [string, string][] = [
-    ["Restaurante", r.venue_name],
+    ["Negocio", r.venue_name],
     ...(r.owner_name ? ([["Propietario", r.owner_name]] as [string, string][]) : []),
     ["Plan contratado", r.plan_label],
-    ["Placas NFC", String(r.plaques)],
-    ["Concepto", r.concept],
+    ...(r.items?.length
+      ? r.items.map((it) => [it.name, `${it.qty} × ${receiptMoney(it.unit)} = ${receiptMoney(it.total)}`] as [string, string])
+      : ([["Placas NFC", String(r.plaques)], ["Concepto", r.concept]] as [string, string][])),
     ["Método de pago", r.method],
     ...(r.reference ? ([["Referencia", r.reference]] as [string, string][]) : []),
     ["Fecha de pago", human(r.paid_on)],
@@ -34,7 +36,7 @@ export default async function ReceiptPage({ params }: Props) {
       <section className="receipt-card">
         <span className={`receipt-status ${paid ? "" : "void"}`}>{paid ? "PAGADO" : "ANULADO"}</span>
         <div>
-          <p className="muted">Comprobante de pago {r.number}</p>
+          <p className="muted">Recibo de pago {r.number}</p>
           <p className="receipt-amount num">{receiptMoney(r.amount)} <small style={{ fontSize: 16 }}>{r.currency}</small></p>
         </div>
         <dl className="receipt-rows">
@@ -44,8 +46,9 @@ export default async function ReceiptPage({ params }: Props) {
         </dl>
         {!paid && <p className="alert alert-error">Este comprobante fue anulado{r.void_reason ? `: ${r.void_reason}` : ""}. No es válido como constancia de pago.</p>}
         <a className="btn btn-dark" href={`/recibo/${r.token}/pdf?dl=1`}>Descargar PDF</a>
+        <a className="btn btn-ghost" href={founderWhatsApp(`Hola FiveTap, tengo una consulta sobre mi recibo ${r.number}.`)}>¿Dudas? WhatsApp FiveTap {FOUNDER_PHONE}</a>
       </section>
-      <p className="receipt-note">Emitido por FiveTap el {human(new Date(Date.parse(r.issued_at) - 5 * 3600_000).toISOString().slice(0, 10))}. Es un comprobante de pago y no sustituye una factura fiscal.</p>
+      <p className="receipt-note">Emitido por FiveTap el {human(new Date(Date.parse(r.issued_at) - 5 * 3600_000).toISOString().slice(0, 10))}. Es un recibo de pago y no sustituye una factura fiscal.</p>
     </main>
   );
 }

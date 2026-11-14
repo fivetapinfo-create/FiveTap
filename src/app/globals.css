@@ -1054,3 +1054,47 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .rate-stars svg { width: 20px; height: 20px; }
 .choice-rate:active .rate-stars svg { transform: scale(1.08); }
 @media (max-width: 360px) { .rate-stars svg { width: 17px; height: 17px; } }
+
+/* Contratos → Plan Test (one-time purchases) */
+.order-products { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.order-product { position: relative; display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); cursor: pointer; background: var(--surface); }
+.order-product input { position: absolute; opacity: 0; pointer-events: none; }
+.order-product.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.order-product span { color: var(--muted); font-size: 14px; }
+.order-total { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--paper); }
+.order-total span { color: var(--muted); }
+.order-total b { font-size: 20px; }
+@media (max-width: 560px) { .order-products { grid-template-columns: 1fr; } }
+
+/* ================= Business options + safe delete ================= */
+.opts-menu { position: relative; }
+.opts-menu > summary { list-style: none; cursor: pointer; }
+.opts-menu > summary::-webkit-details-marker { display: none; }
+.opts-list {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 190px;
+  display: grid; padding: 6px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: var(--shadow-lg);
+}
+.opts-list a, .opts-list button {
+  display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 8px;
+  font: inherit; font-size: 14px; color: inherit; background: none; border: 0; cursor: pointer; text-decoration: none;
+}
+.opts-list a:hover, .opts-list button:hover { background: var(--line); }
+.opts-list .danger { color: var(--danger); }
+.confirm-dialog {
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0;
+  border-radius: 16px; background: var(--surface); color: inherit; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+}
+.confirm-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+.confirm-body { display: grid; gap: 14px; padding: 22px; border: 0; }
+.confirm-body h2 { margin: 0; font-size: 20px; }
+.confirm-warn { margin: 0; color: var(--danger); font-weight: 600; }
+.confirm-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px; }
+.confirm-cols ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.confirm-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.confirm-actions .btn-danger:disabled { opacity: 0.45; cursor: not-allowed; }
+@media (max-width: 560px) { .confirm-cols { grid-template-columns: 1fr; } .confirm-actions .btn { flex: 1; } }
+
+/* ================= Receipts filters ================= */
+.receipt-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.receipt-filters .input, .receipt-filters .select { flex: 1 1 180px; width: auto; }

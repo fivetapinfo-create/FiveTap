@@ -537,3 +537,42 @@ create index if not exists events_tag_idx on events (tag_id, created_at);
 alter table feedback add column if not exists rating smallint;
 alter table feedback drop constraint if exists feedback_rating_check;
 alter table feedback add constraint feedback_rating_check check (rating is null or rating between 1 and 5);
+
+-- ============ Plan Test one-time orders, receipt items, WhatsApp sends ============
+-- Deleting a business keeps its money history: payments keep the business name.
+alter table payments add column if not exists business_name text;
+update payments p set business_name = b.name from businesses b where b.id = p.business_id and p.business_name is null;
+alter table payments alter column business_id drop not null;
+alter table payments drop constraint if exists payments_business_id_fkey;
+alter table payments add constraint payments_business_id_fkey foreign key (business_id) references businesses (id) on delete set null;
+
+-- What a receipt lists: [{ name, qty, unit, total }] (one-time purchases).
+alter table receipts add column if not exists items jsonb not null default '[]'::jsonb;
+
+alter table receipt_sends drop constraint if exists receipt_sends_channel_check;
+alter table receipt_sends add constraint receipt_sends_channel_check check (channel in ('email', 'push', 'whatsapp'));
+alter table receipt_sends drop constraint if exists receipt_sends_status_check;
+alter table receipt_sends add constraint receipt_sends_status_check check (status in ('sent', 'failed', 'skipped', 'opened'));
+
+-- Plan Test: one-time sale of single pieces. Never a monthly charge, never pauses anything.
+create sequence if not exists order_seq;
+create table if not exists orders (
+  id uuid primary key default gen_random_uuid(),
+  number text not null unique default ('P-' || to_char(now() at time zone 'America/Panama', 'YYYY') || '-' || lpad(nextval('order_seq')::text, 4, '0')),
+  business_id uuid references businesses (id) on delete set null,
+  business_name text not null,
+  customer_name text,
+  product text not null check (product in ('plaque', 'card')),
+  quantity int not null check (quantity between 1 and 500),
+  unit_price numeric(10, 2) not null check (unit_price > 0),
+  total numeric(10, 2) not null check (total > 0),
+  purchased_on date not null,
+  method text not null check (method in ('paypal', 'card', 'ach', 'yappy', 'cash', 'other')),
+  method_label text,
+  pay_status text not null default 'pending' check (pay_status in ('pending', 'paid', 'void')),
+  payment_id uuid unique references payments (id) on delete set null,
+  notes text,
+  created_at timestamptz not null default now()
+);
+create index if not exists orders_business_idx on orders (business_id, purchased_on desc);
+alter table orders enable row level security;

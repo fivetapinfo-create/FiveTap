@@ -30,3 +30,13 @@ export const TEST_PRICES = `placa de reseñas $${TEST_OFFER.plaque} · tarjeta d
 /** The founder's WhatsApp for quotes, as people read it and as wa.me needs it. */
 export const FOUNDER_PHONE = "6171-9111";
 export const founderWhatsApp = (text: string) => `https://wa.me/50761719111?text=${encodeURIComponent(text)}`;
+
+/**
+ * Plan Test · one-time purchases of single pieces (Contratos → Plan Test). A sale, not a
+ * subscription: it never creates a monthly charge and never pauses anything.
+ */
+export const PLAN_TEST_PRODUCTS = {
+  plaque: { name: "Placa NFC individual", short: "Placa NFC", unit: 40, kind: "table" as const, label: "Placa" },
+  card: { name: "Placa NFC con cordón para el personal", short: "Placa con cordón", unit: 30, kind: "waiter" as const, label: "Personal" },
+};
+export type PlanTestProduct = keyof typeof PLAN_TEST_PRODUCTS;

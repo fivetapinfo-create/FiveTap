@@ -14,7 +14,7 @@ const MAIN: { href: string; label: string; badge?: "todo" | "unread" | "late" }[
 const MORE: { href: string; label: string; hint: string }[] = [
   { href: "/admin/placas", label: "Placas", hint: "Inventario de placas y tarjetas NFC" },
   { href: "/admin/agenda", label: "Agenda", hint: "La semana y el calendario" },
-  { href: "/admin/comprobantes", label: "Comprobantes", hint: "Pagos recibidos y PDFs" },
+  { href: "/admin/comprobantes", label: "Recibos y facturación", hint: "Recibos, PDFs y envíos" },
   { href: "/admin/contratos", label: "Contratos", hint: "Contratos de 3 meses" },
   { href: "/admin/planes", label: "Planes", hint: "Precios y lo que incluye cada plan" },
   { href: "/admin/empresa", label: "Empresa", hint: "Datos de FiveTap e ingresos" },

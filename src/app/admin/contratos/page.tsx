@@ -5,21 +5,33 @@ import { listAgreements } from "@/lib/agreements-db";
 import { todayPanama } from "@/lib/agenda";
 import { SITE_URL } from "@/lib/site";
 import { db } from "@/lib/supabase";
-import { createAgreement, deleteAgreement } from "../actions";
+import { PLAN_TEST_PRODUCTS, type PlanTestProduct } from "@/lib/test-kit";
+import { customMethods, receiptMoney } from "@/lib/receipts";
+import { createAgreement, createOrder, deleteAgreement, payOrder, sendReceiptWhatsApp } from "../actions";
+import { OrderForm } from "./OrderForm";
 import { Flash } from "../Flash";
 
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<{ ok?: string; error?: string; b?: string; c?: string }> };
 type Biz = { id: string; name: string; billing_name: string | null; manager_name: string | null; billing_phone: string | null; manager_phone: string | null; status: string };
+type Order = { id: string; number: string; business_id: string | null; business_name: string; customer_name: string | null; product: PlanTestProduct; quantity: number; unit_price: number; total: number; purchased_on: string; method: string; method_label: string | null; pay_status: "pending" | "paid" | "void"; payment_id: string | null; notes: string | null };
+const METHOD_NAME: Record<string, string> = { yappy: "Yappy", cash: "Efectivo", ach: "Transferencia", card: "Tarjeta", paypal: "PayPal" };
 
 /** 3-month contracts: create one from a business, preview, download and send it. */
 export default async function Contracts({ searchParams }: Props) {
-  const [sp, list, bizRes] = await Promise.all([
+  const [sp, list, bizRes, orderRes, methods] = await Promise.all([
     searchParams,
     listAgreements(),
     db().from("businesses").select("id, name, billing_name, manager_name, billing_phone, manager_phone, status").neq("status", "canceled").order("name"),
+    db().from("orders").select("*").order("created_at", { ascending: false }).limit(200),
+    customMethods(),
   ]);
+  const orders = (orderRes.data ?? []) as Order[];
+  const paidIds = orders.map((o) => o.payment_id).filter((x): x is string => Boolean(x));
+  const receipts = new Map(
+    (paidIds.length ? (((await db().from("receipts").select("id, number, token, payment_id, status").in("payment_id", paidIds)).data ?? []) as { id: string; number: string; token: string; payment_id: string; status: string }[]) : []).map((r) => [r.payment_id, r]),
+  );
   const businesses = (bizRes.data ?? []) as Biz[];
   const chosen = businesses.find((b) => b.id === sp.b) ?? null;
   const today = todayPanama();
@@ -44,6 +56,75 @@ export default async function Contracts({ searchParams }: Props) {
         <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=pro" target="_blank" rel="noreferrer">Pro</a>
         <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=enterprise" target="_blank" rel="noreferrer">Enterprise</a>
       </div>
+
+      <nav className="biz-tabs" aria-label="Secciones de contratos">
+        <a href="#plan-test">Plan Test · compras individuales</a>
+        <a href="#nuevo">Contrato de 3 meses</a>
+        <a href="#lista">Contratos emitidos</a>
+      </nav>
+
+      <section className="panel" id="plan-test">
+        <div className="panel-head">
+          <h2>Plan Test · compras individuales</h2>
+          <span className="muted">Venta única, sin mensualidad</span>
+        </div>
+        {businesses.length === 0 ? (
+          <div className="empty"><p>Primero crea el negocio (plan Personalizado si solo compra piezas).</p><Link className="btn btn-dark" href="/admin/new">+ Nuevo negocio</Link></div>
+        ) : (
+          <OrderForm
+            businesses={businesses.map((b) => ({ id: b.id, name: b.name, contact: b.billing_name || b.manager_name || "" }))}
+            methods={methods.map((m) => m.label)}
+            today={today}
+            action={createOrder}
+          />
+        )}
+        {orders.length > 0 && (
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>N.º</th><th>Negocio</th><th>Producto</th><th className="right">Cant.</th><th className="right">Total</th><th>Pago</th><th /></tr></thead>
+              <tbody>
+                {orders.map((o) => {
+                  const r = o.payment_id ? receipts.get(o.payment_id) : undefined;
+                  return (
+                    <tr key={o.id}>
+                      <td><b>{o.number}</b><br /><small className="muted">{longDay(o.purchased_on)}</small></td>
+                      <td>{o.business_id ? <Link href={`/admin/b/${o.business_id}#pagos`}>{o.business_name}</Link> : <>{o.business_name} <small className="muted">(eliminado)</small></>}{o.customer_name ? <><br /><small className="muted">{o.customer_name}</small></> : null}</td>
+                      <td>{PLAN_TEST_PRODUCTS[o.product].short}<br /><small className="muted">{receiptMoney(Number(o.unit_price))} c/u{o.notes ? ` · ${o.notes}` : ""}</small></td>
+                      <td className="right num">{o.quantity}</td>
+                      <td className="right num"><b>{receiptMoney(Number(o.total))}</b></td>
+                      <td>
+                        <span className={`pill ${o.pay_status === "paid" ? "active" : "trial"}`}>{o.pay_status === "paid" ? "Pagado" : o.pay_status === "void" ? "Anulado" : "Pendiente"}</span>
+                        <br /><small className="muted">{o.method === "other" ? o.method_label : METHOD_NAME[o.method]}</small>
+                      </td>
+                      <td>
+                        <div className="row" style={{ justifyContent: "flex-end" }}>
+                          {r ? (
+                            <>
+                              <a className="btn btn-ghost btn-sm" href={`/recibo/${r.token}/pdf?dl=1`}>Recibo {r.number}</a>
+                              <form action={sendReceiptWhatsApp}>
+                                <input type="hidden" name="receipt_id" value={r.id} />
+                                <input type="hidden" name="back" value="/admin/contratos#plan-test" />
+                                <SubmitButton className="btn btn-ghost btn-sm" pending="…">WhatsApp</SubmitButton>
+                              </form>
+                            </>
+                          ) : o.pay_status === "pending" && o.business_id ? (
+                            <form action={payOrder} className="row" style={{ gap: 6 }}>
+                              <input type="hidden" name="order_id" value={o.id} />
+                              <input type="hidden" name="send" value="1" />
+                              <label className="check" style={{ fontSize: 13 }}><input type="checkbox" name="confirm" value="1" required /> Ya pagó</label>
+                              <SubmitButton className="btn btn-dark btn-sm" pending="…">Marcar pagado</SubmitButton>
+                            </form>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section className="panel" id="nuevo">
         <div className="panel-head"><h2>Nuevo contrato de 3 meses</h2></div>

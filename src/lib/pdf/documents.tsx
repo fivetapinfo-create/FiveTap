@@ -436,6 +436,7 @@ export type ReceiptPdfInput = {
   period_end: string | null;
   service_start: string | null;
   next_due: string | null;
+  items?: { name: string; qty: number; unit: number; total: number }[];
   status: "paid" | "void";
   void_reason: string | null;
   issued_at: string;
@@ -446,12 +447,14 @@ const dayOf = (iso: string) => longDate(iso.slice(0, 10));
 const issuedDay = (iso: string) => new Date(Date.parse(iso) - 5 * 3600_000).toISOString().slice(0, 10);
 
 /** A payment receipt (not a tax invoice): one page, the amount and the period up front. */
-export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; legalName: string | null; site: string }) {
+export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; legalName: string | null; site: string; whatsapp?: string }) {
   const paid = r.status === "paid";
   const rows: [string, string][] = [
     ["Concepto", `${r.concept} · FiveTap`],
     ["Plan contratado", r.plan_label],
-    ["Placas NFC", String(r.plaques)],
+    ...(r.items?.length
+      ? r.items.map((it) => [it.name, `${it.qty} × ${usd2(it.unit)} = ${usd2(it.total)}`] as [string, string])
+      : ([["Placas NFC", String(r.plaques)]] as [string, string][])),
     ...(r.period_start && r.period_end ? ([["Período pagado", `${dayOf(r.period_start)} al ${dayOf(r.period_end)}`]] as [string, string][]) : []),
     ...(r.service_start ? ([["Inicio del servicio", dayOf(r.service_start)]] as [string, string][]) : []),
     ...(r.next_due ? ([["Próximo vencimiento", dayOf(r.next_due)]] as [string, string][]) : []),
@@ -460,12 +463,12 @@ export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; leg
     ["Moneda", r.currency],
   ];
   const doc = (
-    <Document title={`Comprobante ${r.number} — FiveTap`} author={p.tradeName}>
+    <Document title={`Recibo ${r.number} — FiveTap`} author={p.tradeName}>
       <Page size="A4" style={s.page}>
-        <Header doc={`Comprobante ${r.number}`} tag={paid ? "PAGADO" : "ANULADO"} />
+        <Header doc={`Recibo ${r.number}`} tag={paid ? "PAGADO" : "ANULADO"} />
         <View style={s.heroRow}>
           <View>
-            <Text style={s.eyebrow}>Comprobante de pago</Text>
+            <Text style={s.eyebrow}>Recibo de pago</Text>
             <Text style={s.title}>{usd2(r.amount)} {r.currency}</Text>
             <Text style={s.subtitle}>{r.venue_name} · {r.plan_label}</Text>
             <View style={s.rule} />
@@ -475,7 +478,7 @@ export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; leg
 
         <View style={s.facts}>
           <View style={[s.fact, s.factFirst]}>
-            <Text style={s.eyebrow}>N.º de comprobante</Text>
+            <Text style={s.eyebrow}>N.º de recibo</Text>
             <Text style={s.factValue}>{r.number}</Text>
           </View>
           <View style={s.fact}>
@@ -494,6 +497,7 @@ export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; leg
             <Text style={s.partyName}>{p.tradeName}</Text>
             {p.legalName && p.legalName !== p.tradeName ? <KV k="Razón social" v={p.legalName} /> : null}
             <KV k="Web" v={p.site} />
+            {p.whatsapp ? <KV k="WhatsApp" v={p.whatsapp} /> : null}
           </View>
           <View style={s.party}>
             <Text style={s.eyebrow}>Cliente</Text>
@@ -510,12 +514,12 @@ export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; leg
         </View>
 
         {!paid && (
-          <Text style={[s.small, { color: RED, marginBottom: 8 }]}>Comprobante anulado{r.void_reason ? `: ${r.void_reason}` : ""}. No es válido como constancia de pago.</Text>
+          <Text style={[s.small, { color: RED, marginBottom: 8 }]}>Recibo anulado{r.void_reason ? `: ${r.void_reason}` : ""}. No es válido como constancia de pago.</Text>
         )}
         <Text style={s.small}>
-          Este documento es un comprobante de pago emitido por {p.tradeName}. No sustituye una factura fiscal. Gracias por confiar en FiveTap.
+          Este documento es un recibo de pago emitido por {p.tradeName}. No sustituye una factura fiscal. Gracias por confiar en FiveTap.
         </Text>
-        <Footer left={`${p.tradeName} · ${p.site} · Comprobante ${r.number}`} />
+        <Footer left={`${p.tradeName} · ${p.site} · Recibo ${r.number}`} />
       </Page>
     </Document>
   );

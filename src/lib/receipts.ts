@@ -7,6 +7,7 @@ import { receiptPdf } from "./pdf/documents";
 import { sendPush } from "./push";
 import { SITE_URL } from "./site";
 import { db } from "./supabase";
+import { FOUNDER_PHONE, PLAN_TEST_PRODUCTS, type PlanTestProduct } from "./test-kit";
 import type { Business, Payment } from "./types";
 
 // Payment receipts: one per registered payment, issued automatically, never edited.
@@ -55,9 +56,13 @@ export type Receipt = {
   void_reason: string | null;
   voided_at: string | null;
   issued_at: string;
+  /** What was bought, line by line (one-time pieces); empty for a monthly payment. */
+  items: ReceiptItem[];
 };
 
-export type ReceiptSend = { id: string; receipt_id: string; channel: "email" | "push"; recipient: string | null; status: "sent" | "failed" | "skipped"; detail: string | null; created_at: string };
+export type ReceiptItem = { name: string; qty: number; unit: number; total: number };
+
+export type ReceiptSend = { id: string; receipt_id: string; channel: "email" | "push" | "whatsapp"; recipient: string | null; status: "sent" | "failed" | "skipped" | "opened"; detail: string | null; created_at: string };
 
 function must<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
@@ -94,16 +99,24 @@ export async function issueReceipt(paymentId: string): Promise<Receipt> {
   const plaques = tagCount.count ?? 0;
   const after = nextCharge(b, pays);
   const recurring = pay.kind === "monthly" || pay.kind === "annual";
+  // A Plan Test purchase: the receipt lists the product, the quantity and the unit price.
+  const order = (await db().from("orders").select("product, quantity, unit_price, total, customer_name").eq("payment_id", pay.id).maybeSingle()).data as
+    | { product: PlanTestProduct; quantity: number; unit_price: number; total: number; customer_name: string | null }
+    | null;
+  const items: ReceiptItem[] = order
+    ? [{ name: PLAN_TEST_PRODUCTS[order.product].name, qty: order.quantity, unit: Number(order.unit_price), total: Number(order.total) }]
+    : [];
   const months = after?.kind === "annual" ? 12 : 1;
   const row = {
     payment_id: pay.id,
     business_id: b.id,
     venue_name: b.name,
-    owner_name: b.billing_name || b.manager_name,
+    owner_name: order?.customer_name || b.billing_name || b.manager_name,
     owner_email: b.billing_email || b.manager_email,
-    plan_label: planLabel(b, after, 0, plans),
-    plaques,
-    concept: KIND_LABEL[pay.kind],
+    plan_label: order ? "Plan Test · compra individual" : planLabel(b, after, 0, plans),
+    plaques: order ? order.quantity : plaques,
+    concept: order ? PLAN_TEST_PRODUCTS[order.product].short : KIND_LABEL[pay.kind],
+    items,
     amount: Number(pay.amount),
     currency: "USD",
     method: methodName(pay),
@@ -112,7 +125,8 @@ export async function issueReceipt(paymentId: string): Promise<Receipt> {
     period_start: recurring && after ? addMonths(after.due, -months) : null,
     period_end: recurring && after ? addDays(after.due, -1) : null,
     service_start: localDay(b.created_at),
-    next_due: after?.due ?? null,
+    // A one-time purchase has no next due date.
+    next_due: order ? null : after?.due ?? null,
   };
   const ins = await db().from("receipts").insert(row).select("*").single();
   if (ins.error) {
@@ -129,17 +143,20 @@ export async function issueReceipt(paymentId: string): Promise<Receipt> {
 function emailBody(r: Receipt) {
   const hi = r.owner_name ? `Hola, ${r.owner_name.split(" ")[0]}.` : "Hola.";
   const rows: [string, string][] = [
-    ["Restaurante", r.venue_name],
+    ["Negocio", r.venue_name],
     ["Plan contratado", r.plan_label],
-    ["Placas NFC", String(r.plaques)],
+    ...(r.items?.length
+      ? r.items.map((it) => [it.name, `${it.qty} × ${receiptMoney(it.unit)} = ${receiptMoney(it.total)}`] as [string, string])
+      : ([["Placas NFC", String(r.plaques)]] as [string, string][])),
     ["Monto pagado", `${receiptMoney(r.amount)} ${r.currency}`],
     ["Método de pago", r.method],
     ["Fecha de pago", human(r.paid_on)],
     ...(r.next_due ? ([["Próximo vencimiento", human(r.next_due)]] as [string, string][]) : []),
-    ["Comprobante", r.number],
+    ["Recibo", r.number],
   ];
   const url = receiptUrl(r);
-  const text = `${hi}\n\nTe confirmamos que hemos recibido correctamente tu pago correspondiente a tu suscripción de FiveTap.\n\n${rows.map(([k, v]) => `${k}: ${v}`).join("\n")}\n\nTu comprobante: ${url}\n\nGracias por confiar en FiveTap.`;
+  const what = r.items?.length ? "tu compra" : "tu suscripción";
+  const text = `${hi}\n\nTe confirmamos que hemos recibido correctamente tu pago correspondiente a ${what} de FiveTap.\n\n${rows.map(([k, v]) => `${k}: ${v}`).join("\n")}\n\nTu recibo: ${url}\n\n¿Dudas? WhatsApp FiveTap ${FOUNDER_PHONE}.\nGracias por confiar en FiveTap.`;
   const esc = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
   const html = `<!doctype html><html><body style="margin:0;background:#f6f5f1;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#26251f">
 <div style="max-width:520px;margin:0 auto;padding:32px 20px">
@@ -147,24 +164,24 @@ function emailBody(r: Receipt) {
 <div style="background:#fff;border:1px solid #e6e4de;border-radius:16px;padding:28px">
 <p style="display:inline-block;margin:0 0 14px;padding:3px 10px;border-radius:99px;background:#e8f4ec;color:#157f45;font-size:12px;font-weight:700">PAGADO</p>
 <p style="font-size:16px;margin:0 0 8px">${esc(hi)}</p>
-<p style="margin:0 0 20px;line-height:1.5">Te confirmamos que hemos recibido correctamente tu pago correspondiente a tu suscripción de FiveTap. Estos son los detalles de tu transacción:</p>
+<p style="margin:0 0 20px;line-height:1.5">Te confirmamos que hemos recibido correctamente tu pago correspondiente a ${what} de FiveTap. Estos son los detalles de tu transacción:</p>
 <table style="width:100%;border-collapse:collapse;font-size:14px">${rows.map(([k, v]) => `<tr><td style="padding:8px 0;border-top:1px solid #eeece6;color:#6b6a64">${esc(k)}</td><td style="padding:8px 0;border-top:1px solid #eeece6;text-align:right;font-weight:600;color:#0a0a0a">${esc(v)}</td></tr>`).join("")}</table>
-<p style="margin:24px 0 0"><a href="${url}" style="display:inline-block;background:#0a0a0a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:99px;font-weight:600">Ver mi comprobante</a></p>
-<p style="margin:20px 0 0;line-height:1.5">Gracias por confiar en FiveTap.</p>
+<p style="margin:24px 0 0"><a href="${url}" style="display:inline-block;background:#0a0a0a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:99px;font-weight:600">Ver mi recibo</a></p>
+<p style="margin:20px 0 0;line-height:1.5">¿Dudas? Escríbenos por WhatsApp al ${FOUNDER_PHONE}. Gracias por confiar en FiveTap.</p>
 </div>
-<p style="font-size:12px;color:#6b6a64;margin:16px 4px 0;line-height:1.5">Adjuntamos tu comprobante en PDF. Es un comprobante de pago y no sustituye una factura fiscal.</p>
+<p style="font-size:12px;color:#6b6a64;margin:16px 4px 0;line-height:1.5">Adjuntamos tu recibo en PDF. Es un recibo de pago y no sustituye una factura fiscal.</p>
 </div></body></html>`;
   return { text, html };
 }
 
-async function logSend(receiptId: string, channel: "email" | "push", recipient: string | null, result: EmailResult) {
+export async function logSend(receiptId: string, channel: "email" | "push" | "whatsapp", recipient: string | null, result: { status: string; detail: string }) {
   await db().from("receipt_sends").insert({ receipt_id: receiptId, channel, recipient, status: result.status, detail: result.detail.slice(0, 300) });
 }
 
 /** The receipt's PDF, with the provider's names as saved in Empresa. */
 export async function receiptPdfFor(r: Receipt) {
   const c = await getCompany();
-  return receiptPdf(r, { tradeName: c.trade_name || "FiveTap", legalName: c.legal_name, site: SITE_URL.replace(/^https?:\/\//, "") });
+  return receiptPdf(r, { tradeName: c.trade_name || "FiveTap", legalName: c.legal_name, site: SITE_URL.replace(/^https?:\/\//, ""), whatsapp: FOUNDER_PHONE });
 }
 
 /**

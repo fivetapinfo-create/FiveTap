@@ -8,13 +8,14 @@ import { normalizePhone } from "@/lib/phone";
 import { placeIdFrom, reviewUrlFrom } from "@/lib/site";
 import { addDays, todayPanama } from "@/lib/agenda";
 import { AGREEMENT_METHODS, SIGNER_ROLES, endOf } from "@/lib/agreement";
-import { TEST_ACTIVE_DAYS } from "@/lib/test-kit";
+import { PLAN_TEST_PRODUCTS, TEST_ACTIVE_DAYS, type PlanTestProduct } from "@/lib/test-kit";
 import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot, snapshotFromGoogle } from "@/lib/data";
 import { placesReady } from "@/lib/places";
 import { renewCode } from "@/lib/access";
 import { sendPush } from "@/lib/push";
-import { audit, deliverReceipt, issueReceipt } from "@/lib/receipts";
+import { audit, deliverReceipt, issueReceipt, logSend, receiptMoney, receiptUrl } from "@/lib/receipts";
+import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { db } from "@/lib/supabase";
 import { PANEL_KINDS, verticalByKey } from "@/lib/verticals";
 
@@ -314,6 +315,8 @@ export async function recordPayment(f: FormData) {
 
     const ins = await db().from("payments").insert({
       business_id: id,
+      // Kept on the payment so the record still says whose it was if the venue is deleted.
+      business_name: before.name,
       amount,
       kind,
       method,
@@ -352,6 +355,148 @@ export async function recordPayment(f: FormData) {
   revalidatePath("/admin/cobros");
   revalidatePath("/admin/comprobantes");
   redirect(`${back}?ok=${result}&r=${encodeURIComponent(receiptNumber)}#pagos`);
+}
+
+/**
+ * Sends a receipt by WhatsApp. With the official Cloud API configured it goes out from here and
+ * Meta's answer is recorded; otherwise WhatsApp opens with the message ready and the panel
+ * records "opened" (the founder still taps Send).
+ */
+export async function sendReceiptWhatsApp(f: FormData) {
+  const rid = str(f, "receipt_id", 60);
+  const back = str(f, "back", 160).startsWith("/admin") ? str(f, "back", 160) : "/admin/comprobantes";
+  let target = "";
+  try {
+    const { data: r, error } = await db().from("receipts").select("*").eq("id", rid).maybeSingle();
+    if (error || !r) throw new Error(error?.message ?? "Recibo no encontrado.");
+    if (r.status !== "paid") throw new Error("Un recibo anulado no se envía.");
+    const b = r.business_id ? (await db().from("businesses").select("billing_phone, manager_phone").eq("id", r.business_id).maybeSingle()).data : null;
+    const phone = b?.billing_phone || b?.manager_phone;
+    if (!phone) throw new Error("Este negocio no tiene WhatsApp registrado. Agrégalo en Editar datos.");
+    const first = r.owner_name ? r.owner_name.split(" ")[0] : "";
+    const url = receiptUrl(r);
+    if (whatsappApiReady()) {
+      const out = await sendWhatsAppTemplate(phone, [first || r.venue_name, r.number, receiptMoney(r.amount), url]);
+      await logSend(r.id, "whatsapp", phone, out);
+      await audit("receipt.sent", { businessId: r.business_id, entity: "receipt", entityId: r.number, details: { whatsapp: out.status } });
+      if (out.status !== "sent") throw new Error(`WhatsApp no lo envió: ${out.detail}`);
+      const [path, hash] = back.split("#");
+      target = `${path}${path!.includes("?") ? "&" : "?"}ok=wa-enviado${hash ? `#${hash}` : ""}`;
+    } else {
+      const text = `Hola${first ? ` ${first}` : ""}, te escribe FiveTap. Recibimos tu pago de ${receiptMoney(r.amount)} (${r.concept}). Tu recibo ${r.number} está aquí: ${url}\n\n¡Gracias por confiar en FiveTap!`;
+      await logSend(r.id, "whatsapp", phone, { status: "opened", detail: "Se abrió WhatsApp con el recibo listo; el envío se confirma en WhatsApp." });
+      await audit("receipt.sent", { businessId: r.business_id, entity: "receipt", entityId: r.number, details: { whatsapp: "opened" } });
+      target = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    }
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath("/admin/comprobantes");
+  redirect(target);
+}
+
+const PRODUCTS = Object.keys(PLAN_TEST_PRODUCTS) as PlanTestProduct[];
+
+/** Plan Test: a one-time sale of single pieces. Registers it and, if already paid, issues its receipt. */
+export async function createOrder(f: FormData) {
+  const back = "/admin/contratos";
+  let ok = "compra";
+  try {
+    const businessId = str(f, "business_id", 60);
+    const product = PRODUCTS.find((p) => p === str(f, "product", 10));
+    if (!product) throw new Error("Elige el producto.");
+    const quantity = Math.round(num(f, "quantity", 0));
+    if (!(quantity >= 1 && quantity <= 500)) throw new Error("La cantidad va de 1 a 500.");
+    const unit = Math.round(num(f, "unit_price", PLAN_TEST_PRODUCTS[product].unit) * 100) / 100;
+    if (!(unit > 0)) throw new Error("Precio unitario inválido.");
+    const rawMethod = str(f, "method", 80);
+    const custom = rawMethod.startsWith("m:") ? rawMethod.slice(2).trim() : "";
+    const method = custom ? "other" : (METHODS as readonly string[]).includes(rawMethod) ? rawMethod : "";
+    if (!method || (method === "other" && !custom && !str(f, "method_other", 40))) throw new Error("Elige el método de pago.");
+    const purchased = /^\d{4}-\d{2}-\d{2}$/.test(str(f, "purchased_on", 10)) ? str(f, "purchased_on", 10) : todayPanama();
+    const { data: b, error: be } = await db().from("businesses").select("id, name").eq("id", businessId).maybeSingle();
+    if (be || !b) throw new Error("Elige el negocio. Si es nuevo, créalo primero en Nuevo negocio con el plan Personalizado.");
+    const paid = str(f, "pay_status", 10) === "paid";
+    const { data: order, error } = await db().from("orders").insert({
+      business_id: b.id,
+      business_name: b.name,
+      customer_name: opt(f, "customer_name", 100),
+      product,
+      quantity,
+      unit_price: unit,
+      // Always computed here: quantity × unit price, never typed.
+      total: Math.round(quantity * unit * 100) / 100,
+      purchased_on: purchased,
+      method,
+      method_label: method === "other" ? custom || str(f, "method_other", 40) : null,
+      pay_status: "pending",
+      notes: opt(f, "notes", 500),
+    }).select("id, number").single();
+    if (error) throw new Error(error.message);
+    await audit("order.created", { businessId: b.id, entity: "order", entityId: order.number, details: { product, quantity, unit, total: quantity * unit } });
+    // The pieces appear in the inventory (Placas) ready to be written and delivered.
+    if (str(f, "create_pieces", 3) === "1") {
+      const p = PLAN_TEST_PRODUCTS[product];
+      const { count } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", b.id).like("label", `${p.label}%`);
+      await createTags(b.id, p.label, quantity, (count ?? 0) + 1, p.kind);
+    }
+    if (paid) ok = await payOrderNow(order.id, str(f, "send", 3) === "1");
+  } catch (e) {
+    if (e && typeof e === "object" && "digest" in e) throw e;
+    fail(back, e);
+  }
+  revalidatePath(back);
+  revalidatePath("/admin/comprobantes");
+  redirect(`${back}?ok=${ok}#plan-test`);
+}
+
+/** A pending Plan Test purchase was paid: payment, receipt and (optionally) its delivery. */
+export async function payOrder(f: FormData) {
+  const back = "/admin/contratos";
+  let ok = "compra-pagada";
+  try {
+    if (str(f, "confirm", 3) !== "1") throw new Error("Confirma que el pago ya llegó.");
+    ok = await payOrderNow(str(f, "order_id", 60), str(f, "send", 3) === "1");
+  } catch (e) {
+    if (e && typeof e === "object" && "digest" in e) throw e;
+    fail(back, e);
+  }
+  revalidatePath(back);
+  revalidatePath("/admin/comprobantes");
+  redirect(`${back}?ok=${ok}#plan-test`);
+}
+
+async function payOrderNow(orderId: string, send: boolean): Promise<string> {
+  const { data: o, error } = await db().from("orders").select("*").eq("id", orderId).maybeSingle();
+  if (error || !o) throw new Error(error?.message ?? "Compra no encontrada.");
+  if (o.pay_status === "void") throw new Error("Esta compra está anulada.");
+  if (!o.business_id) throw new Error("El negocio de esta compra ya no existe.");
+  let paymentId: string | null = o.payment_id;
+  if (!paymentId) {
+    // One payment per purchase, even if the button is pressed twice.
+    const key = `order-${o.id}`;
+    const ins = await db().from("payments").insert({
+      business_id: o.business_id,
+      business_name: o.business_name,
+      amount: Number(o.total),
+      kind: "pieces",
+      method: o.method,
+      method_label: o.method_label,
+      paid_at: o.purchased_on,
+      idempotency_key: key,
+    }).select("id").single();
+    if (ins.error && ins.error.code !== "23505") throw new Error(ins.error.message);
+    paymentId = ins.data?.id ?? (await db().from("payments").select("id").eq("idempotency_key", key).single()).data?.id ?? null;
+    if (!paymentId) throw new Error("No se pudo registrar el pago.");
+    const up = await db().from("orders").update({ payment_id: paymentId, pay_status: "paid" }).eq("id", o.id);
+    if (up.error) throw new Error(up.error.message);
+    await audit("payment.recorded", { businessId: o.business_id, entity: "payment", entityId: paymentId, details: { amount: Number(o.total), kind: "pieces", method: o.method, order: o.number } });
+  }
+  const receipt = await issueReceipt(paymentId);
+  if (!send) return "compra-pagada";
+  const token = (await db().from("businesses").select("owner_token").eq("id", o.business_id).maybeSingle()).data?.owner_token;
+  const out = await deliverReceipt(receipt, { email: true, push: true, ownerToken: token });
+  return out.email?.status === "sent" ? "comprobante-correo" : "comprobante-app";
 }
 
 /** Sends an existing receipt again (email and app). The receipt and its number stay the same. */
@@ -587,12 +732,17 @@ export async function deleteBusiness(f: FormData) {
     const { data: b, error } = await db().from("businesses").select("name, logo_url").eq("id", id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!b) throw new Error("El negocio no existe.");
-    if (str(f, "confirm", 80) !== b.name) throw new Error("Escribe el nombre exacto del negocio para eliminarlo.");
-    // Pieces a client has would stop working: they must be retired first (or the venue canceled).
+    if (str(f, "confirm", 80).trim() !== b.name) throw new Error("Escribe el nombre exacto del negocio para eliminarlo.");
+    // Pieces a client has stop working: the founder must say so explicitly in the second step.
     const { count: delivered } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", id).eq("status", "delivered");
-    if (delivered) throw new Error(`No se puede eliminar: tiene ${delivered} ${delivered === 1 ? "pieza entregada" : "piezas entregadas"} a un cliente. Retíralas primero en Placas, o cambia el negocio a Cancelado en Editar datos.`);
+    if (delivered && f.get("retire_delivered") !== "1") throw new Error(`Tiene ${delivered} ${delivered === 1 ? "pieza entregada" : "piezas entregadas"} en el local. Marca que entiendes que dejarán de funcionar para eliminarlo.`);
+    const count = async (t: string) => (await db().from(t).select("id", { count: "exact", head: true }).eq("business_id", id)).count ?? 0;
+    const [pieces, payments, receipts, orders] = await Promise.all([count("tags"), count("payments"), count("receipts"), count("orders")]);
+    // Payments, receipts, orders and contracts keep the business name (FK on delete set null);
+    // pieces, taps, messages, club, review counts and app access go with the business (cascade).
     const del = await db().from("businesses").delete().eq("id", id);
     if (del.error) throw new Error(del.error.message);
+    await audit("business.deleted", { businessId: id, entity: "business", entityId: b.name, details: { name: b.name, pieces, delivered: delivered ?? 0, kept_payments: payments, kept_receipts: receipts, kept_orders: orders } });
     const logo = b.logo_url?.split("/logos/")[1];
     if (logo) await db().storage.from("logos").remove([decodeURIComponent(logo)]);
   } catch (e) {

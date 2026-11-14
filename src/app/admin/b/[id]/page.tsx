@@ -19,9 +19,10 @@ import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusines
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
 import { setTagStatus } from "../../actions";
-import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
+import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, sendReceiptWhatsApp, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
+import { BusinessOptions } from "./BusinessOptions";
 import { Flash } from "../../Flash";
 import { STATUS_LABEL, dateTime, pct, usd } from "../../format";
 
@@ -96,6 +97,13 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <div className="row">
             {preview && <a className="btn btn-ghost btn-sm" href={preview} target="_blank" rel="noreferrer">Ver página del cliente</a>}
             <a className="btn btn-dark btn-sm" href="#pagos">Registrar pago</a>
+            <BusinessOptions
+              id={b.id}
+              name={b.name}
+              delivered={tags.filter((t) => t.status === "delivered").length}
+              counts={{ pieces: tags.length, contacts: contacts.length, payments: payments.length, receipts: receipts.length }}
+              action={deleteBusiness}
+            />
           </div>
         </div>
       </div>
@@ -222,7 +230,11 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 <a className="btn btn-ghost btn-sm" href={`/recibo/${r.token}`} target="_blank" rel="noreferrer">Ver comprobante</a>
                 <a className="btn btn-ghost btn-sm" href={`/recibo/${r.token}/pdf?dl=1`}>Descargar PDF</a>
                 {(b.billing_phone || b.manager_phone) && (
-                  <a className="btn btn-ghost btn-sm" href={`https://wa.me/${b.billing_phone || b.manager_phone}?text=${encodeURIComponent(`Hola, te escribe FiveTap. Confirmamos tu pago de ${usd(Number(r.amount).toFixed(2))}. Tu comprobante ${r.number}: ${SITE_URL}/recibo/${r.token} ¡Gracias! 🙌`)}`}>Enviar por WhatsApp</a>
+                  <form action={sendReceiptWhatsApp}>
+                    <input type="hidden" name="receipt_id" value={r.id} />
+                    <input type="hidden" name="back" value={`/admin/b/${b.id}#pagos`} />
+                    <SubmitButton className="btn btn-ghost btn-sm" pending="Abriendo…">Enviar por WhatsApp</SubmitButton>
+                  </form>
                 )}
               </div>
             </div>
@@ -297,6 +309,13 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                                 <input type="hidden" name="back" value={`/admin/b/${b.id}#pagos`} />
                                 <SubmitButton className="btn btn-ghost btn-sm" pending="Enviando…">Reenviar</SubmitButton>
                               </form>
+                              {(b.billing_phone || b.manager_phone) && (
+                                <form action={sendReceiptWhatsApp}>
+                                  <input type="hidden" name="receipt_id" value={r.id} />
+                                  <input type="hidden" name="back" value={`/admin/b/${b.id}#pagos`} />
+                                  <SubmitButton className="btn btn-ghost btn-sm" pending="…">WhatsApp</SubmitButton>
+                                </form>
+                              )}
                             </>
                           ) : (
                             <form action={emitReceipt}>
@@ -607,16 +626,6 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             </label>
             <SubmitButton className="btn btn-dark" pending="Guardando…">Guardar cambios</SubmitButton>
           </div>
-        </form>
-        <form action={deleteBusiness} className="form-section danger-zone">
-          <input type="hidden" name="id" value={b.id} />
-          <h3>Eliminar negocio</h3>
-          <p className="muted">Borra el negocio con sus placas, estadísticas, mensajes, club y pagos. No se puede deshacer. Sus placas dejarán de funcionar.</p>
-          <label className="field">
-            <span>Escribe <b>{b.name}</b> para confirmar</span>
-            <input className="input" name="confirm" autoComplete="off" required />
-          </label>
-          <SubmitButton className="btn btn-danger" pending="Eliminando…">Eliminar para siempre</SubmitButton>
         </form>
       </details>
     </main>
