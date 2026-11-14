@@ -1098,3 +1098,6 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 /* ================= Receipts filters ================= */
 .receipt-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
 .receipt-filters .input, .receipt-filters .select { flex: 1 1 180px; width: auto; }
+.order-form { min-width: 0; }
+.order-form > *, .order-form .grid-2 > *, .order-products > * { min-width: 0; }
+.order-form .select, .order-form .input { width: 100%; max-width: 100%; }
