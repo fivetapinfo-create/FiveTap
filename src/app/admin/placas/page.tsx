@@ -29,6 +29,7 @@ const said = (l: Log) =>
   l.action === "tag.status" ? `Pasó a ${PIECE_LABEL[l.details.to === "written" ? "grabada" : l.details.to === "delivered" ? "entregada" : "retirada"]}`
   : l.action === "tag.renamed" ? `Nombre: “${l.details.from}” → “${l.details.to}”`
   : l.action === "tag.note" ? "Nota actualizada"
+  : l.action === "tag.staff" ? `Mesero: “${l.details.from || "sin nombre"}” → “${l.details.to || "sin nombre"}”`
   : l.action === "tag.activated" ? "Activada" : l.action === "tag.deactivated" ? "Desactivada" : l.action;
 
 /**

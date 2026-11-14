@@ -17,6 +17,7 @@ import { sendPush } from "@/lib/push";
 import { audit, deliverReceipt, issueReceipt, logSend, receiptMoney, receiptUrl } from "@/lib/receipts";
 import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { db } from "@/lib/supabase";
+import { saveStaff } from "@/lib/team";
 import { PANEL_KINDS, verticalByKey } from "@/lib/verticals";
 
 const str = (f: FormData, k: string, max = 200) => String(f.get(k) ?? "").trim().slice(0, max);
@@ -843,4 +844,18 @@ export async function deleteAgreement(f: FormData) {
   revalidatePath("/admin/contratos");
   if (data?.business_id) revalidatePath(`/admin/b/${data.business_id}`);
   redirect("/admin/contratos?ok=contrato-borrado");
+}
+
+/** Founder: who carries each waiter card (and the card's number). */
+export async function setStaff(f: FormData) {
+  const businessId = str(f, "business_id", 60);
+  const back = `/admin/b/${businessId}`;
+  try {
+    const r = await saveStaff({ tagId: str(f, "tag_id", 60), businessId, name: str(f, "staff_name", 60), label: str(f, "label", 40) || undefined, newPerson: str(f, "new_person", 3) === "1" });
+    if (r.before !== r.after) await audit("tag.staff", { businessId, entity: "tag", entityId: str(f, "tag_id", 60), details: { from: r.before ?? "", to: r.after ?? "", new_person: str(f, "new_person", 3) === "1" } });
+  } catch (e) {
+    fail(`${back}#equipo`, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=equipo#equipo`);
 }

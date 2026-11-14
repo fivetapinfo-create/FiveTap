@@ -1,6 +1,7 @@
 const OK: Record<string, string> = {
   creado: "Negocio creado. Graba cada enlace en su placa NFC con NFC Tools.",
   guardado: "Cambios guardados.",
+  equipo: "Tarjeta guardada. El ranking ya muestra el nombre.",
   placas: "Placas nuevas generadas.",
   pago: "Pago registrado y comprobante emitido.",
   "pago-reactivado": "Pago registrado y comprobante emitido. Sus placas y su app ya funcionan otra vez.",

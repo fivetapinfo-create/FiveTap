@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { accessRole, renewCode, unlock } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { db } from "@/lib/supabase";
+import { saveStaff } from "@/lib/team";
 
 /** The owner or manager closes a private message once it is handled (or opens it again). */
 export async function setMessageResolved(f: FormData) {
@@ -42,4 +43,18 @@ export async function renewManagerCode(f: FormData) {
   if (!b || (await accessRole(b)) !== "owner") redirect("/");
   await renewCode(b, "manager");
   redirect(`/mi/${token}/ajustes?ok=codigo#acceso`);
+}
+
+/** Owner or manager: writes who carries each waiter card (e.g. a new waiter took a card). */
+export async function setStaffName(f: FormData) {
+  const token = String(f.get("token") ?? "");
+  const b = await businessByOwnerToken(token);
+  if (!b || !(await accessRole(b))) redirect("/");
+  try {
+    await saveStaff({ tagId: String(f.get("tag_id") ?? ""), businessId: b.id, name: String(f.get("staff_name") ?? ""), newPerson: f.get("new_person") === "1" });
+  } catch (e) {
+    console.error("[setStaffName]", e instanceof Error ? e.message : e);
+  }
+  revalidatePath(`/mi/${token}`);
+  redirect(`/mi/${token}#equipo`);
 }

@@ -15,7 +15,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { addDays, billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
 import { after } from "next/server";
 import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
-import { setMessageResolved } from "./actions";
+import { setMessageResolved, setStaffName } from "./actions";
+import { TeamRanking } from "@/components/TeamRanking";
+import { teamPeriod, teamRanking } from "@/lib/team";
 import { getPlans } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
@@ -23,7 +25,7 @@ import { dateTime } from "../../admin/format";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ rol?: string; instalar?: string; app?: string; acceso?: string }> };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ rol?: string; instalar?: string; app?: string; acceso?: string; equipo?: string }> };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const [{ token }, sp] = await Promise.all([params, searchParams]);
@@ -74,6 +76,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   // Waiters ranked by guests sent to Google; table plaques by taps.
   // Only pieces in use: deactivated ones stay in the founder's panel, not in the owner's app.
   const waiters = tags.filter((t) => t.active && isWaiter(t)).map(row).sort(byReviews);
+  const period = teamPeriod(sp.equipo);
+  const team = await teamRanking(tags, period);
   const tables = tags.filter((t) => t.active && !isWaiter(t)).map(row).sort(byScans);
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
@@ -198,26 +202,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           )}
         </section>
 
-        {/* 4. The team: who brings more guests to Google. */}
-        {waiters.length > 0 && (
-          <section className="panel" id="equipo">
-            <div className="panel-head">
-              <h2>Tu equipo</h2>
-              <span className="muted">Quién lleva más clientes a Google · 30 días</span>
-            </div>
-            <ol className="team">
-              {waiters.map((t, i) => (
-                <li key={t.id}>
-                  <span className={`team-rank num${t.reviews > 0 && i < 3 ? " top" : ""}`} aria-label={`Puesto ${i + 1}`}>{i + 1}</span>
-                  <b>{t.label}</b>
-                  {!t.active && <span className="muted"> · desactivada</span>}
-                  <span className="team-num num">{t.reviews} <small>a Google</small></span>
-                  <span className="team-num num muted">{t.scans} <small>toques</small></span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
+        {/* 4. The team: who brings more guests to Google, live. */}
+        {team.length > 0 && <TeamRanking rows={team} period={period} base={`/mi/${token}`} edit={{ action: setStaffName, hidden: { token } }} />}
 
         {/* 5. The club, with the promotion sender. */}
         <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} business={b.name} />

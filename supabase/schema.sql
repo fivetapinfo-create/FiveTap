@@ -576,3 +576,9 @@ create table if not exists orders (
 );
 create index if not exists orders_business_idx on orders (business_id, purchased_on desc);
 alter table orders enable row level security;
+
+-- ============ Team ranking: who carries each waiter card ============
+alter table tags add column if not exists staff_name text;
+alter table tags add column if not exists staff_since timestamptz;
+create index if not exists events_tag_time_idx on events (tag_id, created_at desc);
+create index if not exists feedback_tag_time_idx on feedback (tag_id, created_at desc);

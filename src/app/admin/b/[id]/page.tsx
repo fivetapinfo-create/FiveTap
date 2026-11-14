@@ -19,14 +19,16 @@ import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusines
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
 import { setTagStatus } from "../../actions";
-import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, sendReceiptWhatsApp, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
+import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, sendReceiptWhatsApp, setStaff, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
 import { BusinessOptions } from "../../BusinessOptions";
+import { TeamRanking } from "@/components/TeamRanking";
+import { teamPeriod, teamRanking } from "@/lib/team";
 import { Flash } from "../../Flash";
 import { STATUS_LABEL, dateTime, pct, usd } from "../../format";
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; r?: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string; r?: string; equipo?: string }> };
 
 
 export default async function BusinessPage({ params, searchParams }: Props) {
@@ -74,6 +76,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const isWaiter = (t: { kind?: string; label: string }) => t.kind === "waiter" || (!t.kind && /meser|camarer|tarjeta/i.test(t.label));
   const tables = tags.filter((t) => !isWaiter(t));
   const waiters = tags.filter(isWaiter);
+  const period = teamPeriod(sp.equipo);
+  const team = await teamRanking(tags, period);
   const receiptByPayment = new Map(receipts.filter((r) => r.payment_id).map((r) => [r.payment_id!, r]));
   const receiptEmail = b.billing_email || b.manager_email;
   if (feedback.some((f) => !f.read_at)) after(() => markRead({ businessId: b.id }));
@@ -114,6 +118,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <a href="#pagos">Pagos</a>
         <a href="#resenas">Reseñas</a>
         <a href="#app">Accesos</a>
+        {waiters.length > 0 && <a href="#equipo">Equipo</a>}
         <a href="#placas">Placas</a>
         <a href="#contrato">Contrato</a>
         <a href="#club">Club</a>
@@ -476,6 +481,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           </form>
         </div>
       </section>
+
+      {team.length > 0 && <TeamRanking rows={team} period={period} base={`/admin/b/${b.id}`} edit={{ action: setStaff, hidden: { business_id: b.id }, cardLabel: true }} />}
 
       <section className="panel" id="placas">
         <div className="panel-head">

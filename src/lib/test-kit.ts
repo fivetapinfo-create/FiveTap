@@ -40,3 +40,15 @@ export const PLAN_TEST_PRODUCTS = {
   card: { name: "Placa NFC con cordón para el personal", short: "Placa con cordón", unit: 30, kind: "waiter" as const, label: "Personal" },
 };
 export type PlanTestProduct = keyof typeof PLAN_TEST_PRODUCTS;
+
+/**
+ * Pack prices (slight discount by quantity) for Plan Test purchases: unit price by quantity
+ * tier. 1 piece pays the list price; from 10 pieces it is the lowest tier.
+ */
+export const PLAN_TEST_TIERS: Record<PlanTestProduct, { from: number; unit: number }[]> = {
+  plaque: [{ from: 1, unit: 40 }, { from: 2, unit: 38 }, { from: 3, unit: 37 }, { from: 4, unit: 36 }, { from: 5, unit: 35 }, { from: 10, unit: 33 }],
+  card: [{ from: 1, unit: 30 }, { from: 2, unit: 28 }, { from: 3, unit: 27 }, { from: 4, unit: 26 }, { from: 5, unit: 25 }, { from: 10, unit: 24 }],
+};
+export const packUnit = (p: PlanTestProduct, qty: number) => PLAN_TEST_TIERS[p].filter((t) => qty >= t.from).at(-1)!.unit;
+/** The packs offered as one-tap buttons. */
+export const PLAN_TEST_PACKS = [2, 3, 4, 5, 10];

@@ -54,6 +54,9 @@ export type Tag = {
   retired_at: string | null;
   /** The founder's own note; never written on the chip. */
   note: string | null;
+  /** Waiter cards: who carries it, and since when (when it changed hands). */
+  staff_name?: string | null;
+  staff_since?: string | null;
   created_at: string;
 };
 
