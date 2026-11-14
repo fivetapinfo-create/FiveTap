@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Amex, Mastercard, PayPal, Visa } from "@/components/PaymentBadges";
 import { Signup } from "@/components/Signup";
-import { activePlans, planPieces } from "@/lib/plans";
+import { activePlans, planPieces, planShort } from "@/lib/plans";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -42,7 +42,7 @@ export default async function Start({ searchParams }: Props) {
           {plans.map((p) => (
             <Link key={p.key} href={href(p.key)} className={`plan-chip${p.key === plan.key ? " on" : ""}`} aria-current={p.key === plan.key ? "true" : undefined}>
               <b>{p.name.replace(/^FiveTap\s+/, "")}{p.badge ? ` · ${p.badge}` : ""}</b>
-              <span>{p.plaques} placas + {p.cards} tarjetas · {usd(p.monthly)}/mes</span>
+              <span>{planShort(p)} · {usd(p.monthly)}/mes</span>
             </Link>
           ))}
         </div>
@@ -78,7 +78,7 @@ export default async function Start({ searchParams }: Props) {
         <h3>Cómo funciona</h3>
         <ol className="trial-steps">
           <li><b>Hoy</b> Te registras y activas tu plan. Te escribimos para elegir el día de la instalación.</li>
-          <li><b>Día de la instalación</b> Instalamos tus {plan.plaques} placas FiveTap, las {plan.cards} tarjetas de tu equipo y FiveTap Business en tu celular, y anotamos tus reseñas actuales en Google.</li>
+          <li><b>Día de la instalación</b> Instalamos {plan.flex_pieces ? `tus ${planShort(plan)} FiveTap` : `tus ${plan.plaques} placas FiveTap, las ${plan.cards} tarjetas de tu equipo`} y FiveTap Business en tu celular, y anotamos tus reseñas actuales en Google.</li>
           <li><b>Desde ese día</b> Ves en tu app cuántos clientes van a dejarte su reseña, y cada mes te llega tu reporte.</li>
         </ol>
       </section>

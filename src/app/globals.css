@@ -1138,3 +1138,19 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
   .team-board .team-num small { display: block; font-size: 11px; }
   .team-board .team-num { text-align: right; line-height: 1.1; }
 }
+
+/* ================= Small plans row (Uno, Essential, Essential 10) ================= */
+.plans-small { margin-top: 28px; padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.plans-small-head { display: grid; gap: 6px; margin-bottom: 18px; }
+.plans-small-head h3 { margin: 0; font-size: 20px; }
+.plans-small-head p { margin: 0; max-width: 620px; }
+.plans-small-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.plan-small { display: grid; gap: 6px; align-content: start; padding: 18px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); color: inherit; text-decoration: none; transition: border-color 0.2s var(--ease-out), transform 0.2s var(--ease-out); }
+.plan-small:hover { border-color: var(--ink); transform: translateY(-2px); }
+.plan-small-name { font-weight: 700; font-size: 16px; }
+.plan-small-price { color: var(--muted); font-size: 14px; }
+.plan-small-price b { color: var(--ink); font-size: 26px; letter-spacing: -0.02em; margin-right: 2px; }
+.plan-small-pieces { font-size: 14px; font-weight: 600; }
+.plan-small-feat { font-size: 13px; color: var(--muted); }
+.plan-small .offer-link { margin-top: 6px; }
+@media (max-width: 760px) { .plans-small { padding: 20px; } .plans-small-grid { grid-template-columns: 1fr; } }

@@ -256,7 +256,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
               <p className="muted">Planes mensuales con placas FiveTap, tarjetas de equipo con cordón, FiveTap Business e instalación incluida. Precios de lanzamiento.</p>
             </div>
             <div className="plans plans-3">
-              {plans.map((p, n) => (
+              {plans.filter((p) => p.line !== "compact").map((p, n) => (
                 <div key={p.key} className={`plan${n === 1 ? " plan-dark" : ""}`}>
                   {p.badge && <span className={`plan-badge plan-badge-${p.badge_color}`}>{p.badge}</span>}
                   <h3>{p.name}</h3>
@@ -274,6 +274,25 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
               ))}
             </div>
             {plans.length === 0 && <a className="btn btn-dark" href={talk}>Pide tu plan por WhatsApp</a>}
+            {plans.some((p) => p.line === "compact") && (
+              <div className="plans-small">
+                <div className="plans-small-head">
+                  <h3>Para negocios pequeños</h3>
+                  <p className="muted">Una caja, un mostrador o un equipo chico. Eliges las piezas que necesitas, placas o tarjetas, con FiveTap Business incluido.</p>
+                </div>
+                <div className="plans-small-grid">
+                  {plans.filter((p) => p.line === "compact").map((p) => (
+                    <a key={p.key} className="plan-small" href={`/empezar?plan=${p.key}#pagar`}>
+                      <span className="plan-small-name">{p.name.replace(/^FiveTap\s+/, "")}</span>
+                      <span className="plan-small-price"><b className="num">{usd(p.monthly)}</b> / mes</span>
+                      <span className="plan-small-pieces">{planPieces(p)[0]}</span>
+                      <span className="plan-small-feat">{p.features.filter((f) => !f.startsWith("Todo lo de")).slice(0, 2).join(" · ")}</span>
+                      <span className="offer-link">Elegir {p.name.replace(/^FiveTap\s+/, "")} →</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="offer-row">
               <a className="offer-card" href={founderWhatsApp(`Hola, quiero ${TEST_OFFER.name} de 30 días para mi ${kind}: ___ placas y ___ tarjetas de equipo.`)}>
                 <span className="offer-kicker">¿Quieres probar primero?</span>

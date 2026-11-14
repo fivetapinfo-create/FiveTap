@@ -582,3 +582,9 @@ alter table tags add column if not exists staff_name text;
 alter table tags add column if not exists staff_since timestamptz;
 create index if not exists events_tag_time_idx on events (tag_id, created_at desc);
 create index if not exists feedback_tag_time_idx on feedback (tag_id, created_at desc);
+
+-- ============ Small plans (Uno, Essential, Essential 10) ============
+alter table plans add column if not exists flex_pieces boolean not null default false;
+alter table plans add column if not exists line text not null default 'main';
+alter table plans drop constraint if exists plans_line_check;
+alter table plans add constraint plans_line_check check (line in ('main', 'compact'));

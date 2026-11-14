@@ -22,6 +22,10 @@ export type Plan = {
   paypal_plan: string | null;
   sort: number;
   active: boolean;
+  /** Small plans: the pieces are the venue's choice (plaques or team cards). */
+  flex_pieces: boolean;
+  /** "main": the three big plans; "compact": the small ones shown in a row below. */
+  line: "main" | "compact";
 };
 
 export const PLANS_TAG = "plans";
@@ -52,8 +56,15 @@ export function planOf(b: { plan_key?: string | null; monthly_fee: number }, pla
 }
 
 /** "10 placas FiveTap · 2 tarjetas de equipo con cordón": the same pieces, in words for any business. */
-export function planPieces(p: Pick<Plan, "plaques" | "cards" | "lanyards">) {
+export function planPieces(p: Pick<Plan, "plaques" | "cards" | "lanyards"> & { flex_pieces?: boolean }) {
+  if (p.flex_pieces) return [p.plaques === 1 ? "1 pieza FiveTap: placa o tarjeta de equipo" : `${p.plaques} piezas FiveTap a tu elección: placas o tarjetas de equipo`];
   const parts = [`${p.plaques} ${p.plaques === 1 ? "placa FiveTap" : "placas FiveTap"}`];
   if (p.cards) parts.push(`${p.cards} ${p.cards === 1 ? "tarjeta de equipo" : "tarjetas de equipo"}${p.lanyards ? " con cordón" : ""}`);
   return parts;
+}
+
+/** "5 piezas" or "15 placas + 3 tarjetas": the pieces in a few words. */
+export function planShort(p: Pick<Plan, "plaques" | "cards"> & { flex_pieces?: boolean }) {
+  if (p.flex_pieces) return p.plaques === 1 ? "1 pieza" : `${p.plaques} piezas`;
+  return `${p.plaques} placas + ${p.cards} tarjetas`;
 }

@@ -501,8 +501,10 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         {currentPlan && (
           <div className="msg">
             <p className="muted">
-              {currentPlan.name} incluye {currentPlan.plaques} placas de mesa, {currentPlan.cards} tarjetas de meseros y {currentPlan.lanyards} cordones.
-              {tables.length !== currentPlan.plaques || waiters.length !== currentPlan.cards ? ` Hoy tiene ${tables.length} placas y ${waiters.length} tarjetas.` : " Ya tiene todo lo del plan."}
+              {currentPlan.flex_pieces
+                ? `${currentPlan.name} incluye ${currentPlan.plaques} ${currentPlan.plaques === 1 ? "pieza" : "piezas"} a su elección (placas o tarjetas). Hoy tiene ${tables.length} placas y ${waiters.length} tarjetas.`
+                : <>{currentPlan.name} incluye {currentPlan.plaques} placas de mesa, {currentPlan.cards} tarjetas de meseros y {currentPlan.lanyards} cordones.
+              {tables.length !== currentPlan.plaques || waiters.length !== currentPlan.cards ? ` Hoy tiene ${tables.length} placas y ${waiters.length} tarjetas.` : " Ya tiene todo lo del plan."}</>}
             </p>
           </div>
         )}

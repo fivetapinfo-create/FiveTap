@@ -1,4 +1,4 @@
-import { type Plan, planOf } from "@/lib/plans";
+import { planShort, type Plan, planOf } from "@/lib/plans";
 import type { Business } from "@/lib/types";
 import { PANEL_KINDS } from "@/lib/verticals";
 
@@ -64,7 +64,7 @@ export function OptionFields({ b, plans, planKey, compact }: { b?: Business; pla
           <span>Plan</span>
           <select className="select" name="plan_key" defaultValue={current}>
             {plans.filter((p) => p.active || p.key === current).map((p) => (
-              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {p.plaques} placas + {p.cards} tarjetas</option>
+              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {planShort(p)}</option>
             ))}
             <option value="test">FiveTap Test con FiveTap Business · 1 a 4 piezas ($40 placa, $30 tarjeta) · 30 días</option>
             <option value="test-google">FiveTap Test sin FiveTap Business (directo a Google) · 30 días</option>
@@ -138,7 +138,7 @@ export function PlanFields({ plans, planKey, kind }: { plans: Plan[]; planKey?: 
             <option value="" disabled>Elige…</option>
             <option value="test">FiveTap Test · 30 días · $40 por placa, $30 por tarjeta</option>
             {plans.filter((p) => p.active).map((p) => (
-              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {p.plaques} placas + {p.cards} tarjetas</option>
+              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {planShort(p)}</option>
             ))}
             <option value="test-google">FiveTap Test sin app (directo a Google) · 30 días</option>
             <option value="custom">Personalizado (precio y piezas a mano)</option>
