@@ -37,7 +37,7 @@ export const getPlans = unstable_cache(
     if (error) throw new Error(error.message);
     return (data ?? []).map((p) => ({ ...p, monthly: Number(p.monthly) })) as Plan[];
   },
-  ["plans-v2"],
+  ["plans-v3"],
   { tags: [PLANS_TAG], revalidate: 300 },
 );
 
