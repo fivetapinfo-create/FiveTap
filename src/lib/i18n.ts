@@ -11,7 +11,7 @@ export function langFrom(acceptLanguage: string | null): Lang {
 export const COPY = {
   es: {
     question: "¿Cómo estuvo tu experiencia?",
-    review: "Dejar reseña",
+    review: "Califícanos",
     manager: "¿Tuviste algún inconveniente?",
     managerHint: "Deja tu reseña y cuenta qué te sucedió.",
     formTitle: "¿Cómo fue tu experiencia con nosotros?",
@@ -28,7 +28,7 @@ export const COPY = {
     back: "Volver",
     thanksTitle: "¡Gracias por compartir tu experiencia!",
     thanksBody: "Tu comentario ha sido enviado al equipo del establecimiento.",
-    thanksReview: "Dejar reseña",
+    thanksReview: "Califícanos",
     errorShort: "Escribe un comentario un poco más largo.",
     errorRating: "Elige de 1 a 5 estrellas.",
     errorGeneric: "No se pudo enviar. Inténtalo de nuevo.",
@@ -53,7 +53,7 @@ export const COPY = {
   },
   en: {
     question: "How was your experience?",
-    review: "Leave a review",
+    review: "Rate us",
     manager: "Did something go wrong?",
     managerHint: "Leave your review and tell us what happened.",
     formTitle: "How was your experience with us?",
@@ -70,7 +70,7 @@ export const COPY = {
     back: "Back",
     thanksTitle: "Thank you for sharing your experience!",
     thanksBody: "Your feedback has been sent to the team.",
-    thanksReview: "Leave a review",
+    thanksReview: "Rate us",
     errorRating: "Choose 1 to 5 stars.",
     errorShort: "Please write a slightly longer message.",
     errorGeneric: "Couldn't send. Please try again.",

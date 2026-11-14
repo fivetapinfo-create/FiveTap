@@ -44,9 +44,11 @@ export function GuestCard({
 
         <nav className="guest-actions" aria-label={copy.question}>
           {/* Plain <a>: the click is counted server-side and must never be prefetched. */}
-          <a className="choice choice-primary rise" href={reviewHref} tabIndex={tab} style={{ ...style, "--i": 3 } as React.CSSProperties}>
-            <StarSolid />
-            {copy.review}
+          <a className="choice choice-primary choice-rate rise" href={reviewHref} tabIndex={tab} style={{ ...style, "--i": 3 } as React.CSSProperties}>
+            <span>{copy.review}</span>
+            <span className="rate-stars" aria-hidden="true">
+              <StarSolid /><StarSolid /><StarSolid /><StarSolid /><StarSolid />
+            </span>
           </a>
           <a className="choice choice-two rise" href={managerHref} tabIndex={tab} style={{ "--i": 4 } as React.CSSProperties}>
             <Chat />

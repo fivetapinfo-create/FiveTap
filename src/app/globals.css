@@ -1047,3 +1047,10 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .guest-reply-fields { display: grid; gap: 16px; padding-top: 4px; }
 .msg-stars { color: var(--gold); letter-spacing: 1px; font-size: 14px; }
 .msg-stars i { font-style: normal; color: var(--line-strong); }
+
+/* Guest page: the review button shows five gold stars beside its words */
+.choice-rate { justify-content: space-between; }
+.rate-stars { display: inline-flex; gap: 3px; }
+.rate-stars svg { width: 20px; height: 20px; }
+.choice-rate:active .rate-stars svg { transform: scale(1.08); }
+@media (max-width: 360px) { .rate-stars svg { width: 17px; height: 17px; } }
