@@ -9,6 +9,8 @@ import { PLAN_TEST_PRODUCTS, type PlanTestProduct } from "@/lib/test-kit";
 import { customMethods, receiptMoney } from "@/lib/receipts";
 import { createAgreement, createOrder, deleteAgreement, payOrder, sendReceiptWhatsApp } from "../actions";
 import { OrderForm } from "./OrderForm";
+import { ContractBizPicker, type ContractBiz } from "./ContractBizPicker";
+import { getPlans, planOf } from "@/lib/plans";
 import { Flash } from "../Flash";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +35,27 @@ export default async function Contracts({ searchParams }: Props) {
     (paidIds.length ? (((await db().from("receipts").select("id, number, token, payment_id, status").in("payment_id", paidIds)).data ?? []) as { id: string; number: string; token: string; payment_id: string; status: string }[]) : []).map((r) => [r.payment_id, r]),
   );
   const businesses = (bizRes.data ?? []) as Biz[];
+  // What each business's contract would say today: its plan, price and active pieces.
+  const [plans, tagRes, feeRes] = await Promise.all([
+    getPlans(),
+    db().from("tags").select("business_id, kind, active").eq("active", true),
+    db().from("businesses").select("id, plan_key, monthly_fee, status"),
+  ]);
+  const activeTags = (tagRes.data ?? []) as { business_id: string; kind: string }[];
+  const fees = new Map(((feeRes.data ?? []) as { id: string; plan_key: string | null; monthly_fee: number; status: string }[]).map((x) => [x.id, x]));
+  const contractBiz: ContractBiz[] = businesses.map((b) => {
+    const f = fees.get(b.id);
+    const fee = Number(f?.monthly_fee ?? 0);
+    return {
+      id: b.id,
+      name: b.name,
+      plan: (f && planOf({ plan_key: f.plan_key, monthly_fee: fee }, plans)?.name) || "Plan FiveTap personalizado",
+      fee,
+      plaques: activeTags.filter((t) => t.business_id === b.id && t.kind !== "waiter").length,
+      cards: activeTags.filter((t) => t.business_id === b.id && t.kind === "waiter").length,
+      test: f?.status === "trial",
+    };
+  });
   const chosen = businesses.find((b) => b.id === sp.b) ?? null;
   const today = todayPanama();
   const phoneOf = (id: string | null) => {
@@ -52,9 +75,9 @@ export default async function Contracts({ searchParams }: Props) {
       <p className="alert alert-warn">Redactado con criterio legal y en palabras simples, pero no sustituye a un abogado: haz que uno de Panamá lo revise antes de firmar con clientes.</p>
       <div className="row">
         <span className="muted">Contrato de ejemplo para mostrar:</span>
-        <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=start" target="_blank" rel="noreferrer">Start</a>
-        <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=pro" target="_blank" rel="noreferrer">Pro</a>
-        <a className="btn btn-ghost btn-sm" href="/admin/contratos/ejemplo?plan=enterprise" target="_blank" rel="noreferrer">Enterprise</a>
+        {plans.filter((p) => p.active).map((p) => (
+          <a key={p.key} className="btn btn-ghost btn-sm" href={`/admin/contratos/ejemplo?plan=${p.key}`} target="_blank" rel="noreferrer">{p.name.replace(/^FiveTap\s+/, "")}</a>
+        ))}
       </div>
 
       <nav className="biz-tabs" aria-label="Secciones de contratos">
@@ -133,13 +156,7 @@ export default async function Contracts({ searchParams }: Props) {
         ) : (
           <form action={createAgreement} className="form-section">
             <div className="grid-2">
-              <label className="field">
-                <span>Negocio</span>
-                <select className="select" name="business_id" defaultValue={chosen?.id ?? ""} required>
-                  <option value="" disabled>Elige el negocio</option>
-                  {businesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
-              </label>
+              <ContractBizPicker businesses={contractBiz} defaultId={chosen?.id} />
               <label className="field">
                 <span>Fecha de inicio</span>
                 <input className="input" type="date" name="start_date" defaultValue={today} required />
@@ -165,7 +182,7 @@ export default async function Contracts({ searchParams }: Props) {
                 <input className="input" name="venue_address" maxLength={160} placeholder="Calle 50, local 7B" />
               </label>
             </div>
-            <small className="muted">El plan, la mensualidad y las placas y tarjetas se toman del negocio tal como están hoy.</small>
+            <small className="muted">El plan, la mensualidad y las piezas activas se toman del negocio tal como están hoy. Si el cliente cambió de plan, cámbialo primero en su ficha.</small>
             <SubmitButton className="btn btn-dark" pending="Creando…">Crear contrato</SubmitButton>
           </form>
         )}

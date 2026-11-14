@@ -54,8 +54,8 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
  */
 export function agreementClauses(a: Agreement): { title: string; paras: string[] }[] {
   const pieces = [
-    plural(a.plaques, "placa NFC para mesas", "placas NFC para mesas"),
-    a.cards ? plural(a.cards, "tarjeta NFC para meseros", "tarjetas NFC para meseros") : null,
+    a.plaques ? plural(a.plaques, "placa NFC FiveTap", "placas NFC FiveTap") : null,
+    a.cards ? plural(a.cards, "tarjeta NFC de equipo", "tarjetas NFC de equipo") : null,
     a.lanyards ? plural(a.lanyards, "cordón porta tarjeta", "cordones porta tarjetas") : null,
   ].filter(Boolean).join(", ");
   const fee = money2(a.monthly_fee);
@@ -64,7 +64,7 @@ export function agreementClauses(a: Agreement): { title: string; paras: string[]
     {
       title: "Objeto del contrato",
       paras: [
-        `FiveTap presta al local, por suscripción, el servicio ${a.plan_name}: instala y deja funcionando ${pieces}, y da acceso a FiveTap Business, la aplicación del local para ver sus resultados, recibir los mensajes privados de sus clientes, gestionar su club de clientes y recibir su reporte mensual.`,
+        `FiveTap presta al local, por suscripción, el servicio ${a.plan_name}: instala y deja funcionando ${pieces}, y da acceso a FiveTap Business, la aplicación del local para ver sus resultados, recibir los mensajes privados de sus clientes, gestionar su club de clientes${a.cards ? ", ver el ranking de su equipo" : ""} y recibir su reporte mensual.`,
         "Cada placa y tarjeta abre una página de FiveTap donde el cliente puede dejar una reseña en Google, escribir en privado al local o unirse a su club de clientes. Cualquier pieza o servicio adicional se acuerda por escrito y se cotiza aparte.",
       ],
     },

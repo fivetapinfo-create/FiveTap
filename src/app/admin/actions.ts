@@ -83,8 +83,15 @@ export async function createBusiness(f: FormData) {
   const isTest = str(f, "plan_key", 30).startsWith("test");
   const noApp = str(f, "plan_key", 30) === "test-google";
   const plan = isTest ? null : await planByKey(str(f, "plan_key", 30));
-  const spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? (isTest ? 1 : plan?.plaques ?? 10) : num(f, "spots", 10)), 0), 80);
-  const cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? (isTest ? 0 : plan?.cards ?? 0) : num(f, "cards", 0)), 0), 40);
+  let spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? (isTest ? 1 : plan?.plaques ?? 10) : num(f, "spots", 10)), 0), 80);
+  let cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? (isTest ? 0 : plan?.cards ?? 0) : num(f, "cards", 0)), 0), 40);
+  // Small plans (Uno, Essential): N pieces of the client's choice, split between plaques and cards.
+  if (plan?.flex_pieces) {
+    const total = plan.plaques;
+    if (str(f, "spots") === "" && str(f, "cards") !== "") spots = Math.max(total - cards, 0);
+    if (str(f, "cards") === "") cards = str(f, "spots") === "" ? 0 : Math.max(total - spots, 0);
+    if (spots + cards > total) fail("/admin/new", new Error(`${plan.name} incluye ${total} ${total === 1 ? "pieza" : "piezas"}: reparte placas + tarjetas hasta ${total}, o elige un plan más grande.`));
+  }
   const fee = isTest ? 0 : str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
   const spotLabel = str(f, "spot_label", 30) || verticalByKey(kind).spot;
   if (!name || !review) fail("/admin/new", new Error("Escribe el nombre y el enlace de reseñas de Google."));
@@ -149,6 +156,11 @@ export async function updateBusiness(f: FormData) {
   const id = str(f, "id", 60);
   const back = `/admin/b/${id}`;
   try {
+    // Changing plan (e.g. Test → Essential) takes the new plan's price unless another one was typed.
+    const before = (await db().from("businesses").select("plan_key, monthly_fee, status").eq("id", id).maybeSingle()).data as { plan_key: string | null; monthly_fee: number; status: string } | null;
+    const chosenPlan = await planByKey(str(f, "plan_key", 30));
+    const typedFee = str(f, "monthly_fee") === "" ? null : num(f, "monthly_fee", 0);
+    const planChanged = Boolean(chosenPlan && before && chosenPlan.key !== before.plan_key);
     const patch: Record<string, unknown> = {
       name: str(f, "name", 80),
       kind: str(f, "kind", 30),
@@ -163,8 +175,11 @@ export async function updateBusiness(f: FormData) {
       billing_email: email(opt(f, "billing_email", 120)),
       status: str(f, "status", 20),
       setup_fee: num(f, "setup_fee", 0),
-      monthly_fee: str(f, "plan_key", 30).startsWith("test") ? 0 : str(f, "monthly_fee") === "" ? (await planByKey(str(f, "plan_key", 30)))?.monthly ?? 129 : num(f, "monthly_fee", 129),
-      plan_key: (await planByKey(str(f, "plan_key", 30)))?.key ?? null,
+      monthly_fee: str(f, "plan_key", 30).startsWith("test") ? 0
+        : typedFee === null ? chosenPlan?.monthly ?? Number(before?.monthly_fee ?? 0)
+        : planChanged && typedFee === Number(before?.monthly_fee) ? chosenPlan!.monthly
+        : typedFee,
+      plan_key: chosenPlan?.key ?? null,
       mode: str(f, "mode", 10) === "google" ? "google" : "full",
       trial_ends_at: opt(f, "trial_ends_at", 10),
       notes: opt(f, "notes", 2000),

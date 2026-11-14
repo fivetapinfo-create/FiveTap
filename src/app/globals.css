@@ -1155,3 +1155,9 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .plan-small-feat { font-size: 13px; color: var(--muted); }
 .plan-small .offer-link { margin-top: 6px; }
 @media (max-width: 760px) { .plans-small { padding: 20px; } .plans-small-grid { grid-template-columns: 1fr; } }
+.plan-pick-info { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); line-height: 1.45; } .plan-pick-info b { color: var(--ink); }
+.contract-preview { grid-column: 1 / -1; display: grid; gap: 4px; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--paper); border: 1px solid var(--line); font-size: 14px; }
+.contract-preview b { font-size: 16px; }
+.contract-preview.warn { border-color: var(--danger); }
+.contract-preview.warn small { color: var(--danger); }
+.contract-preview a { font-size: 13px; }

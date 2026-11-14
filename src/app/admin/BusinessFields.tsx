@@ -1,4 +1,8 @@
-import { planShort, type Plan, planOf } from "@/lib/plans";
+import { type Plan, planOf } from "@/lib/plans";
+import { PlanPicker, type PickPlan } from "./PlanPicker";
+
+const pick = (plans: Plan[], keep?: string): PickPlan[] =>
+  plans.filter((p) => p.active || p.key === keep).map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards, lanyards: p.lanyards, flex_pieces: p.flex_pieces, line: p.line }));
 import type { Business } from "@/lib/types";
 import { PANEL_KINDS } from "@/lib/verticals";
 
@@ -55,26 +59,16 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
 
 /** Defaults that rarely change: type, color, plan. */
 export function OptionFields({ b, plans, planKey, compact }: { b?: Business; plans: Plan[]; planKey?: string; compact?: boolean }) {
-  const current = b ? (b.status === "trial" && Number(b.monthly_fee) <= 0 ? (b.mode === "google" ? "test-google" : "test") : planOf(b, plans)?.key ?? "") : planKey ?? "start";
+  const current = b ? (b.status === "trial" && Number(b.monthly_fee) <= 0 ? (b.mode === "google" ? "test-google" : "test") : planOf(b, plans)?.key ?? "custom") : planKey ?? "start";
   return (
     <div className="form-section">
       <div className="grid-2">
         {!compact && (<>
-        <label className="field">
-          <span>Plan</span>
-          <select className="select" name="plan_key" defaultValue={current}>
-            {plans.filter((p) => p.active || p.key === current).map((p) => (
-              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {planShort(p)}</option>
-            ))}
-            <option value="test">FiveTap Test con FiveTap Business · 1 a 4 piezas ($40 placa, $30 tarjeta) · 30 días</option>
-            <option value="test-google">FiveTap Test sin FiveTap Business (directo a Google) · 30 días</option>
-            <option value="custom">Personalizado (sin plan)</option>
-          </select>
-        </label>
+        <PlanPicker plans={pick(plans, current)} defaultKey={current} label="Plan" />
         <label className="field">
           <span>Mensualidad (USD)</span>
           <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b ? b.monthly_fee : undefined} placeholder="La del plan" />
-          <small>{b ? "Su precio queda congelado aunque cambies el plan en Planes." : "Vacío: el precio del plan. Pon 0 para un negocio de prueba (no cobra ni se pausa)."}</small>
+          <small>{b ? "Si cambias de plan aquí, toma el precio del plan nuevo. Su precio no cambia si editas el plan en Planes." : "Vacío: el precio del plan. Pon 0 para un negocio de prueba (no cobra ni se pausa)."}</small>
         </label>
         <label className="field">
           <span>Tipo de negocio</span>
@@ -133,35 +127,16 @@ export function PlanFields({ plans, planKey, kind }: { plans: Plan[]; planKey?: 
     <div className="form-section">
       <div className="grid-2">
         <label className="field">
-          <span>6. ¿Qué contrató?</span>
-          <select className="select" name="plan_key" defaultValue={planKey ?? ""} required>
-            <option value="" disabled>Elige…</option>
-            <option value="test">FiveTap Test · 30 días · $40 por placa, $30 por tarjeta</option>
-            {plans.filter((p) => p.active).map((p) => (
-              <option key={p.key} value={p.key}>{p.name} · ${p.monthly}/mes · {planShort(p)}</option>
-            ))}
-            <option value="test-google">FiveTap Test sin app (directo a Google) · 30 días</option>
-            <option value="custom">Personalizado (precio y piezas a mano)</option>
-          </select>
-        </label>
-        <label className="field">
-          <span>7. Tipo de negocio</span>
+          <span>6. Tipo de negocio</span>
           <select className="select" name="kind" defaultValue={kind ?? "restaurant"}>
             {PANEL_KINDS.map((v) => (
               <option key={v.key} value={v.key}>{v.label}</option>
             ))}
           </select>
         </label>
-        <label className="field">
-          <span>Placas</span>
-          <input className="input" type="number" name="spots" min={0} max={80} placeholder="Las del plan (Test: 1)" />
-        </label>
-        <label className="field">
-          <span>Tarjetas de meseros</span>
-          <input className="input" type="number" name="cards" min={0} max={40} placeholder="Las del plan (Test: 0)" />
-        </label>
+        <PlanPicker plans={pick(plans)} defaultKey={planKey} pieces label="7. ¿Qué contrató?" />
       </div>
-      <small className="muted">Vacío: las piezas del plan. En el FiveTap Test escribe cuántas placas y tarjetas lleva (de 1 a 4 en total).</small>
+      <small className="muted">Vacío: las piezas del plan. En Uno y Essential el cliente elige: reparte las piezas entre placas y tarjetas. En el FiveTap Test escribe cuántas lleva (de 1 a 4 en total).</small>
     </div>
   );
 }

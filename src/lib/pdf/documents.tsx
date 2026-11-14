@@ -579,8 +579,8 @@ export async function agreementPdf(a: Agreement, p: Provider) {
         <Rows
           rows={[
             ["Plan", a.plan_name],
-            ["Placas NFC para mesas", String(a.plaques)],
-            ["Tarjetas NFC para meseros", String(a.cards)],
+            ["Placas NFC FiveTap", String(a.plaques)],
+            ["Tarjetas NFC de equipo", String(a.cards)],
             ["Cordones porta tarjetas", String(a.lanyards)],
             ["FiveTap Business", "Incluido"],
             ["Forma de pago", a.payment_method],
