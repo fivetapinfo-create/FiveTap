@@ -1038,7 +1038,7 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .rating-star.picked { animation: star-pop 320ms var(--ease-out); }
 .rating-star:active { transform: scale(0.9); }
 .rating-star:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-.rating-stars[aria-invalid="true"] .rating-star { color: color-mix(in srgb, var(--danger) 35%, transparent); }
+.rating-stars[aria-invalid="true"] .rating-star:not(.on) { color: color-mix(in srgb, var(--danger) 35%, transparent); }
 .rating-label { font-size: 15px; font-weight: 500; color: var(--muted); min-height: 1.4em; }
 .rating-label.on { color: var(--ink); }
 @keyframes star-pop { 0% { transform: scale(0.8); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }

@@ -18,7 +18,7 @@ export function RatingStars({ labels, pick, invalid }: { labels: readonly string
         className="rating-stars"
         role="radiogroup"
         aria-label={labels.join(", ")}
-        aria-invalid={invalid || undefined}
+        aria-invalid={(invalid && !value) || undefined}
         onMouseLeave={() => setHover(0)}
         onKeyDown={(e) => {
           if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); set(value + 1); }
