@@ -19,6 +19,8 @@ export async function sendFeedback(formData: FormData) {
   const name = String(formData.get("name") || "").trim().slice(0, 80) || null;
   const message = String(formData.get("message") || "").trim().slice(0, 1500);
   const phone = normalizePhone(String(formData.get("phone") || "").slice(0, 30));
+  const rating = Number(formData.get("rating"));
+  if (!(Number.isInteger(rating) && rating >= 1 && rating <= 5)) redirect(`${base}error=estrellas`);
   if (message.length < 3) redirect(`${base}error=corto`);
 
   const tag = await tagByCode(code);
@@ -27,7 +29,7 @@ export async function sendFeedback(formData: FormData) {
   const req = await guestRequest();
   let feedbackId: string;
   try {
-    ({ id: feedbackId } = await insertFeedback({ business_id: tag.business_id, tag_id: tag.id, name, message, phone }));
+    ({ id: feedbackId } = await insertFeedback({ business_id: tag.business_id, tag_id: tag.id, name, message, phone, rating }));
   } catch (e) {
     console.error("[feedback]", e);
     redirect(`${base}error=envio`);
@@ -37,11 +39,12 @@ export async function sendFeedback(formData: FormData) {
     // Everything is stored and shown in the panel; only the email is throttled
     // so one table cannot flood the manager's inbox.
     if ((await recentFeedbackCount(tag.id)) <= 5) {
-      const via = await notifyFeedback({ business: tag.business, spot: tag.label, name, message, phone });
+      const via = await notifyFeedback({ business: tag.business, spot: tag.label, name, message, phone, rating });
       const preview = message.length > 140 ? `${message.slice(0, 139)}…` : message;
+      const stars = `${"★".repeat(rating)}${"☆".repeat(5 - rating)}`;
       const [venue] = await Promise.all([
-        sendPush({ role: ["owner", "manager"], businessId: tag.business_id }, { title: `Nuevo mensaje privado · ${tag.label}`, body: `${name ? `${name}: ` : ""}${preview}`, url: `/mi/${tag.business.owner_token}#mensajes` }),
-        sendPush({ role: "founder" }, { title: `${tag.business.name}: nuevo mensaje`, body: preview, url: "/admin/mensajes" }),
+        sendPush({ role: ["owner", "manager"], businessId: tag.business_id }, { title: `Comentario privado ${stars} · ${tag.label}`, body: `${name ? `${name}: ` : ""}${preview}`, url: `/mi/${tag.business.owner_token}#mensajes` }),
+        sendPush({ role: "founder" }, { title: `${tag.business.name}: comentario ${rating}/5`, body: preview, url: "/admin/mensajes" }),
       ]);
       await markNotified(feedbackId, venue ? [...via, "push"] : via);
     }
@@ -55,5 +58,6 @@ export async function sendFeedback(formData: FormData) {
     });
   });
 
-  redirect(`${base}enviado=1`);
+  // The thank-you page offers to also send it on WhatsApp; it reads the comment by its id.
+  redirect(`${base}enviado=${feedbackId}`);
 }

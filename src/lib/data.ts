@@ -50,7 +50,7 @@ export async function logEvent(e: {
   if (error) console.error("[events]", error.message);
 }
 
-export async function insertFeedback(f: { business_id: string; tag_id: string; name: string | null; message: string; phone: string | null }) {
+export async function insertFeedback(f: { business_id: string; tag_id: string; name: string | null; message: string; phone: string | null; rating: number | null }) {
   return must(await db().from("feedback").insert(f).select("id").single()) as { id: string };
 }
 

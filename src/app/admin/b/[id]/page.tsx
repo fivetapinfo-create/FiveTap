@@ -188,6 +188,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             <div key={f.id} className={`msg${f.read_at ? "" : " unread"}`}>
               <div className="msg-meta">
                 <b style={{ color: "var(--ink)" }}>{f.name || "Sin nombre"}</b>
+                {f.rating ? <span className="msg-stars" aria-label={`${f.rating} de 5 estrellas`}>{"★".repeat(f.rating)}<i>{"★".repeat(5 - f.rating)}</i></span> : null}
                 <span>{tags.find((t) => t.id === f.tag_id)?.label ?? "—"}</span>
                 <span>{dateTime(f.created_at)}</span>
                 <span>{f.notified_via.includes("email") ? "Enviado por email" : "Solo en el panel"}</span>

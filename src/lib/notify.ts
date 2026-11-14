@@ -11,6 +11,7 @@ export type FeedbackAlert = {
   name: string | null;
   message: string;
   phone: string | null;
+  rating?: number | null;
 };
 
 type Channel = {
@@ -29,7 +30,7 @@ const email: Channel = {
   async send(a) {
     const to = [...new Set([a.business.manager_email, process.env.FOUNDER_EMAIL].filter(Boolean) as string[])];
     const where = a.spot ? ` · ${a.spot}` : "";
-    const who = a.name || "Cliente (sin nombre)";
+    const who = `${a.name || "Cliente (sin nombre)"}${a.rating ? ` · ${"★".repeat(a.rating)}${"☆".repeat(5 - a.rating)} (${a.rating}/5)` : ""}`;
     const wa = a.phone ? `https://wa.me/${a.phone}` : null;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

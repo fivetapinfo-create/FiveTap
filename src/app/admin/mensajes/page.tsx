@@ -30,6 +30,7 @@ export default async function Inbox() {
                   <BusinessLogo name={m.business.name} logoUrl={m.business.logo_url} color={m.business.brand_color} className="biz-logo" />
                   <b style={{ color: "var(--ink)" }}>{m.business.name}</b>
                 </Link>
+                {m.rating ? <span className="msg-stars" aria-label={`${m.rating} de 5 estrellas`}>{"★".repeat(m.rating)}<i>{"★".repeat(5 - m.rating)}</i></span> : null}
                 <span>{m.tag?.label ?? "—"}</span>
                 <span>{dateTime(m.created_at)}</span>
                 <span className={`msg-state ${m.resolved_at ? "done" : m.read_at ? "seen" : "new"}`}>{m.resolved_at ? "Resuelto por el local" : m.read_at ? "Visto" : "Nuevo"}</span>

@@ -48,9 +48,12 @@ export function GuestCard({
             <StarSolid />
             {copy.review}
           </a>
-          <a className="choice rise" href={managerHref} tabIndex={tab} style={{ "--i": 4 } as React.CSSProperties}>
+          <a className="choice choice-two rise" href={managerHref} tabIndex={tab} style={{ "--i": 4 } as React.CSSProperties}>
             <Chat />
-            {copy.manager}
+            <span>
+              <b>{copy.manager}</b>
+              <small>{copy.managerHint}</small>
+            </span>
           </a>
         </nav>
 

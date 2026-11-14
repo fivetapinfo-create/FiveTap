@@ -178,6 +178,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
               <div key={f.id} className={`msg${f.resolved_at ? " msg-done" : ""}`}>
                 <div className="msg-meta">
                   <b style={{ color: "var(--ink)" }}>{f.name || "Sin nombre"}</b>
+                  {f.rating ? <span className="msg-stars" aria-label={`${f.rating} de 5 estrellas`}>{"★".repeat(f.rating)}<i>{"★".repeat(5 - f.rating)}</i></span> : null}
                   <span>{(f.tag_id && label.get(f.tag_id)) || "—"}</span>
                   <span>{dateTime(f.created_at)}</span>
                   <span className={`msg-state ${f.resolved_at ? "done" : f.read_at ? "seen" : "new"}`}>{f.resolved_at ? "Resuelto" : f.read_at ? "Visto" : "Nuevo"}</span>

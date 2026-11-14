@@ -67,6 +67,8 @@ export type Feedback = {
   notified_via: string[];
   read_at: string | null;
   resolved_at: string | null;
+  /** Private stars the guest gave (1 = very bad … 5 = excellent); older messages have none. */
+  rating: number | null;
   created_at: string;
 };
 

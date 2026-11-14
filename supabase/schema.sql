@@ -532,3 +532,8 @@ create or replace view tag_last_tap with (security_invoker = true) as
 select e.tag_id, max(e.created_at) as last_at, count(*) filter (where e.type = 'scan') as scans_total
 from events e where e.tag_id is not null group by e.tag_id;
 create index if not exists events_tag_idx on events (tag_id, created_at);
+
+-- Private feedback carries the guest's stars (1 = very bad … 5 = excellent).
+alter table feedback add column if not exists rating smallint;
+alter table feedback drop constraint if exists feedback_rating_check;
+alter table feedback add constraint feedback_rating_check check (rating is null or rating between 1 and 5);
