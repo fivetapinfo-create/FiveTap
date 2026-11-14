@@ -1144,7 +1144,8 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .plans-small-head { display: grid; gap: 6px; margin-bottom: 18px; }
 .plans-small-head h3 { margin: 0; font-size: 20px; }
 .plans-small-head p { margin: 0; max-width: 620px; }
-.plans-small-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.plans-small-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1080px) { .plans-small-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .plan-small { display: grid; gap: 6px; align-content: start; padding: 18px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); color: inherit; text-decoration: none; transition: border-color 0.2s var(--ease-out), transform 0.2s var(--ease-out); }
 .plan-small:hover { border-color: var(--ink); transform: translateY(-2px); }
 .plan-small-name { font-weight: 700; font-size: 16px; }

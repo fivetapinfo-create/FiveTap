@@ -78,7 +78,7 @@ export default async function Start({ searchParams }: Props) {
         <h3>Cómo funciona</h3>
         <ol className="trial-steps">
           <li><b>Hoy</b> Te registras y activas tu plan. Te escribimos para elegir el día de la instalación.</li>
-          <li><b>Día de la instalación</b> Instalamos {plan.flex_pieces ? `tus ${planShort(plan)} FiveTap` : `tus ${plan.plaques} placas FiveTap, las ${plan.cards} tarjetas de tu equipo`} y FiveTap Business en tu celular, y anotamos tus reseñas actuales en Google.</li>
+          <li><b>Día de la instalación</b> Instalamos {plan.flex_pieces ? `tus ${planShort(plan)} FiveTap` : plan.plaques ? `tus ${plan.plaques} placas FiveTap, las ${plan.cards} tarjetas de tu equipo` : `las ${plan.cards} tarjetas de tu equipo`} y FiveTap Business en tu celular, y anotamos tus reseñas actuales en Google.</li>
           <li><b>Desde ese día</b> Ves en tu app cuántos clientes van a dejarte su reseña, y cada mes te llega tu reporte.</li>
         </ol>
       </section>

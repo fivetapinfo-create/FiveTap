@@ -278,7 +278,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
               <div className="plans-small">
                 <div className="plans-small-head">
                   <h3>Para negocios pequeños</h3>
-                  <p className="muted">Una caja, un mostrador o un equipo chico. Eliges las piezas que necesitas, placas o tarjetas, con FiveTap Business incluido.</p>
+                  <p className="muted">Una caja, un mostrador o solo tu equipo. Eliges las piezas que necesitas, placas o tarjetas, con FiveTap Business incluido.</p>
                 </div>
                 <div className="plans-small-grid">
                   {plans.filter((p) => p.line === "compact").map((p) => (
