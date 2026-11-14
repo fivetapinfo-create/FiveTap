@@ -18,7 +18,7 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
       </label>
       <label className="field">
         <span>3. Enlace de reseñas de Google</span>
-        <input className="input" name="review" required defaultValue={b?.google_review_url} placeholder="https://g.page/r/…/review  o  Place ID" />
+        <input className="input" name="review" required defaultValue={v?.google_review_url} placeholder="https://g.page/r/…/review  o  Place ID" />
         <small>
           Tiene que abrir la ventana de reseña, no el mapa. Lo mejor: en Google Business, <b>Pedir reseñas</b> → copiar enlace (g.page/r/…/review). O el Place ID (empieza con ChIJ) desde{" "}
           <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>
@@ -28,7 +28,7 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
       </label>
       <label className="field">
         <span>Place ID del local (para medir sus reseñas)</span>
-        <input className="input" name="place_id" defaultValue={b?.google_place_id ?? ""} placeholder="ChIJ… (opcional si ya lo pegaste arriba)" autoComplete="off" />
+        <input className="input" name="place_id" defaultValue={v?.google_place_id ?? ""} placeholder="ChIJ… (opcional si ya lo pegaste arriba)" autoComplete="off" />
         <small>Con el Place ID, FiveTap lee cada semana de Google cuántas reseñas y estrellas tiene el local y se lo muestra al dueño.</small>
       </label>
       <div className="field">
@@ -37,7 +37,7 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
           <input className="input" name="manager_name" defaultValue={v?.manager_name ?? ""} placeholder="Nombre" autoComplete="off" aria-label="Nombre del gerente" />
           <input className="input" type="tel" inputMode="tel" name="manager_phone" defaultValue={v?.manager_phone ?? ""} placeholder="WhatsApp: 6000-0000" autoComplete="off" aria-label="WhatsApp del gerente" />
         </div>
-        <input className="input" type="email" name="manager_email" defaultValue={b?.manager_email ?? ""} placeholder="Correo: gerente@negocio.com" autoComplete="off" aria-label="Email del gerente" />
+        <input className="input" type="email" name="manager_email" defaultValue={v?.manager_email ?? ""} placeholder="Correo: gerente@negocio.com" autoComplete="off" aria-label="Email del gerente" />
         <small>Al correo le llega cada queja al instante. Con su WhatsApp, desde tu panel se la reenvías con un toque.</small>
       </div>
       <div className="field">
@@ -46,7 +46,7 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
           <input className="input" name="billing_name" defaultValue={v?.billing_name ?? ""} placeholder="Nombre" autoComplete="off" aria-label="Nombre de quien paga" />
           <input className="input" type="tel" inputMode="tel" name="billing_phone" defaultValue={v?.billing_phone ?? ""} placeholder="WhatsApp: 6000-0000" autoComplete="off" aria-label="WhatsApp de quien paga" />
         </div>
-        <input className="input" type="email" name="billing_email" defaultValue={b?.billing_email ?? ""} placeholder="Correo para sus comprobantes de pago" autoComplete="off" aria-label="Correo de quien paga" />
+        <input className="input" type="email" name="billing_email" defaultValue={v?.billing_email ?? ""} placeholder="Correo para sus comprobantes de pago" autoComplete="off" aria-label="Correo de quien paga" />
         <small>A este número van los recordatorios de pago y el saludo de los lunes, y a este correo sus comprobantes. Si es la misma persona de las quejas, déjalo vacío.</small>
       </div>
     </div>
@@ -128,7 +128,7 @@ export function BaselineFields({ auto }: { auto: boolean }) {
  * What the venue bought, always visible when creating: plan (no default, so a FiveTap Test
  * is never saved as a monthly plan by mistake), type of business and how many pieces.
  */
-export function PlanFields({ plans, planKey }: { plans: Plan[]; planKey?: string }) {
+export function PlanFields({ plans, planKey, kind }: { plans: Plan[]; planKey?: string; kind?: string }) {
   return (
     <div className="form-section">
       <div className="grid-2">
@@ -146,7 +146,7 @@ export function PlanFields({ plans, planKey }: { plans: Plan[]; planKey?: string
         </label>
         <label className="field">
           <span>7. Tipo de negocio</span>
-          <select className="select" name="kind" defaultValue="restaurant">
+          <select className="select" name="kind" defaultValue={kind ?? "restaurant"}>
             {PANEL_KINDS.map((v) => (
               <option key={v.key} value={v.key}>{v.label}</option>
             ))}

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BusinessOptions } from "./BusinessOptions";
+import { deleteBusiness } from "./actions";
 import { BusinessLogo } from "@/components/BusinessLogo";
 import { FileText, Globe, Layers, Plus, Tap, Wallet } from "@/components/Icons";
 import { BILLING_LABEL, agenda, billingAll, todayPanama } from "@/lib/agenda";
@@ -18,7 +20,7 @@ const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", 
  * The founder's home: what needs doing today, the money, and every venue. Four numbers,
  * today's to-dos with their WhatsApp ready, quick actions, and the list of venues.
  */
-export default async function AdminHome({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
+export default async function AdminHome({ searchParams }: { searchParams: Promise<{ ok?: string; rehacer?: string }> }) {
   const today = todayPanama();
   const month = today.slice(0, 7);
   const [rows, sp, billing, plans, tagRes, receiptRes, unread, tasks] = await Promise.all([
@@ -26,11 +28,17 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
     searchParams,
     billingAll(today),
     getPlans(),
-    db().from("tags").select("kind, active"),
+    db().from("tags").select("kind, active, business_id, status"),
     db().from("receipts").select("amount").eq("status", "paid").gte("paid_on", `${month}-01`),
     unreadCount(),
     agenda(today, today),
   ]);
+  const pieces = (tagRes.data ?? []) as { business_id: string; status: string }[];
+  const money = await Promise.all([db().from("payments").select("business_id").not("business_id", "is", null), db().from("receipts").select("business_id").not("business_id", "is", null)]);
+  const tally = (list: { business_id: string | null }[]) => list.reduce((m, x) => m.set(x.business_id!, (m.get(x.business_id!) ?? 0) + 1), new Map<string, number>());
+  const payCount = tally((money[0].data ?? []) as { business_id: string }[]);
+  const receiptCount = tally((money[1].data ?? []) as { business_id: string }[]);
+  const redoId = sp.rehacer && /^[0-9a-f-]{36}$/i.test(sp.rehacer) && sp.ok === "eliminado" ? sp.rehacer : null;
   const billOf = new Map(billing.map((r) => [r.business.id, r.billing]));
   const paying = rows.filter((r) => r.business.status === "active");
   const mrr = paying.reduce((n, r) => n + Number(r.business.monthly_fee), 0);
@@ -54,7 +62,14 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
         <Link className="btn btn-dark btn-sm" href="/admin/new">+ Nuevo negocio</Link>
       </div>
 
-      <Flash ok={sp.ok} />
+      {redoId ? (
+        <div className="alert alert-ok redo-alert">
+          <span>Negocio eliminado. Sus pagos y recibos siguen en Recibos y facturación.</span>
+          <Link className="btn btn-dark btn-sm" href={`/admin/new?desde=${redoId}`}>Volver a crearlo</Link>
+        </div>
+      ) : (
+        <Flash ok={sp.ok} />
+      )}
 
       <div className="kpis home-kpis">
         <Link href="/admin/comprobantes" className="kpi"><span>Cobrado este mes</span><b className="num">{usd(collected)}</b><small className="muted">Mensualidades: {usd(mrr)} al mes</small></Link>
@@ -106,6 +121,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
                   <th className="right">A Google</th>
                   <th className="right">Mensajes</th>
                   <th>Última actividad</th>
+                  <th><span className="sr-only">Opciones</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -129,6 +145,16 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
                       <td className="right num">{s?.reviews_30d ?? 0}</td>
                       <td className="right num">{s?.feedback_30d ?? 0}</td>
                       <td className="muted">{ago(s?.last_event_at)}</td>
+                      <td className="right">
+                        <BusinessOptions
+                          variant="row"
+                          id={b.id}
+                          name={b.name}
+                          delivered={pieces.filter((t) => t.business_id === b.id && t.status === "delivered").length}
+                          counts={{ pieces: pieces.filter((t) => t.business_id === b.id).length, payments: payCount.get(b.id) ?? 0, receipts: receiptCount.get(b.id) ?? 0 }}
+                          action={deleteBusiness}
+                        />
+                      </td>
                     </tr>
                   );
                 })}

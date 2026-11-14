@@ -2,23 +2,29 @@ import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { getPlans } from "@/lib/plans";
 import { db } from "@/lib/supabase";
+import type { Business } from "@/lib/types";
 import { createBusiness } from "../actions";
 import { placesReady } from "@/lib/places";
 import { BaselineFields, EssentialFields, OptionFields, PlanFields } from "../BusinessFields";
 import { Flash } from "../Flash";
 
-type Props = { searchParams: Promise<{ error?: string; signup?: string }> };
+type Props = { searchParams: Promise<{ error?: string; signup?: string; desde?: string }> };
 
 export default async function NewBusiness({ searchParams }: Props) {
-  const { error, signup: signupId } = await searchParams;
+  const { error, signup: signupId, desde } = await searchParams;
   // Prefilled from a self sign-up on /empezar.
   const signup = signupId && /^[0-9a-f-]{36}$/i.test(signupId)
     ? ((await db().from("signups").select("id, venue_name, owner_name, phone, plan").eq("id", signupId).maybeSingle()).data as { id: string; venue_name: string; owner_name: string; phone: string; plan: string } | null)
     : null;
-  const prefill = signup ? { name: signup.venue_name, manager_name: signup.owner_name, manager_phone: signup.phone, billing_name: signup.owner_name, billing_phone: signup.phone } : undefined;
+  // "Volver a crearlo": the data of a business deleted by mistake, saved when it was deleted.
+  const redo = !signup && desde && /^[0-9a-f-]{36}$/i.test(desde)
+    ? ((await db().from("audit_log").select("details").eq("action", "business.deleted").eq("business_id", desde).order("at", { ascending: false }).limit(1).maybeSingle()).data?.details as { redo?: Record<string, string | null> } | undefined)?.redo ?? null
+    : null;
+  const prefill = redo ? (redo as Partial<Business>) : signup ? { name: signup.venue_name, manager_name: signup.owner_name, manager_phone: signup.phone, billing_name: signup.owner_name, billing_phone: signup.phone } : undefined;
   // The plan chosen on /empezar sets the price and, for plaques, how many to create.
   const plans = await getPlans();
   const chosen = signup ? plans.find((p) => p.key === signup.plan) ?? null : null;
+  const redoPlan = redo?.plan_key && (redo.plan_key.startsWith("test") || plans.some((p) => p.key === redo.plan_key && p.active)) ? redo.plan_key : undefined;
   return (
     <main className="container admin-main" style={{ maxWidth: 680 }}>
       <div>
@@ -31,11 +37,12 @@ export default async function NewBusiness({ searchParams }: Props) {
         </div>
       </div>
       <Flash error={error} />
+      {redo && <p className="alert alert-ok">Datos de {redo.name}, que eliminaste. Revísalos, corrige lo que estaba mal y créalo de nuevo. Sus placas se generan nuevas: graba los enlaces nuevos.</p>}
       {signup && <p className="alert alert-ok">Datos de {signup.venue_name}, que se registró solo desde la web{chosen ? ` con el plan ${chosen.name} ($${chosen.monthly} al mes)` : ""}. Solo falta el enlace de Google.</p>}
       <form action={createBusiness} className="panel">
         {signup && <input type="hidden" name="signup_id" value={signup.id} />}
         <EssentialFields prefill={prefill} />
-        <PlanFields plans={plans} planKey={chosen?.key} />
+        <PlanFields plans={plans} planKey={chosen?.key ?? redoPlan} kind={redo?.kind ?? undefined} />
         <BaselineFields auto={placesReady()} />
         <details className="more">
           <summary>Más opciones (precio especial, nombre de las placas, color)</summary>

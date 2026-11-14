@@ -8,8 +8,10 @@ type Props = {
   name: string;
   /** Pieces the client has in the venue: they stop working when the business is deleted. */
   delivered: number;
-  counts: { pieces: number; contacts: number; payments: number; receipts: number };
+  counts: { pieces: number; contacts?: number; payments: number; receipts: number };
   action: (f: FormData) => Promise<void>;
+  /** "menu": the Opciones menu of the business page. "row": a small button in the businesses list. */
+  variant?: "menu" | "row";
 };
 
 /**
@@ -17,7 +19,7 @@ type Props = {
  * erased and what is kept, then a second one where the founder types the exact name.
  * The server checks the name again; nothing is erased until both steps are done.
  */
-export function BusinessOptions({ id, name, delivered, counts, action }: Props) {
+export function BusinessOptions({ id, name, delivered, counts, action, variant = "menu" }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const menu = useRef<HTMLDetailsElement>(null);
   const [step, setStep] = useState<1 | 2>(1);
@@ -36,6 +38,9 @@ export function BusinessOptions({ id, name, delivered, counts, action }: Props) 
 
   return (
     <>
+      {variant === "row" ? (
+        <button type="button" className="btn btn-ghost btn-sm row-delete" onClick={open} aria-label={`Eliminar ${name}`}>Eliminar</button>
+      ) : (
       <details className="opts-menu" ref={menu}>
         <summary className="btn btn-ghost btn-sm" aria-label="Opciones del negocio">Opciones ⋯</summary>
         <div className="opts-list" role="menu">
@@ -44,6 +49,7 @@ export function BusinessOptions({ id, name, delivered, counts, action }: Props) 
           <button role="menuitem" type="button" className="danger" onClick={open}>Eliminar negocio</button>
         </div>
       </details>
+      )}
 
       <dialog ref={dialog} className="confirm-dialog" aria-labelledby="del-title" onClose={() => setStep(1)}>
         {step === 1 ? (
@@ -57,7 +63,7 @@ export function BusinessOptions({ id, name, delivered, counts, action }: Props) 
                   <li>{counts.pieces} {counts.pieces === 1 ? "placa o tarjeta" : "placas y tarjetas"} (sus enlaces dejan de funcionar)</li>
                   <li>Toques, estadísticas y conteos de reseñas</li>
                   <li>Mensajes de clientes</li>
-                  <li>Club: {counts.contacts} {counts.contacts === 1 ? "contacto" : "contactos"}</li>
+                  <li>Club{counts.contacts != null ? `: ${counts.contacts} ${counts.contacts === 1 ? "contacto" : "contactos"}` : " de clientes"}</li>
                   <li>Accesos y avisos de su app FiveTap Business</li>
                 </ul>
               </div>
@@ -70,6 +76,7 @@ export function BusinessOptions({ id, name, delivered, counts, action }: Props) 
                 </ul>
               </div>
             </div>
+            <p className="muted" style={{ margin: 0, fontSize: 14 }}>¿Lo creaste mal? Después de eliminarlo podrás volver a crearlo con sus datos ya llenos.</p>
             {delivered > 0 && (
               <p className="alert alert-warn">Tiene {delivered} {delivered === 1 ? "pieza entregada" : "piezas entregadas"} en el local. Al eliminarlo, dejarán de funcionar.</p>
             )}

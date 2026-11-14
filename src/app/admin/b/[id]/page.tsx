@@ -22,7 +22,7 @@ import { setTagStatus } from "../../actions";
 import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, sendReceiptWhatsApp, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
-import { BusinessOptions } from "./BusinessOptions";
+import { BusinessOptions } from "../../BusinessOptions";
 import { Flash } from "../../Flash";
 import { STATUS_LABEL, dateTime, pct, usd } from "../../format";
 

@@ -1101,3 +1101,6 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .order-form { min-width: 0; }
 .order-form > *, .order-form .grid-2 > *, .order-products > * { min-width: 0; }
 .order-form .select, .order-form .input { width: 100%; max-width: 100%; }
+.redo-alert { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.row-delete { color: var(--danger); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
