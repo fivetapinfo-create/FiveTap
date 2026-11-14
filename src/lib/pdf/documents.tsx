@@ -577,14 +577,14 @@ export async function agreementPdf(a: Agreement, p: Provider) {
 
         <Text style={s.label}>Lo que se entrega</Text>
         <Rows
-          rows={[
+          rows={([
             ["Plan", a.plan_name],
-            ["Placas NFC FiveTap", String(a.plaques)],
-            ["Tarjetas NFC de equipo", String(a.cards)],
-            ["Cordones porta tarjetas", String(a.lanyards)],
+            a.plaques ? ["Placas NFC FiveTap", String(a.plaques)] : null,
+            a.cards ? ["Tarjetas NFC de equipo", String(a.cards)] : null,
+            a.lanyards ? ["Cordones porta tarjetas", String(a.lanyards)] : null,
             ["FiveTap Business", "Incluido"],
             ["Forma de pago", a.payment_method],
-          ]}
+          ] as ([string, string] | null)[]).filter((r): r is [string, string] => r !== null)}
         />
 
         {agreementClauses(a).map((c, i) => (
