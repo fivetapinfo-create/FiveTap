@@ -729,7 +729,7 @@ export async function deleteBusiness(f: FormData) {
   const id = str(f, "id", 60);
   const back = `/admin/b/${id}`;
   try {
-    const { data: b, error } = await db().from("businesses").select("name, logo_url, kind, plan_key, google_review_url, google_place_id, manager_name, manager_phone, manager_email, billing_name, billing_phone, billing_email").eq("id", id).maybeSingle();
+    const { data: b, error } = await db().from("businesses").select("name, logo_url, kind, plan_key, status, mode, google_review_url, google_place_id, manager_name, manager_phone, manager_email, billing_name, billing_phone, billing_email").eq("id", id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!b) throw new Error("El negocio no existe.");
     if (str(f, "confirm", 80).trim() !== b.name) throw new Error("Escribe el nombre exacto del negocio para eliminarlo.");
@@ -744,7 +744,7 @@ export async function deleteBusiness(f: FormData) {
     if (del.error) throw new Error(del.error.message);
     await audit("business.deleted", { businessId: id, entity: "business", entityId: b.name, details: { name: b.name, pieces, delivered: delivered ?? 0, kept_payments: payments, kept_receipts: receipts, kept_orders: orders,
       // What "Volver a crearlo" fills in; the logo and the pieces are not kept.
-      redo: { name: b.name, kind: b.kind, plan_key: b.plan_key, google_review_url: b.google_review_url, google_place_id: b.google_place_id, manager_name: b.manager_name, manager_phone: b.manager_phone, manager_email: b.manager_email, billing_name: b.billing_name, billing_phone: b.billing_phone, billing_email: b.billing_email } } });
+      redo: { name: b.name, kind: b.kind, plan_key: b.plan_key ?? (b.status === "trial" ? (b.mode === "google" ? "test-google" : "test") : null), google_review_url: b.google_review_url, google_place_id: b.google_place_id, manager_name: b.manager_name, manager_phone: b.manager_phone, manager_email: b.manager_email, billing_name: b.billing_name, billing_phone: b.billing_phone, billing_email: b.billing_email } } });
     const logo = b.logo_url?.split("/logos/")[1];
     if (logo) await db().storage.from("logos").remove([decodeURIComponent(logo)]);
   } catch (e) {
