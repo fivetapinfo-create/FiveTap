@@ -4,6 +4,7 @@ import { Check, Gift, StarSolid } from "@/components/Icons";
 import { RatingStars } from "@/components/RatingStars";
 import { SubmitButton } from "@/components/SubmitButton";
 import { guestClosed, tagByCode } from "@/lib/data";
+import { COPY } from "@/lib/i18n";
 import { waLink } from "@/lib/phone";
 import { db } from "@/lib/supabase";
 import { guestRequest } from "../request";
@@ -35,18 +36,18 @@ export default async function MessagePage({ params, searchParams }: Props) {
   const q = sp.s === "q" ? "?s=q" : "";
 
   if (sp.enviado) {
-    // The comment just saved, to prepare the optional WhatsApp to the manager.
+    // The comment just saved, to prepare the optional WhatsApp to the manager (always in Spanish: it is for the venue).
     const sent = UUID.test(sp.enviado)
       ? ((await db().from("feedback").select("message, rating, created_at, business_id").eq("id", sp.enviado).maybeSingle()).data as { message: string; rating: number | null; created_at: string; business_id: string } | null)
       : null;
     const mine = sent && sent.business_id === b.id ? sent : null;
-    const when = mine ? new Date(mine.created_at).toLocaleString("es-PA", { timeZone: "America/Panama", dateStyle: "medium", timeStyle: "short" }) : "";
+    const when = mine ? new Date(mine.created_at).toLocaleString("es-PA", { timeZone: "America/Panama", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
     const wa =
       mine && b.manager_phone
         ? `${waLink(b.manager_phone)}?text=${encodeURIComponent(
             [
               `Comentario privado · ${b.name}`,
-              mine.rating ? `Valoración: ${"★".repeat(mine.rating)}${"☆".repeat(5 - mine.rating)} (${mine.rating}/5 · ${copy.ratingLabels[mine.rating - 1]})` : null,
+              mine.rating ? `Valoración: ${"★".repeat(mine.rating)}${"☆".repeat(5 - mine.rating)} (${mine.rating}/5 · ${COPY.es.ratingLabels[mine.rating - 1]})` : null,
               `Comentario: ${mine.message}`,
               `Fecha: ${when}`,
               `Lugar: ${tag.label} · ID ${b.slug}`,
