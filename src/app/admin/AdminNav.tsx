@@ -18,11 +18,12 @@ const MORE: { href: string; label: string; hint: string }[] = [
   { href: "/admin/contratos", label: "Contratos", hint: "Contratos de 3 meses" },
   { href: "/admin/planes", label: "Planes", hint: "Precios y lo que incluye cada plan" },
   { href: "/admin/empresa", label: "Empresa", hint: "Datos de FiveTap e ingresos" },
+  { href: "/admin/soporte", label: "Soporte", hint: "Solicitudes de tus clientes" },
   { href: "/admin/claude", label: "Actividad de Claude", hint: "Lo que Claude hizo y cómo conectarlo" },
 ];
 
 /** Panel menu; the current section is highlighted the moment it's tapped. */
-export function AdminNav({ todo, unread, late = 0 }: { todo: number; unread: number; late?: number }) {
+export function AdminNav({ todo, unread, late = 0, support = 0 }: { todo: number; unread: number; late?: number; support?: number }) {
   const path = usePathname();
   const more = useRef<HTMLDetailsElement>(null);
   const current = (href: string) => (href === "/admin" ? path === "/admin" || path.startsWith("/admin/b/") || path === "/admin/new" : path.startsWith(href));
@@ -39,11 +40,11 @@ export function AdminNav({ todo, unread, late = 0 }: { todo: number; unread: num
         );
       })}
       <details className="nav-more" ref={more}>
-        <summary aria-current={inMore ? "page" : undefined}>Más</summary>
+        <summary aria-current={inMore ? "page" : undefined}>Más{support > 0 && <span className="badge num" aria-label={`${support} solicitudes de soporte esperando respuesta`}>{support}</span>}</summary>
         <div className="nav-more-menu">
           {MORE.map((l) => (
             <Link key={l.href} href={l.href} onClick={() => more.current?.removeAttribute("open")} aria-current={current(l.href) ? "page" : undefined}>
-              <b>{l.label}</b>
+              <b>{l.label}{l.href === "/admin/soporte" && support > 0 && <span className="badge num">{support}</span>}</b>
               <small>{l.hint}</small>
             </Link>
           ))}

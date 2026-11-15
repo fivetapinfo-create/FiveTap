@@ -18,6 +18,7 @@ import { audit, deliverReceipt, issueReceipt, logSend, receiptMoney, receiptUrl 
 import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
+import { replyTicket, setTicketStatus } from "@/lib/support";
 import { setModule, type ModuleKey } from "@/lib/orders";
 import { presetFor } from "@/lib/presets";
 import { EMPTY_EXPERIENCE } from "@/lib/experience-shape";
@@ -957,4 +958,21 @@ export async function setModuleAdmin(f: FormData) {
     await setModule(id, key, v === "on" ? true : v === "off" ? false : null);
     await audit("module.changed", { businessId: id, entity: "business", entityId: id, details: { module: key, value: v } });
   });
+}
+
+// ---------- Soporte (founder) ----------
+
+export async function replySupportAdmin(f: FormData) {
+  const id = str(f, "ticket_id", 60);
+  const back = `/admin/soporte/${id}`;
+  try {
+    const status = str(f, "status", 12);
+    if (status === "resolved" || status === "open") await setTicketStatus(id, status);
+    else await replyTicket(id, "founder", String(f.get("body") ?? ""));
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath("/admin/soporte");
+  revalidatePath(back);
+  redirect(`${back}?ok=guardado`);
 }

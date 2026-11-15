@@ -10,6 +10,7 @@ import { deleteItem, deletePromotion, saveItem, savePromotion, setActive } from 
 import { adjustLine, setOrderStatus, type OrderStatus } from "@/lib/orders";
 import { addManualReservation, saveReservationSettings, setReservationStatus, type ReservationStatus } from "@/lib/reservations";
 import { phoneDigits } from "@/lib/reservation-rules";
+import { openTicket, replyTicket, setTicketStatus } from "@/lib/support";
 
 /** The owner or manager closes a private message once it is handled (or opens it again). */
 export async function setMessageResolved(f: FormData) {
@@ -180,4 +181,52 @@ export async function saveReservationSettingsOwner(f: FormData) {
   await saveReservationSettings(b.id, { max_party: Number(f.get("max_party")), days_ahead: Number(f.get("days_ahead")), min_notice_hours: Number(f.get("min_notice_hours")) });
   revalidatePath(`/mi/${token}/reservas`);
   redirect(`/mi/${token}/reservas?ok=ajustes#ajustes`);
+}
+
+// ---------- Soporte and Capacitación ----------
+
+async function ownerCtx(f: FormData) {
+  const token = String(f.get("token") ?? "");
+  const b = await businessByOwnerToken(token);
+  const role = b ? await accessRole(b) : null;
+  if (!b || !role) redirect("/");
+  return { b, role, token };
+}
+
+/** The owner or manager opens a support request. */
+export async function openSupport(f: FormData) {
+  const { b, role, token } = await ownerCtx(f);
+  let id = "", error = "";
+  try {
+    id = (await openTicket({ id: b.id, name: b.name }, role, String(f.get("subject") ?? ""), String(f.get("category") ?? ""), String(f.get("body") ?? ""))).id;
+  } catch (e) {
+    error = e instanceof Error ? e.message : "No se pudo enviar.";
+  }
+  revalidatePath(`/mi/${token}/soporte`);
+  redirect(error ? `/mi/${token}/soporte?error=${encodeURIComponent(error)}#nueva` : `/mi/${token}/soporte?t=${id}&ok=enviada`);
+}
+
+/** A reply in one of this business's requests. */
+export async function replySupport(f: FormData) {
+  const { b, role, token } = await ownerCtx(f);
+  const id = String(f.get("ticket_id") ?? "");
+  let error = "";
+  try {
+    if (f.get("resolve") === "1") await setTicketStatus(id, "resolved", { businessId: b.id });
+    else await replyTicket(id, role, String(f.get("body") ?? ""), { businessId: b.id });
+  } catch (e) {
+    error = e instanceof Error ? e.message : "No se pudo enviar.";
+  }
+  revalidatePath(`/mi/${token}/soporte`);
+  redirect(`/mi/${token}/soporte?t=${id}${error ? `&error=${encodeURIComponent(error)}` : ""}`);
+}
+
+/** Marks a training guide as read (or not) for the owner or manager. */
+export async function markGuide(f: FormData) {
+  const { b, role, token } = await ownerCtx(f);
+  const guide = String(f.get("guide") ?? "").slice(0, 40);
+  if (f.get("done") === "1") await db().from("training_progress").upsert({ business_id: b.id, guide, role });
+  else await db().from("training_progress").delete().eq("business_id", b.id).eq("guide", guide).eq("role", role);
+  revalidatePath(`/mi/${token}/ayuda`);
+  redirect(`/mi/${token}/ayuda#${guide}`);
 }

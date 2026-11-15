@@ -18,6 +18,10 @@ import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, nfcUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
+import { moduleOn } from "@/lib/orders";
+import { db } from "@/lib/supabase";
+import { ticketsFor } from "@/lib/support";
+import { guidesFor } from "@/lib/training";
 import { setTagStatus } from "../../actions";
 import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, sendReceiptWhatsApp, setStaff, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
@@ -52,7 +56,13 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const { business: b, tags, stats, tagStats, feedback, payments } = d;
   const periods = report.periods;
   const ownerLink = `${SITE_URL}/mi/${b.owner_token}`;
-  const codes = await accessCodes(b);
+  const [codes, training, tickets] = await Promise.all([
+    accessCodes(b),
+    db().from("training_progress").select("guide, role").eq("business_id", b.id).then((r) => (r.data ?? []) as { guide: string; role: string }[]),
+    ticketsFor(b.id),
+  ]);
+  const guides = guidesFor({ orders: moduleOn(b, "orders"), reservations: moduleOn(b, "reservations") });
+  const readBy = (role: string) => guides.filter((g) => training.some((t) => t.role === role && t.guide === g.key)).length;
   const v = verticalByKey(b.kind);
   const firstActive = tags.find((t) => t.active);
   const preview = firstActive ? `/t/${firstActive.code}?preview=1` : null;
@@ -480,6 +490,13 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             <SubmitButton className="btn btn-ghost btn-sm" pending="Cambiando…">Cambiar enlace privado</SubmitButton>
             <small className="muted">Si alguien que tenía acceso ya no trabaja ahí: el enlace viejo deja de funcionar y se borran los avisos de todos los celulares del local. Luego reenvía el acceso.</small>
           </form>
+          <div className="row" style={{ gap: 16 }}>
+            <span><small className="muted">Capacitación</small> <b className="num">Dueño {readBy("owner")}/{guides.length}</b> · <b className="num">Gerente {readBy("manager")}/{guides.length}</b> guías leídas</span>
+            <span>
+              <small className="muted">Soporte</small>{" "}
+              {tickets.length === 0 ? <b>sin solicitudes</b> : <Link href={`/admin/soporte/${tickets[0]!.id}`}><b className="num">{tickets.filter((t) => t.status === "open").length} esperando · {tickets.length} en total</b> →</Link>}
+            </span>
+          </div>
         </div>
       </section>
 

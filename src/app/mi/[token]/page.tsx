@@ -22,6 +22,7 @@ import { presetFor } from "@/lib/presets";
 import { TeamRanking } from "@/components/TeamRanking";
 import { teamPeriod, teamRanking } from "@/lib/team";
 import { getPlans } from "@/lib/plans";
+import { answeredTicketsCount } from "@/lib/support";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
 import { dateTime } from "../../admin/format";
@@ -83,6 +84,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const newOrders = ordersOn ? await newOrdersCount(b.id) : 0;
   const resvOn = moduleOn(b, "reservations");
   const resv = resvOn ? await reservationGlance(b.id) : { today: 0, pending: 0 };
+  const answered = await answeredTicketsCount(b.id);
   // Tools that suit this kind of business and it does not have yet (only for venues with the app).
   const rec = b.mode === "google" ? null : presetFor(b.kind).modules.reservations && !resvOn ? "reservas" : presetFor(b.kind).modules.orders && !ordersOn ? "pedidos" : null;
   const period = teamPeriod(sp.equipo);
@@ -102,9 +104,9 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         <div className="container">
           <Logo size={20} />
           <div className="owner-actions">
-            <a className="btn btn-sm owner-help" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Tengo una consulta sobre FiveTap.`)}>
+            <Link className="btn btn-sm owner-help" href={`/mi/${token}/ayuda`}>
               Ayuda
-            </a>
+            </Link>
             <ThemeToggle />
             <Link className="owner-gear" href={`/mi/${token}/ajustes`} aria-label="Configuración">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -125,6 +127,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         </div>
 
         {/* 1. Only what needs you now. */}
+        {answered > 0 && (
+          <Link className="alert alert-warn glance-alert" href={`/mi/${token}/soporte`}>
+            FiveTap respondió {answered === 1 ? "tu solicitud" : `${answered} solicitudes`} de soporte. Ver respuesta →
+          </Link>
+        )}
         {ordersOn && (
           <Link className={`alert ${newOrders ? "alert-warn" : "alert-ok"} glance-alert`} href={`/mi/${token}/pedidos`}>
             <b>{newOrders ? (newOrders === 1 ? "1 pedido nuevo" : `${newOrders} pedidos nuevos`) : "Pedidos desde la placa"}</b> · {newOrders ? "Atender →" : "Ver pedidos →"}

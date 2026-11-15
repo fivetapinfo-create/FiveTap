@@ -670,3 +670,37 @@ create table if not exists reservations (
 );
 create index if not exists reservations_business_day_idx on reservations (business_id, reserved_on, reserved_at);
 alter table reservations enable row level security;
+
+-- ---------- Support requests and training (FiveTap Business) ----------
+create sequence if not exists support_seq;
+create table if not exists support_tickets (
+  id uuid primary key default gen_random_uuid(),
+  number int not null default nextval('support_seq') unique,
+  business_id uuid not null references businesses(id) on delete cascade,
+  subject text not null check (char_length(subject) between 3 and 120),
+  category text not null default 'question' check (category in ('question','plaque','page','billing','other')),
+  status text not null default 'open' check (status in ('open','answered','resolved')),
+  opened_by text not null default 'owner' check (opened_by in ('owner','manager','founder')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists support_tickets_business_idx on support_tickets(business_id, updated_at desc);
+create index if not exists support_tickets_status_idx on support_tickets(status, updated_at desc);
+create table if not exists support_messages (
+  id uuid primary key default gen_random_uuid(),
+  ticket_id uuid not null references support_tickets(id) on delete cascade,
+  author text not null check (author in ('owner','manager','founder')),
+  body text not null check (char_length(body) between 1 and 2000),
+  created_at timestamptz not null default now()
+);
+create index if not exists support_messages_ticket_idx on support_messages(ticket_id, created_at);
+create table if not exists training_progress (
+  business_id uuid not null references businesses(id) on delete cascade,
+  guide text not null check (char_length(guide) <= 40),
+  role text not null check (role in ('owner','manager')),
+  completed_at timestamptz not null default now(),
+  primary key (business_id, guide, role)
+);
+alter table support_tickets enable row level security;
+alter table support_messages enable row level security;
+alter table training_progress enable row level security;

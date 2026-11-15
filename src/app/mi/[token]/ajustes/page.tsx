@@ -78,6 +78,18 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
           <b>Mi página NFC</b>
           <span className="muted">Promociones y catálogo que ven tus clientes al tocar la placa →</span>
         </Link>
+        <Link className="panel settings-link" href={`${home}/clientes`}>
+          <b>Mis clientes</b>
+          <span className="muted">Tu club y tus reservas en una sola lista, con visitas y cumpleaños →</span>
+        </Link>
+        <Link className="panel settings-link" href={`${home}/ayuda`}>
+          <b>Ayuda y capacitación</b>
+          <span className="muted">Guías cortas para ti, tu gerente y tu equipo →</span>
+        </Link>
+        <Link className="panel settings-link" href={`${home}/soporte`}>
+          <b>Soporte</b>
+          <span className="muted">Escríbenos una duda o problema y sigue la respuesta aquí →</span>
+        </Link>
 
         <AppSetup
           endpoint={`${home}/push`}
