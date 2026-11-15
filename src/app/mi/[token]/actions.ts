@@ -8,6 +8,8 @@ import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
 import { deleteItem, deletePromotion, saveItem, savePromotion, setActive } from "@/lib/experience";
 import { adjustLine, setOrderStatus, type OrderStatus } from "@/lib/orders";
+import { addManualReservation, saveReservationSettings, setReservationStatus, type ReservationStatus } from "@/lib/reservations";
+import { phoneDigits } from "@/lib/reservation-rules";
 
 /** The owner or manager closes a private message once it is handled (or opens it again). */
 export async function setMessageResolved(f: FormData) {
@@ -113,4 +115,67 @@ export async function moveOrder(f: FormData) {
 }
 export async function adjustOrderLine(f: FormData) {
   await orderRun(f, (id) => adjustLine(id, String(f.get("order_id") ?? ""), String(f.get("line_id") ?? ""), Number(f.get("qty") ?? 0)));
+}
+
+// ---------- Reservas: confirm, cancel or close them; confirmations go out by WhatsApp ----------
+
+const R_TO: ReservationStatus[] = ["confirmed", "canceled", "attended", "no_show", "pending"];
+
+async function resvAuth(f: FormData) {
+  const token = String(f.get("token") ?? "");
+  const b = await businessByOwnerToken(token);
+  if (!b || !(await accessRole(b))) redirect("/");
+  return { b, token, back: `/mi/${token}/reservas${String(f.get("back") ?? "").startsWith("?") ? String(f.get("back")) : ""}` };
+}
+
+/** Changes a reservation. Confirming or cancelling opens WhatsApp with the message ready (no API, nothing simulated). */
+export async function moveReservation(f: FormData) {
+  const { b, token, back } = await resvAuth(f);
+  const to = R_TO.find((x) => x === String(f.get("to") ?? ""));
+  const id = String(f.get("id") ?? "");
+  let target = back;
+  try {
+    if (!to) throw new Error("Estado no válido.");
+    const reason = String(f.get("reason") ?? "").trim().slice(0, 200) || null;
+    await setReservationStatus(b.id, id, to, reason);
+    if ((to === "confirmed" || to === "canceled") && f.get("notify") === "1") {
+      const { data: r } = await db().from("reservations").select("customer_name, phone, party_size, reserved_on, reserved_at").eq("id", id).eq("business_id", b.id).maybeSingle();
+      const wa = phoneDigits(r?.phone);
+      if (r && wa) {
+        const day = new Date(`${r.reserved_on}T12:00:00Z`).toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+        const first = String(r.customer_name).split(" ")[0];
+        const text = to === "confirmed"
+          ? `Hola ${first}, te escribimos de ${b.name}. ✅ Tu reserva está confirmada: ${day} a las ${r.reserved_at}, para ${r.party_size} ${r.party_size === 1 ? "persona" : "personas"}. ¡Te esperamos!`
+          : `Hola ${first}, te escribimos de ${b.name}. Lo sentimos, no podemos recibir tu reserva del ${day} a las ${r.reserved_at}${reason ? ` (${reason})` : ""}. ¿Te gustaría otro horario?`;
+        target = `https://wa.me/${wa}?text=${encodeURIComponent(text)}`;
+      }
+    }
+  } catch (e) {
+    target = `${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(e instanceof Error ? e.message : "No se pudo guardar.")}`;
+  }
+  revalidatePath(`/mi/${token}/reservas`);
+  redirect(target);
+}
+
+/** The venue writes down a reservation taken by phone or in person. */
+export async function addReservationOwner(f: FormData) {
+  const { b, token, back } = await resvAuth(f);
+  const clean = (k: string, max: number) => String(f.get(k) ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+  let error = "";
+  try {
+    await addManualReservation(b.id, { name: clean("name", 80), phone: clean("phone", 30) || null, party: Number(f.get("party")), date: clean("date", 10), time: clean("time", 5), country: clean("country", 40) || null, notes: String(f.get("notes") ?? "").trim().slice(0, 400) || null });
+  } catch (e) {
+    error = e instanceof Error ? e.message : "No se pudo guardar.";
+  }
+  revalidatePath(`/mi/${token}/reservas`);
+  redirect(error ? `${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(error)}#nueva` : `${back}${back.includes("?") ? "&" : "?"}ok=nueva`);
+}
+
+/** Owner: how far ahead, how big a party and how much notice guests need. */
+export async function saveReservationSettingsOwner(f: FormData) {
+  const { b, token } = await resvAuth(f);
+  if ((await accessRole(b)) !== "owner") redirect(`/mi/${token}/reservas`);
+  await saveReservationSettings(b.id, { max_party: Number(f.get("max_party")), days_ahead: Number(f.get("days_ahead")), min_notice_hours: Number(f.get("min_notice_hours")) });
+  revalidatePath(`/mi/${token}/reservas`);
+  redirect(`/mi/${token}/reservas?ok=ajustes#ajustes`);
 }

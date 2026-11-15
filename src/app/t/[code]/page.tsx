@@ -53,6 +53,7 @@ export default async function TapPage({ params, searchParams }: Props) {
 
   const q = source === "qr" ? "?s=q" : "";
   const orderHref = moduleOn(tag.business, "orders") ? `/t/${code}/pedir` : undefined;
+  const reserveHref = moduleOn(tag.business, "reservations") ? `/t/${code}/reservar` : undefined;
   // A published experience (cover, promotions, catalog…) wraps the same review card.
   const x = await publishedExperience(tag.business_id);
   if (x && hasContent(x.experience, x.promos.length, x.items.length)) {
@@ -70,6 +71,7 @@ export default async function TapPage({ params, searchParams }: Props) {
           managerHref={`/t/${code}/mensaje${q}`}
           clubHref={`/t/${code}/club${q}`}
           orderHref={orderHref}
+          reserveHref={reserveHref}
         />
       </>
     );
@@ -84,6 +86,7 @@ export default async function TapPage({ params, searchParams }: Props) {
       managerHref={`/t/${code}/mensaje${q}`}
       clubHref={`/t/${code}/club${q}`}
       orderHref={orderHref}
+          reserveHref={reserveHref}
     />
     </>
   );

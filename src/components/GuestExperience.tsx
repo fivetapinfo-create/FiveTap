@@ -2,7 +2,7 @@ import { onColor, safeColor } from "@/lib/brand";
 import { openState, socialUrl, waDigits, type CatalogItem, type Experience, type Promotion } from "@/lib/experience-shape";
 import type { Copy, Lang } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
-import { Bag, Camera, Chat, Clock, Gift, Globe, LinkIcon, Phone, Route, StarSolid, Tag } from "./Icons";
+import { Bag, Calendar, Camera, Chat, Clock, Gift, Globe, LinkIcon, Phone, Route, StarSolid, Tag } from "./Icons";
 import { LogoMark } from "./Logo";
 import type { GuestBusiness } from "./GuestCard";
 
@@ -18,6 +18,8 @@ type Props = {
   clubHref?: string;
   /** Ordering from the plaque, when the business has the Orders module. */
   orderHref?: string;
+  /** Booking from the plaque, when the business has the Reservations module. */
+  reserveHref?: string;
   /** Founder preview: links inside the page do nothing, nothing is counted. */
   preview?: boolean;
 };
@@ -43,7 +45,7 @@ const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits
  * published: its cover and identity, the review card (same as always, never filtered),
  * and only the sections the business turned on and filled in.
  */
-export function GuestExperience({ business, experience: e, promos, items, copy, lang, reviewHref, managerHref, clubHref, orderHref, preview }: Props) {
+export function GuestExperience({ business, experience: e, promos, items, copy, lang, reviewHref, managerHref, clubHref, orderHref, reserveHref, preview }: Props) {
   const brand = safeColor(business.brand_color, "#0a0a0a");
   const custom = brand.toLowerCase() !== "#0a0a0a" && brand.toLowerCase() !== "#111111";
   const style = { "--brand": custom ? brand : undefined, "--on-brand": custom ? onColor(brand) : undefined } as React.CSSProperties;
@@ -100,10 +102,11 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
       </header>
 
       <div className="guest-wrap gx-wrap">
-        {orderHref && (
-          <a className="gx-order rise" href={preview ? "#" : orderHref} style={i(4)}>
-            <Bag /><span>{copy.oOrder}</span><b aria-hidden="true">→</b>
-          </a>
+        {(orderHref || reserveHref) && (
+          <div className={`gx-mods rise${orderHref && reserveHref ? " two" : ""}`} style={i(4)}>
+            {orderHref && <a className="gx-order" href={preview ? "#" : orderHref}><Bag /><span>{copy.oOrder}</span><b aria-hidden="true">→</b></a>}
+            {reserveHref && <a className={`gx-order${orderHref ? " gx-order-alt" : ""}`} href={preview ? "#" : reserveHref}><Calendar /><span>{copy.rReserve}</span><b aria-hidden="true">→</b></a>}
+          </div>
         )}
         {(wa || tel || maps) && (
           <div className="gx-quick rise" style={i(4)}>

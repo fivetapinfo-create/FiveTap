@@ -1,7 +1,7 @@
 import { onColor, safeColor } from "@/lib/brand";
 import type { Copy } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
-import { Bag, Chat, Gift, StarSolid } from "./Icons";
+import { Bag, Calendar, Chat, Gift, StarSolid } from "./Icons";
 import { LogoMark } from "./Logo";
 
 export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string };
@@ -14,6 +14,7 @@ export function GuestCard({
   managerHref,
   clubHref,
   orderHref,
+  reserveHref,
   embedded = false,
 }: {
   business: GuestBusiness;
@@ -24,6 +25,8 @@ export function GuestCard({
   clubHref?: string;
   /** Ordering from the plaque (Orders module). */
   orderHref?: string;
+  /** Booking from the plaque (Reservations module). */
+  reserveHref?: string;
   /** Rendered inside another page (landing mockup): no <main>, links inert. */
   embedded?: boolean;
 }) {
@@ -62,10 +65,11 @@ export function GuestCard({
           </a>
         </nav>
 
-        {orderHref && (
-          <a className="gx-order rise" href={orderHref} tabIndex={tab} style={{ "--i": 5, marginTop: 12 } as React.CSSProperties}>
-            <Bag /><span>{copy.oOrder}</span><b aria-hidden="true">→</b>
-          </a>
+        {(orderHref || reserveHref) && (
+          <div className={`gx-mods rise${orderHref && reserveHref ? " two" : ""}`} style={{ "--i": 5, marginTop: 12 } as React.CSSProperties}>
+            {orderHref && <a className="gx-order" href={orderHref} tabIndex={tab}><Bag /><span>{copy.oOrder}</span><b aria-hidden="true">→</b></a>}
+            {reserveHref && <a className={`gx-order${orderHref ? " gx-order-alt" : ""}`} href={reserveHref} tabIndex={tab}><Calendar /><span>{copy.rReserve}</span><b aria-hidden="true">→</b></a>}
+          </div>
         )}
 
         {clubHref && (

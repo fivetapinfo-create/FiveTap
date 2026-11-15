@@ -648,3 +648,25 @@ create table if not exists guest_order_items (
 );
 create index if not exists guest_order_items_order_idx on guest_order_items (order_id);
 alter table guest_order_items enable row level security;
+
+-- ============ Reservations (module) ============
+alter table businesses add column if not exists reservation_settings jsonb not null default '{}'::jsonb;
+create table if not exists reservations (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  tag_id uuid references tags (id) on delete set null,
+  token text not null unique default encode(gen_random_bytes(12), 'hex'),
+  customer_name text not null check (char_length(customer_name) between 1 and 80),
+  phone text check (char_length(phone) <= 30),
+  party_size int not null check (party_size between 1 and 200),
+  reserved_on date not null,
+  reserved_at text not null check (reserved_at ~ '^[0-2][0-9]:[0-5][0-9]$'),
+  country text check (char_length(country) <= 40),
+  notes text check (char_length(notes) <= 400),
+  status text not null default 'pending' check (status in ('pending', 'confirmed', 'canceled', 'attended', 'no_show')),
+  source text not null default 'nfc' check (source in ('nfc', 'manual')),
+  cancel_reason text,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create index if not exists reservations_business_day_idx on reservations (business_id, reserved_on, reserved_at);
+alter table reservations enable row level security;

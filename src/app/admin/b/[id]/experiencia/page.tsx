@@ -93,13 +93,14 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
               {(Object.keys(MODULES) as ModuleKey[]).map((k) => {
                 const on = moduleOn(b, k);
                 const src = moduleSource(b, k);
-                const soon = k === "reservations";
+                const soon = false;
                 return (
                   <div key={k} className="xp-module">
                     <div>
                       <b>{MODULES[k]}</b>
                       <small className="muted">{soon ? "Próximamente (Etapa C)" : `${on ? "Activo" : "Apagado"} · ${src === "plan" ? "según su plan" : "activado a mano"}`}</small>
                       {k === "orders" && on && <small className="muted">Sus clientes piden desde la placa con los productos con precio del catálogo.</small>}
+                      {k === "reservations" && on && <small className="muted">Sus clientes reservan desde la placa dentro de su horario; el dueño confirma por WhatsApp.</small>}
                     </div>
                     {!soon && (
                       <form action={setModuleAdmin} className="row" style={{ gap: 6 }}>

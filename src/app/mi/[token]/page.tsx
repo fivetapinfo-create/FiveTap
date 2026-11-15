@@ -17,6 +17,7 @@ import { after } from "next/server";
 import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { setMessageResolved, setStaffName } from "./actions";
 import { moduleOn, newOrdersCount } from "@/lib/orders";
+import { reservationGlance } from "@/lib/reservations";
 import { TeamRanking } from "@/components/TeamRanking";
 import { teamPeriod, teamRanking } from "@/lib/team";
 import { getPlans } from "@/lib/plans";
@@ -79,6 +80,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const waiters = tags.filter((t) => t.active && isWaiter(t)).map(row).sort(byReviews);
   const ordersOn = moduleOn(b, "orders");
   const newOrders = ordersOn ? await newOrdersCount(b.id) : 0;
+  const resvOn = moduleOn(b, "reservations");
+  const resv = resvOn ? await reservationGlance(b.id) : { today: 0, pending: 0 };
   const period = teamPeriod(sp.equipo);
   const team = await teamRanking(tags, period);
   const tables = tags.filter((t) => t.active && !isWaiter(t)).map(row).sort(byScans);
@@ -122,6 +125,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         {ordersOn && (
           <Link className={`alert ${newOrders ? "alert-warn" : "alert-ok"} glance-alert`} href={`/mi/${token}/pedidos`}>
             <b>{newOrders ? (newOrders === 1 ? "1 pedido nuevo" : `${newOrders} pedidos nuevos`) : "Pedidos desde la placa"}</b> · {newOrders ? "Atender →" : "Ver pedidos →"}
+          </Link>
+        )}
+        {resvOn && (
+          <Link className={`alert ${resv.pending ? "alert-warn" : "alert-ok"} glance-alert`} href={`/mi/${token}/reservas`}>
+            <b>{resv.today === 1 ? "1 reserva hoy" : `${resv.today} reservas hoy`}{resv.pending ? ` · ${resv.pending} por confirmar` : ""}</b> · Ver reservas →
           </Link>
         )}
         {pending.length > 0 && (
