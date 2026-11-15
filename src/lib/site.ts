@@ -84,5 +84,6 @@ export function reviewUrlFrom(input: string): string {
   if (host.endsWith("google.com") || host === "maps.app.goo.gl" || host === "goo.gl" || host === "g.page" || host === "g.co") {
     throw new Error("Ese enlace abre el mapa, no la ventana de reseña. Usa el de Google Business → Pedir reseñas → Copiar enlace (g.page/r/…/review), o el Place ID del local.");
   }
-  return value;
+  // Only Google's own review links: a plaque must never send guests anywhere else.
+  throw new Error("El enlace de reseñas debe ser de Google (g.page/r/…/review o search.google.com/local/writereview…), o el Place ID del local.");
 }
