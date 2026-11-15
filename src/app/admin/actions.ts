@@ -73,7 +73,9 @@ async function createTags(businessId: string, label: string, count: number, star
 
 function fail(path: string, e: unknown): never {
   const msg = e instanceof Error ? e.message : "Error inesperado";
-  redirect(`${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}`);
+  // Any "#anchor" stays at the end, so the error reaches the page.
+  const [base, hash] = path.split("#");
+  redirect(`${base}${base!.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}${hash ? `#${hash}` : ""}`);
 }
 
 export async function createBusiness(f: FormData) {
@@ -908,7 +910,8 @@ async function xRun(f: FormData, ok: string, anchor: string, run: (id: string) =
     await run(xId(f));
   } catch (e) {
     if (e && typeof e === "object" && "digest" in e) throw e;
-    fail(`${back}#${anchor}`, e);
+    // The error goes in the query, before the anchor, so the page can show it.
+    redirect(`${back}?error=${encodeURIComponent(e instanceof Error ? e.message : "Error inesperado")}#${anchor}`);
   }
   revalidatePath(back);
   redirect(`${back}?ok=${ok}#${anchor}`);
