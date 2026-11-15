@@ -27,7 +27,7 @@ const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", 
 const WD = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const WD_LONG = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const clock = (t: string) => { const h = Number(t.slice(0, 2)); return `${h % 12 || 12}:${t.slice(3)} ${h >= 12 ? "p. m." : "a. m."}`; };
-const longDay = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+const longDay = (iso: string) => { const t = new Date(`${iso}T12:00:00Z`).toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }); return t.charAt(0).toUpperCase() + t.slice(1); };
 const live = (r: Reservation) => r.status === "pending" || r.status === "confirmed";
 
 /** Reservations: month calendar, the chosen day, the ones waiting for confirmation, stats and settings. */
@@ -181,12 +181,12 @@ export default async function ReservationsPage({ params, searchParams }: Props) 
             </section>
 
             <section className="panel" id="dia">
-              <div className="panel-head"><h2 style={{ textTransform: "capitalize" }}>{day === today ? "Hoy · " : ""}{longDay(day)}</h2><span className="muted">{dayList.filter(live).reduce((n, r) => n + r.party_size, 0)} personas</span></div>
+              <div className="panel-head"><h2>{day === today ? "Hoy · " : ""}{longDay(day)}</h2><span className="muted">{dayList.filter(live).reduce((n, r) => n + r.party_size, 0)} personas</span></div>
               {dayList.length === 0 ? <div className="empty"><p>No hay reservas este día.</p></div> : <ul className="rv-list">{dayList.map((r) => <Row key={r.id} r={r} />)}</ul>}
             </section>
 
             <details className="panel more" id="nueva">
-              <summary>+ Anotar una reserva (teléfono o en persona)</summary>
+              <summary>Anotar una reserva (teléfono o en persona)</summary>
               <form action={addReservationOwner} className="form-section">
                 <input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={here} />
                 <div className="grid-2">

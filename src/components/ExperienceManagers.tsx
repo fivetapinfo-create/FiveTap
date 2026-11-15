@@ -78,7 +78,7 @@ export function PromoManager({ promos, actions, hidden, today }: { promos: Promo
         </ul>
       )}
       <details className="more xm-add">
-        <summary>+ Nueva promoción</summary>
+        <summary>Nueva promoción</summary>
         <form action={actions.save} className="xm-form">
           <Hidden h={hidden} />
           <PromoFields />
@@ -156,7 +156,7 @@ export function CatalogManager({ items, actions, hidden }: { items: CatalogItem[
         ))
       )}
       <details className="more xm-add">
-        <summary>+ Nuevo producto o servicio</summary>
+        <summary>Nuevo producto o servicio</summary>
         <form action={actions.save} className="xm-form">
           <Hidden h={hidden} />
           <ItemFields categories={categories} />

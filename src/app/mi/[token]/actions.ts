@@ -144,9 +144,11 @@ export async function moveReservation(f: FormData) {
       if (r && wa) {
         const day = new Date(`${r.reserved_on}T12:00:00Z`).toLocaleDateString("es-PA", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
         const first = String(r.customer_name).split(" ")[0];
+        const hh = Number(String(r.reserved_at).slice(0, 2));
+        const at = `${hh % 12 || 12}:${String(r.reserved_at).slice(3)} ${hh >= 12 ? "p. m." : "a. m."}`;
         const text = to === "confirmed"
-          ? `Hola ${first}, te escribimos de ${b.name}. ✅ Tu reserva está confirmada: ${day} a las ${r.reserved_at}, para ${r.party_size} ${r.party_size === 1 ? "persona" : "personas"}. ¡Te esperamos!`
-          : `Hola ${first}, te escribimos de ${b.name}. Lo sentimos, no podemos recibir tu reserva del ${day} a las ${r.reserved_at}${reason ? ` (${reason})` : ""}. ¿Te gustaría otro horario?`;
+          ? `Hola ${first}, te escribimos de ${b.name}. ✅ Tu reserva está confirmada: ${day} a las ${at}, para ${r.party_size} ${r.party_size === 1 ? "persona" : "personas"}. ¡Te esperamos!`
+          : `Hola ${first}, te escribimos de ${b.name}. Lo sentimos, no podemos recibir tu reserva del ${day} a las ${at}${reason ? ` (${reason})` : ""}. ¿Te gustaría otro horario?`;
         target = `https://wa.me/${wa}?text=${encodeURIComponent(text)}`;
       }
     }
