@@ -9,6 +9,7 @@ import { db } from "@/lib/supabase";
 import { nfcUrl } from "@/lib/site";
 import { MODULES, moduleOn, moduleSource, type ModuleKey } from "@/lib/orders";
 import { presetFor } from "@/lib/presets";
+import { socialUrl, waDigits } from "@/lib/experience-shape";
 import { verticalByKey } from "@/lib/verticals";
 import {
   deleteItemAdmin, deletePromoAdmin, publishExperienceAction, saveExperienceDraft, saveItemAdmin, savePromoAdmin,
@@ -29,7 +30,8 @@ const SECTIONS = [
   ["gallery", "Fotos"],
   ["info", "Información y horario"],
   ["location", "Ubicación"],
-  ["contact", "Contacto y redes"],
+  ["contact", "Contacto"],
+  ["social", "Redes sociales"],
 ] as const;
 
 /**
@@ -168,6 +170,17 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
                 <label className="field"><span>TikTok</span><input className="input" name="tiktok" maxLength={120} defaultValue={d.tiktok ?? ""} placeholder="@negocio" /></label>
                 <label className="field"><span>Sitio web</span><input className="input" name="website" maxLength={400} defaultValue={d.website ?? ""} placeholder="negocio.com" /></label>
               </div>
+              <small className="muted">Instagram, TikTok y Facebook aceptan @usuario o el enlace del perfil, y solo de su propio dominio. FiveTap no puede confirmar que el perfil exista: ábrelo y revísalo antes de publicar.</small>
+              {(["instagram", "tiktok", "facebook"] as const).some((k) => d[k]) || waDigits(d.whatsapp) ? (
+                <div className="row xp-verify">
+                  <span className="muted">Verificar:</span>
+                  {(["instagram", "tiktok", "facebook"] as const).map((k) => {
+                    const u = socialUrl(k, d[k]);
+                    return u ? <a key={k} className="btn btn-ghost btn-sm" href={u} target="_blank" rel="noreferrer">{k === "instagram" ? "Instagram" : k === "tiktok" ? "TikTok" : "Facebook"} ↗</a> : null;
+                  })}
+                  {waDigits(d.whatsapp) && <a className="btn btn-ghost btn-sm" href={`https://wa.me/${waDigits(d.whatsapp)}`} target="_blank" rel="noreferrer">WhatsApp ↗</a>}
+                </div>
+              ) : null}
             </div>
 
             <div className="form-section">

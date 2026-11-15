@@ -2,7 +2,7 @@
 // (open now, which sections show). No server imports: the editor preview uses it too.
 
 export type DayHours = { open: string; close: string } | null;
-export type Sections = { promos: boolean; catalog: boolean; gallery: boolean; info: boolean; location: boolean; contact: boolean };
+export type Sections = { promos: boolean; catalog: boolean; gallery: boolean; info: boolean; location: boolean; contact: boolean; social: boolean };
 
 export type Experience = {
   cover_url: string | null;
@@ -28,7 +28,7 @@ export type Experience = {
 export type Promotion = { id: string; business_id: string; title: string; body: string | null; image_url: string | null; starts_on: string | null; ends_on: string | null; active: boolean; sort: number };
 export type CatalogItem = { id: string; business_id: string; category: string | null; name: string; description: string | null; price: number | null; image_url: string | null; active: boolean; sort: number };
 
-export const ALL_SECTIONS: Sections = { promos: true, catalog: true, gallery: true, info: true, location: true, contact: true };
+export const ALL_SECTIONS: Sections = { promos: true, catalog: true, gallery: true, info: true, location: true, contact: true, social: true };
 
 export const EMPTY_EXPERIENCE: Experience = {
   cover_url: null, tagline: null, about: null, policies: null, catalog_title: null, hours: [],
@@ -87,7 +87,7 @@ export function promoLive(p: Pick<Promotion, "active" | "starts_on" | "ends_on">
 /** wa.me needs digits with the country code; Panamá numbers are 8 (mobile) or 7 digits. */
 export function waDigits(v: string | null) {
   const d = (v ?? "").replace(/\D/g, "");
-  if (!d) return null;
+  if (d.length < 7 || d.length > 15) return null;
   return d.length <= 8 ? `507${d}` : d;
 }
 
@@ -104,4 +104,34 @@ export function socialUrl(kind: "instagram" | "facebook" | "tiktok", v: string |
 /** True when a published experience has something beyond the review card. */
 export function hasContent(e: Experience, promos: number, items: number) {
   return Boolean(e.cover_url || e.tagline || e.about || e.hours.length || e.address || e.whatsapp || e.phone || e.gallery.length || promos || items);
+}
+
+const SOCIAL_HOSTS = { instagram: ["instagram.com"], facebook: ["facebook.com", "fb.com", "m.facebook.com"], tiktok: ["tiktok.com"] } as const;
+const HANDLE = { instagram: /^[A-Za-z0-9._]{1,30}$/, facebook: /^[A-Za-z0-9.\-]{3,80}$/, tiktok: /^[A-Za-z0-9._]{2,24}$/ } as const;
+
+/**
+ * Checks a social profile typed by the founder: a handle (@lugar) or a link on that
+ * network's own domain. Returns the clean value to store, or an error saying what to fix.
+ * It cannot confirm the profile exists (the networks block that): the editor shows a
+ * link to open it and check.
+ */
+export function checkSocial(kind: "instagram" | "facebook" | "tiktok", v: string | null): { value: string | null; error?: string } {
+  const s = (v ?? "").trim();
+  if (!s) return { value: null };
+  const name = kind === "instagram" ? "Instagram" : kind === "facebook" ? "Facebook" : "TikTok";
+  if (/^https?:\/\//i.test(s) || /\.(com|net)\//i.test(s)) {
+    try {
+      const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`);
+      const host = u.hostname.replace(/^www\./, "").toLowerCase();
+      if (!(SOCIAL_HOSTS[kind] as readonly string[]).includes(host)) return { value: null, error: `El enlace de ${name} debe ser de ${SOCIAL_HOSTS[kind][0]}.` };
+      const first = u.pathname.split("/").filter(Boolean)[0]?.replace(/^@/, "");
+      if (!first) return { value: null, error: `El enlace de ${name} no tiene un perfil.` };
+      return { value: kind === "facebook" && first === "profile.php" ? u.toString() : first };
+    } catch {
+      return { value: null, error: `Revisa el enlace de ${name}.` };
+    }
+  }
+  const handle = s.replace(/^@/, "");
+  if (!HANDLE[kind].test(handle)) return { value: null, error: `El usuario de ${name} no es válido: escribe @usuario o pega el enlace del perfil.` };
+  return { value: handle };
 }

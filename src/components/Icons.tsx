@@ -201,3 +201,17 @@ export const Calendar = (p: P) => (
     <path d="M3.5 10h17M8 3v4M16 3v4" />
   </svg>
 );
+
+export const TikTok = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M14 3.5v11.25a3.75 3.75 0 1 1-3.75-3.75" />
+    <path d="M14 3.5c.4 2.6 2.2 4.4 5 4.75" />
+  </svg>
+);
+
+export const Facebook = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+    <path d="M15 8h-1.6A1.9 1.9 0 0 0 11.5 9.9V20.5M9.5 13h5" />
+  </svg>
+);

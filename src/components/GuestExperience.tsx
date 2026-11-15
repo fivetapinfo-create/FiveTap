@@ -2,7 +2,7 @@ import { onColor, safeColor } from "@/lib/brand";
 import { openState, socialUrl, waDigits, type CatalogItem, type Experience, type Promotion } from "@/lib/experience-shape";
 import type { Copy, Lang } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
-import { Bag, Calendar, Camera, Chat, Clock, Gift, Globe, LinkIcon, Phone, Route, StarSolid, Tag } from "./Icons";
+import { Bag, Calendar, Camera, Facebook, TikTok, Chat, Clock, Gift, Globe, Phone, Route, StarSolid, Tag } from "./Icons";
 import { LogoMark } from "./Logo";
 import type { GuestBusiness } from "./GuestCard";
 
@@ -56,8 +56,8 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
   const maps = e.maps_url ?? (e.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${e.address} ${business.name}`)}` : null);
   const socials = [
     { k: "instagram" as const, label: "Instagram", url: socialUrl("instagram", e.instagram), icon: <Camera /> },
-    { k: "facebook" as const, label: "Facebook", url: socialUrl("facebook", e.facebook), icon: <LinkIcon /> },
-    { k: "tiktok" as const, label: "TikTok", url: socialUrl("tiktok", e.tiktok), icon: <LinkIcon /> },
+    { k: "tiktok" as const, label: "TikTok", url: socialUrl("tiktok", e.tiktok), icon: <TikTok /> },
+    { k: "facebook" as const, label: "Facebook", url: socialUrl("facebook", e.facebook), icon: <Facebook /> },
     { k: "web" as const, label: copy.xWebsite, url: e.website, icon: <Globe /> },
   ].filter((s) => s.url);
   const s = e.sections;
@@ -66,7 +66,11 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
   const showGallery = s.gallery && e.gallery.length > 0;
   const showInfo = s.info && Boolean(e.about || e.hours.length || e.policies);
   const showLocation = s.location && Boolean(e.address || e.maps_url);
-  const showContact = s.contact && Boolean(wa || tel || socials.length);
+  const networks = socials.filter((x) => x.k !== "web");
+  const site = socials.find((x) => x.k === "web");
+  const handle = (k: string) => (k === "instagram" ? e.instagram : k === "tiktok" ? e.tiktok : k === "facebook" ? e.facebook : null);
+  const showSocial = s.social !== false && Boolean(networks.length || wa);
+  const showContact = s.contact && Boolean(wa || tel || site);
   const groups = [...new Set(items.map((x) => x.category || ""))].map((c) => ({ name: c || (items.some((x) => x.category) ? copy.xOther : ""), list: items.filter((x) => (x.category || "") === c) }));
   const nav = [
     showPromos && { id: "promos", label: copy.xPromos },
@@ -74,6 +78,7 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
     showGallery && { id: "fotos", label: copy.xGallery },
     showInfo && { id: "info", label: copy.xInfo },
     showLocation && { id: "ubicacion", label: copy.xLocation },
+    showSocial && { id: "redes", label: copy.xSocial },
     showContact && { id: "contacto", label: copy.xContact },
   ].filter(Boolean) as { id: string; label: string }[];
   const Ext = ({ href, className, children }: { href: string | null; className: string; children: React.ReactNode }) => (
@@ -231,13 +236,36 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
           </section>
         )}
 
+        {showSocial && (
+          <section className="gx-section" id="redes">
+            <h2 className="gx-h">{copy.xSocial}</h2>
+            <p className="gx-social-lead">{copy.xSocialLead.replace("{name}", business.name)}</p>
+            <div className="gx-social">
+              {networks.map((x) => (
+                <Ext key={x.k} className={`gx-net gx-net-${x.k}`} href={x.url!}>
+                  {x.icon}
+                  <span className="gx-net-text"><b>{x.label}</b><small>{handle(x.k) && !/^https?:/.test(handle(x.k)!) ? `@${handle(x.k)}` : business.name}</small></span>
+                  <span className="gx-net-cta">{copy.xFollow}</span>
+                </Ext>
+              ))}
+              {wa && (
+                <Ext className="gx-net gx-net-whatsapp" href={`https://wa.me/${wa}`}>
+                  <Chat />
+                  <span className="gx-net-text"><b>{copy.xWhatsApp}</b><small>{e.whatsapp}</small></span>
+                  <span className="gx-net-cta">{copy.xWrite}</span>
+                </Ext>
+              )}
+            </div>
+          </section>
+        )}
+
         {showContact && (
           <section className="gx-section" id="contacto">
             <h2 className="gx-h">{copy.xContact}</h2>
             <ul className="gx-links">
               {wa && <li><Ext className="gx-link" href={`https://wa.me/${wa}`}><Chat /><span>{copy.xWhatsApp}</span><small>{e.whatsapp}</small></Ext></li>}
               {tel && <li><a className="gx-link" href={preview ? "#" : `tel:${tel}`}><Phone /><span>{copy.xCall}</span><small>{e.phone}</small></a></li>}
-              {socials.map((x) => <li key={x.k}><Ext className="gx-link" href={x.url!}>{x.icon}<span>{x.label}</span></Ext></li>)}
+              {site && <li><Ext className="gx-link" href={site.url!}>{site.icon}<span>{site.label}</span></Ext></li>}
             </ul>
           </section>
         )}

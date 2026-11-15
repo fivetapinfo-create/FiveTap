@@ -1,6 +1,6 @@
 import "server-only";
 import { todayPanama } from "./agenda";
-import { asExperience, promoLive, type CatalogItem, type DayHours, type Experience, type Promotion, type Sections } from "./experience-shape";
+import { asExperience, checkSocial, promoLive, waDigits, type CatalogItem, type DayHours, type Experience, type Promotion, type Sections } from "./experience-shape";
 import { db } from "./supabase";
 
 // Reading and saving each business's NFC experience. Every query is scoped to one
@@ -92,7 +92,6 @@ export async function saveDraft(businessId: string, f: FormData) {
         return open && close ? { open, close } : null;
       })
     : [];
-  const sections = Object.fromEntries((["promos", "catalog", "gallery", "info", "location", "contact"] as (keyof Sections)[]).map((k) => [k, f.get(`sec_${k}`) === "1"])) as Sections;
   let cover = cur.cover_url;
   if (f.get("remove_cover") === "1") cover = null;
   const newCover = await uploadMedia(businessId, f.get("cover"), "cover");
@@ -100,6 +99,14 @@ export async function saveDraft(businessId: string, f: FormData) {
   const removed = new Set(f.getAll("remove_photo").map(String));
   const added = (await Promise.all(f.getAll("photos").map((p) => uploadMedia(businessId, p, "photo")))).filter((x): x is string => Boolean(x));
   const gallery = [...cur.gallery.filter((g) => !removed.has(g)), ...added].slice(0, 12);
+  // Social profiles: a handle or a link on the network's own domain, never anything else.
+  const social = (k: "instagram" | "facebook" | "tiktok") => {
+    const r = checkSocial(k, text(f, k, 200));
+    if (r.error) throw new Error(r.error);
+    return r.value;
+  };
+  if (text(f, "whatsapp", 30) && !waDigits(text(f, "whatsapp", 30))) throw new Error("Revisa el WhatsApp: escribe el número con 8 dígitos, o con el código de país si no es de Panamá.");
+  const sections = Object.fromEntries((["promos", "catalog", "gallery", "info", "location", "contact", "social"] as (keyof Sections)[]).map((k) => [k, f.get(`sec_${k}`) === "1"])) as Sections;
   const next: Experience = {
     cover_url: cover,
     tagline: text(f, "tagline", 120),
@@ -111,9 +118,9 @@ export async function saveDraft(businessId: string, f: FormData) {
     maps_url: url(f, "maps_url"),
     phone: text(f, "phone", 30),
     whatsapp: text(f, "whatsapp", 30),
-    instagram: text(f, "instagram", 120),
-    facebook: text(f, "facebook", 160),
-    tiktok: text(f, "tiktok", 120),
+    instagram: social("instagram"),
+    facebook: social("facebook"),
+    tiktok: social("tiktok"),
     website: url(f, "website"),
     gallery,
     sections,
