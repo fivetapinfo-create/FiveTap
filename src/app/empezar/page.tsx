@@ -8,7 +8,7 @@ import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Empieza con FiveTap",
-  description: "Elige FiveTap Start, Pro o Enterprise: placas FiveTap, tarjetas de equipo y FiveTap Business, con instalación incluida. Pago mensual con tarjeta o PayPal.",
+  description: "Elige tu plan FiveTap: placas FiveTap, tarjetas de equipo y FiveTap Business, con instalación incluida. Pago mensual con tarjeta o PayPal.",
 };
 export const dynamic = "force-dynamic";
 

@@ -58,7 +58,7 @@ export default async function Pay({ searchParams }: Props) {
           <h3>Suscribirte con tarjeta o PayPal</h3>
           <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
         </div>
-        <p className="muted">Elige Start, Pro o Enterprise y se cobra solo cada mes con tu tarjeta Visa, Mastercard, American Express o PayPal.</p>
+        <p className="muted">Elige tu plan y se cobra solo cada mes con tu tarjeta Visa, Mastercard, American Express o PayPal.</p>
         <a className="btn btn-dark" href={`/empezar${business ? `?n=${encodeURIComponent(business)}` : ""}`}>Elegir mi plan</a>
       </section>
 

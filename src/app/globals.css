@@ -1427,3 +1427,5 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .gx-net-cta { margin-left: auto; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--brand, var(--ink)); color: var(--on-brand, var(--paper)); }
 .xp-verify { gap: 6px; }
 @media (prefers-reduced-motion: reduce) { .gx-net { transition: none; } }
+.claude-tools { list-style: none; margin: 0; padding: 0; }
+.claude-tools li { display: grid; gap: 2px; padding: 12px 20px; border-top: 1px solid var(--line); font-size: 14px; }

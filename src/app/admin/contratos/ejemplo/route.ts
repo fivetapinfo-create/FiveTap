@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     venue_address: null,
     signer_name: "Nombre de quien firma",
     signer_role: "Dueño/a",
-    plan_name: plan?.name ?? "FiveTap Start",
+    plan_name: plan?.name ?? "FiveTap Star",
     monthly_fee: Number(plan?.monthly ?? 149),
     plaques: plan?.plaques ?? 15,
     cards: plan?.cards ?? 3,

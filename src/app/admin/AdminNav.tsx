@@ -18,6 +18,7 @@ const MORE: { href: string; label: string; hint: string }[] = [
   { href: "/admin/contratos", label: "Contratos", hint: "Contratos de 3 meses" },
   { href: "/admin/planes", label: "Planes", hint: "Precios y lo que incluye cada plan" },
   { href: "/admin/empresa", label: "Empresa", hint: "Datos de FiveTap e ingresos" },
+  { href: "/admin/claude", label: "Actividad de Claude", hint: "Lo que Claude hizo y cómo conectarlo" },
 ];
 
 /** Panel menu; the current section is highlighted the moment it's tapped. */

@@ -27,7 +27,7 @@ export type Business = {
   trial_ends_at: string | null;
   notes: string | null;
   owner_token: string;
-  /** Commercial plan (Start, Pro, Enterprise); null for a custom price. */
+  /** Commercial plan (Star, Pro, Elite or a small plan); null for a custom price or a one-time sale. */
   plan_key: string | null;
   mode: "full" | "google";
   /** Google Place ID ("ChIJ…"), used to read the review count from Google. */
