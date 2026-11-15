@@ -190,6 +190,17 @@ export function billingState(
 }
 
 /** "FiveTap Pro · 20 placas", for messages about payments. */
+/**
+ * What the client renews each month, in their words: their NFC plaque(s) and their app.
+ * short: "tu placa NFC y tu app" · long: "tus 3 placas NFC y tu app FiveTap Business".
+ */
+export function renewalWhat(pieces: number, long = true) {
+  const app = long ? "tu app FiveTap Business" : "tu app";
+  if (pieces <= 0) return app;
+  return `${pieces === 1 ? "tu placa NFC" : long ? `tus ${pieces} placas NFC` : "tus placas NFC"} y ${app}`;
+}
+const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
+
 export function planLabel(b: { plan_key?: string | null; monthly_fee: number }, charge: Charge | null, plaques: number, plans: Plan[] = []) {
   const plan = planOf(b, plans);
   const name = charge?.kind === "annual" ? "Plan anual" : plan ? plan.name : "Plan mensual";
@@ -340,7 +351,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
       const ownerPush = !overdue
         ? auto
           ? { title: `Hoy se renueva tu plan · ${b.name}`, body: `${plan}: ${money(amount)} por PayPal, automáticamente. ¡Gracias por seguir con nosotros!`, url: "" }
-          : { title: `Hoy vence tu pago · ${b.name}`, body: `${plan}: ${money(amount)}. Fecha límite: ${human(due)}. Toca para pagar por Yappy o transferencia. ¡Gracias! 🙏`, url: pay }
+          : { title: `Hoy vence ${renewalWhat(plaques, false)} · ${b.name}`, body: `Renueva ${renewalWhat(plaques)}: ${money(amount)}. Efectivo, Yappy o transferencia. Toca para renovar. ¡Gracias! 🙏`, url: pay }
         : suspended
           ? sinceSuspended % 7 === 0
             ? { title: `Tus placas están pausadas · ${b.name}`, body: `Tienes un pago pendiente de ${money(amount)} (${plan}). Paga y se reactivan el mismo día. Tus datos están seguros.`, url: pay }
@@ -388,7 +399,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
         businessId: b.id,
         whatsapp: wa(to.phone, `${hi}, te escribe FiveTap 😊 Te recuerdo que el ${human(due)} toca tu ${label} de ${money(amount)} (${plan}). Puedes pagar por Yappy o transferencia aquí: ${payLink(b.name)}. ¡Que tengas un excelente día!`),
         due,
-        push: { title: `Recordatorio de pago · ${b.name}`, body: `Tu ${plan} de ${money(amount)} vence el ${human(due)}. Toca para pagar por Yappy o transferencia.`, url: pay },
+        push: { title: `Recordatorio · ${b.name}`, body: `${cap(renewalWhat(plaques))} vence el ${human(due)}: ${money(amount)}. Toca para renovar por efectivo, Yappy o transferencia.`, url: pay },
       });
     }
   }

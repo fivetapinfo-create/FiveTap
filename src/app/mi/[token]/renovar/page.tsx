@@ -5,7 +5,7 @@ import { AccessGate } from "@/components/AccessGate";
 import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
 import { accessRole } from "@/lib/access";
-import { billingState, human, planLabel } from "@/lib/agenda";
+import { billingState, human, planLabel, renewalWhat } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail } from "@/lib/data";
 import { getPlans } from "@/lib/plans";
 import { FOUNDER_PHONE, founderWhatsApp } from "@/lib/test-kit";
@@ -51,22 +51,24 @@ export default async function RenewPage({ params, searchParams }: Props) {
   ];
   const m = methods.find((x) => x.key === sp.m && x.on)?.key ?? null;
   const amount = charge ? money(charge.amount) : "";
+  const what = renewalWhat(plaques).replace(/^t/, "T");
+  const pl = plaques > 0; // "tu placa y tu app vencen" / "tu app vence"
   const methodName = m === "efectivo" ? "efectivo" : m === "yappy" ? "Yappy" : "transferencia";
-  const proof = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Renové mi plan (${plan}) de ${amount} por ${methodName}. Te envío el comprobante.`);
-  const cash = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Quiero renovar mi plan (${plan}) de ${amount} y pagar en efectivo. ¿Cuándo coordinamos la entrega?`);
+  const proof = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Renové mi placa NFC y mi app (${plan}) de ${amount} por ${methodName}. Te envío el comprobante.`);
+  const cash = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Quiero renovar mi placa NFC y mi app (${plan}) de ${amount} y pagar en efectivo. ¿Cuándo coordinamos la entrega?`);
   const ask = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Tengo una duda sobre la renovación de mi plan FiveTap.`);
 
   const status = !charge
     ? null
     : billing.kind === "suspended"
-      ? { tone: "alert-error", text: `Tus placas están pausadas desde el ${human(billing.suspendsOn!)}. Renueva y se reactivan el mismo día que confirmemos tu pago.` }
+      ? { tone: "alert-error", text: `${what} ${pl ? "están" : "está"} en pausa desde el ${human(billing.suspendsOn!)}. Renueva y se reactivan el mismo día que confirmemos tu pago.` }
       : billing.daysLate > 0
-        ? { tone: "alert-warn", text: `Tu plan venció el ${human(charge.due)}. Renueva antes del ${human(billing.suspendsOn!)} para que tus placas sigan funcionando.` }
+        ? { tone: "alert-warn", text: `${what} ${pl ? "vencieron" : "venció"} el ${human(charge.due)}. Renueva antes del ${human(billing.suspendsOn!)} para que sigan funcionando.` }
         : billing.daysLate === 0
-          ? { tone: "alert-warn", text: "Tu plan vence hoy." }
+          ? { tone: "alert-warn", text: `${what} ${pl ? "vencen" : "vence"} hoy.` }
           : billing.daysLate === -1
-            ? { tone: "alert-warn", text: "Tu plan vence mañana." }
-            : { tone: "alert-ok", text: `Tu plan vence el ${human(charge.due)}.` };
+            ? { tone: "alert-warn", text: `${what} ${pl ? "vencen" : "vence"} mañana.` }
+            : { tone: "alert-ok", text: `${what} ${pl ? "vencen" : "vence"} el ${human(charge.due)}.` };
 
   return (
     <div className="admin">
@@ -78,7 +80,7 @@ export default async function RenewPage({ params, searchParams }: Props) {
       </header>
       <main className="container admin-main settings">
         <div>
-          <h1 className="owner-title">Renovar mi plan</h1>
+          <h1 className="owner-title">Renovar {renewalWhat(plaques, false).replace(/^tus?/, (w) => (w === "tus" ? "mis" : "mi")).replace("tu app", "mi app")}</h1>
           <p className="muted">{b.name}</p>
         </div>
 
@@ -93,7 +95,7 @@ export default async function RenewPage({ params, searchParams }: Props) {
           <>
             {status && <p className={`alert ${status.tone}`} role="status">{status.text}</p>}
             <section className="panel rn-sum">
-              <div><small className="muted">Plan</small><b>{plan}</b></div>
+              <div><small className="muted">Lo que renuevas</small><b>{plaques ? `${plaques} ${plaques === 1 ? "placa NFC" : "placas NFC"} + app FiveTap Business` : "App FiveTap Business"}</b></div>
               <div><small className="muted">Monto</small><b className="num">{amount}</b></div>
               <div><small className="muted">Vence</small><b>{human(charge.due)}</b></div>
             </section>

@@ -93,9 +93,9 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    key: "renovar", title: "Cómo renovar tu plan", minutes: 1, who: "Dueño",
+    key: "renovar", title: "Cómo renovar tu placa NFC y tu app", minutes: 1, who: "Dueño",
     steps: [
-      "Un día antes de que venza tu plan te llega un aviso al celular, y en Inicio aparece el botón Renovar.",
+      "Un día antes de que venzan tu placa NFC y tu app te llega un aviso al celular, y en Inicio aparece el botón Renovar.",
       "En Renovar eliges cómo pagar: efectivo, Yappy o transferencia. Ahí ves el monto y los datos para pagar.",
       "Si pagas por Yappy o transferencia, toca Enviar comprobante: se abre WhatsApp con Sebastián y le mandas la captura.",
       "Si pagas en efectivo, coordinas con él el día y el lugar. Al confirmar tu pago te llega tu recibo.",

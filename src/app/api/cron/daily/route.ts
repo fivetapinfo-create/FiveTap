@@ -1,4 +1,4 @@
-import { addDays, agenda, billingAll, cheerOfTheWeek, todayPanama } from "@/lib/agenda";
+import { addDays, agenda, billingAll, cheerOfTheWeek, renewalWhat, todayPanama } from "@/lib/agenda";
 import { sendPushOnce } from "@/lib/push";
 import { successLine } from "@/lib/report-copy";
 import { snapshotFromGoogle } from "@/lib/data";
@@ -97,8 +97,8 @@ export async function GET(req: Request) {
     const c = r.billing.charge;
     if (!c || c.auto || c.due !== tomorrow || r.billing.blocked || !tokenOf.has(r.business.id)) continue;
     sent.payments += await sendPushOnce(`renew-${r.business.id}-${c.due}`, { role: "owner", businessId: r.business.id }, {
-      title: `Tu plan vence mañana · ${r.business.name}`,
-      body: `Renueva tu plan de $${Number(c.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}: efectivo, Yappy o transferencia. Toca para renovar.`,
+      title: `Mañana vence ${renewalWhat(r.plaques, false)} · ${r.business.name}`,
+      body: `Renueva ${renewalWhat(r.plaques)} ($${Number(c.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}): efectivo, Yappy o transferencia. Toca para renovar.`,
       url: `/mi/${tokenOf.get(r.business.id)}/renovar`,
     });
   }

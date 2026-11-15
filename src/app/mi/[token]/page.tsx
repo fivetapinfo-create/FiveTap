@@ -12,7 +12,7 @@ import { Logo } from "@/components/Logo";
 import { MessageActions } from "@/components/MessageActions";
 import { PausedScreen } from "@/components/PausedScreen";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { addDays, billingState, human, nextCharge, planLabel, todayPanama } from "@/lib/agenda";
+import { addDays, billingState, human, nextCharge, planLabel, renewalWhat, todayPanama } from "@/lib/agenda";
 import { after } from "next/server";
 import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { setMessageResolved, setStaffName } from "./actions";
@@ -96,6 +96,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const planName = planLabel(b, charge, 0, await getPlans());
   const today = todayPanama();
   const payHref = `/mi/${token}/renovar`;
+  const pieces = tags.filter((t) => t.active).length;
 
   return (
     <div className="admin">
@@ -161,7 +162,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         )}
         {role === "owner" && charge && !charge.auto && b.status === "active" && charge.due <= addDays(today, 3) && (
           <Link className="alert alert-warn glance-alert rn-alert" href={`/mi/${token}/renovar`}>
-            <span><b>{charge.due < today ? "Tu plan está vencido" : charge.due === today ? "Tu plan vence hoy" : charge.due === addDays(today, 1) ? "Tu plan vence mañana" : `Tu plan vence el ${shortDate(charge.due)}`}</b> · {money(charge.amount)}</span>
+            <span><b>{charge.due < today ? `Venció ${renewalWhat(pieces, false)}` : charge.due === today ? `Hoy vence ${renewalWhat(pieces, false)}` : charge.due === addDays(today, 1) ? `Mañana vence ${renewalWhat(pieces, false)}` : `${renewalWhat(pieces, false).replace(/^t/, "T")} vence el ${shortDate(charge.due)}`}</b> · {money(charge.amount)}</span>
             <span className="rn-cta">Renovar</span>
           </Link>
         )}
