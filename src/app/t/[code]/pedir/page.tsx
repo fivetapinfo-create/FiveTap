@@ -43,7 +43,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
         {items.length === 0 ? (
           <div className="gx-card"><p className="muted">{copy.oNoItems}</p></div>
         ) : (
-          <OrderBuilder items={items} copy={copy} code={code} needWhere={needWhere} error={sp.error} />
+          <OrderBuilder items={items} copy={copy} code={code} needWhere={needWhere} error={sp.error} lang={req.lang} />
         )}
       </div>
     </main>

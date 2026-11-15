@@ -15,7 +15,7 @@ function Send({ label, pending, disabled }: { label: string; pending: string; di
 }
 
 /** The guest's cart: tap + and −, see the total, write a name and send. Prices are re-checked on the server. */
-export function OrderBuilder({ items, copy, code, needWhere, error }: { items: Item[]; copy: Copy; code: string; needWhere: boolean; error?: string }) {
+export function OrderBuilder({ items, copy, code, needWhere, error, lang }: { items: Item[]; copy: Copy; code: string; needWhere: boolean; error?: string; lang: "es" | "en" }) {
   const [qty, setQty] = useState<Record<string, number>>({});
   const set = (id: string, d: number) => setQty((q) => ({ ...q, [id]: Math.max(0, Math.min(50, (q[id] ?? 0) + d)) }));
   const lines = useMemo(() => Object.entries(qty).filter(([, n]) => n > 0).map(([id, n]) => ({ id, qty: n })), [qty]);
@@ -60,6 +60,7 @@ export function OrderBuilder({ items, copy, code, needWhere, error }: { items: I
       <form action={sendOrder} className="guest-form ob-form" id="enviar">
         <h2 className="gx-h">{copy.oYour}{count ? ` · ${count === 1 ? copy.oItem : copy.oItems.replace("{n}", String(count))}` : ""}</h2>
         <input type="hidden" name="code" value={code} />
+        <input type="hidden" name="lang" value={lang} />
         <input type="hidden" name="lines" value={JSON.stringify(lines)} />
         <label className="hp" aria-hidden="true">Website <input name="website" tabIndex={-1} autoComplete="off" /></label>
         {lines.length > 0 && (

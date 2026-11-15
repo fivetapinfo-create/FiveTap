@@ -32,5 +32,6 @@ export async function sendOrder(f: FormData) {
   } catch (e) {
     redirect(`${back}?error=${e instanceof Error && e.message === "empty" ? "vacio" : "envio"}`);
   }
-  redirect(`/t/${code}/pedido/${token}`);
+  // The confirmation keeps the language the guest ordered in.
+  redirect(`/t/${code}/pedido/${token}?l=${f.get("lang") === "en" ? "en" : "es"}`);
 }

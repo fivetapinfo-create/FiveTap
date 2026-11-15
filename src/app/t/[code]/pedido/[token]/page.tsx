@@ -5,24 +5,25 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { onColor, safeColor } from "@/lib/brand";
 import { tagByCode } from "@/lib/data";
 import { orderByToken, type OrderStatus } from "@/lib/orders";
+import { COPY } from "@/lib/i18n";
 import { guestRequest } from "../../request";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false }, referrer: "no-referrer" };
 
-type Props = { params: Promise<{ code: string; token: string }> };
+type Props = { params: Promise<{ code: string; token: string }>; searchParams: Promise<{ l?: string }> };
 
 const STEPS: OrderStatus[] = ["new", "preparing", "ready", "delivered"];
 const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** The guest follows their order: received, being prepared, ready. Refreshes by itself. */
-export default async function OrderStatusPage({ params }: Props) {
-  const [{ code, token }, req] = await Promise.all([params, guestRequest()]);
+export default async function OrderStatusPage({ params, searchParams }: Props) {
+  const [{ code, token }, sp, req] = await Promise.all([params, searchParams, guestRequest()]);
   const tag = await tagByCode(code);
   if (!tag) notFound();
   const o = await orderByToken(tag.business_id, token);
   if (!o) notFound();
-  const copy = req.copy;
+  const copy = sp.l === "en" || sp.l === "es" ? COPY[sp.l] : req.copy;
   const brand = safeColor(tag.business.brand_color, "#0a0a0a");
   const custom = brand.toLowerCase() !== "#0a0a0a" && brand.toLowerCase() !== "#111111";
   const style = (custom ? { "--brand": brand, "--on-brand": onColor(brand) } : {}) as React.CSSProperties;
