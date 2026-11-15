@@ -17,7 +17,7 @@ function Send({ label, pending, disabled }: { label: string; pending: string; di
 /** The guest's cart: tap + and −, see the total, write a name and send. Prices are re-checked on the server. */
 export function OrderBuilder({ items, copy, code, needWhere, error, lang }: { items: Item[]; copy: Copy; code: string; needWhere: boolean; error?: string; lang: "es" | "en" }) {
   const [qty, setQty] = useState<Record<string, number>>({});
-  const set = (id: string, d: number) => setQty((q) => ({ ...q, [id]: Math.max(0, Math.min(50, (q[id] ?? 0) + d)) }));
+  const set = (id: string, d: number) => setQty((q) => ({ ...q, [id]: Math.max(0, Math.min(20, (q[id] ?? 0) + d)) }));
   const lines = useMemo(() => Object.entries(qty).filter(([, n]) => n > 0).map(([id, n]) => ({ id, qty: n })), [qty]);
   const count = lines.reduce((n, l) => n + l.qty, 0);
   const total = lines.reduce((n, l) => n + l.qty * (items.find((i) => i.id === l.id)?.price ?? 0), 0);

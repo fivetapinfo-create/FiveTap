@@ -48,7 +48,7 @@ export async function placeOrder(tag: { id: string; label: string; business_id: 
   const byId = new Map(((items ?? []) as { id: string; name: string; price: number | null; active: boolean }[]).filter((i) => i.active && i.price != null).map((i) => [i.id, i]));
   const lines = wanted.filter((l) => byId.has(l.id)).map((l) => {
     const it = byId.get(l.id)!;
-    const qty = Math.min(l.qty, 50);
+    const qty = Math.min(l.qty, 20);
     const unit = num(it.price);
     return { item_id: it.id, name: it.name, unit_price: unit, qty, line_total: Math.round(unit * qty * 100) / 100 };
   });
