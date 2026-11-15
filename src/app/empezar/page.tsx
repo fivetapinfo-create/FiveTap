@@ -84,8 +84,14 @@ export default async function Start({ searchParams }: Props) {
       </section>
 
       <div className="rise" style={{ "--i": 4 } as React.CSSProperties}>
-        <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
-        <p className="muted pay-foot">Pago seguro con PayPal. Puedes usar tu tarjeta Visa, Mastercard o American Express.</p>
+        {plan.paypal_plan ? (
+          <>
+            <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
+            <p className="muted pay-foot">Pago seguro con PayPal. Puedes usar tu tarjeta Visa, Mastercard o American Express.</p>
+          </>
+        ) : (
+          <p className="muted pay-foot">Cada plan se ajusta a tu negocio con el fundador: piezas, instalación y forma de pago se acuerdan antes de empezar.</p>
+        )}
       </div>
     </main>
   );
