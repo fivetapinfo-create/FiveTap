@@ -31,6 +31,8 @@ const OTHER_KINDS: Vertical[] = [
   { key: "clinic", slug: "clinicas", label: "Clínica o consultorio", plural: "clínicas", spot: "Placa", where: "en la recepción", guests: "pacientes" },
   { key: "hotel", slug: "hoteles", label: "Hotel u hospedaje", plural: "hoteles", spot: "Placa", where: "en la recepción", guests: "huéspedes" },
   { key: "store", slug: "tiendas", label: "Tienda", plural: "tiendas", spot: "Placa", where: "junto a la caja", guests: "clientes" },
+  { key: "parts", slug: "repuestos", label: "Repuestos automotrices", plural: "repuestos", spot: "Placa", where: "en el mostrador", guests: "clientes" },
+  { key: "market", slug: "minimarkets", label: "Minimarket o abarrotería", plural: "minimarkets", spot: "Placa", where: "junto a la caja", guests: "clientes" },
   { key: "other", slug: "negocios", label: "Otro negocio", plural: "negocios", spot: "Placa", where: "en tu local", guests: "clientes" },
 ];
 

@@ -19,6 +19,8 @@ import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
 import { setModule, type ModuleKey } from "@/lib/orders";
+import { presetFor } from "@/lib/presets";
+import { EMPTY_EXPERIENCE } from "@/lib/experience-shape";
 import { deleteItem, deletePromotion, publishExperience, saveDraft, saveItem, savePromotion, setActive, unpublishExperience } from "@/lib/experience";
 import { PANEL_KINDS, verticalByKey } from "@/lib/verticals";
 
@@ -83,9 +85,11 @@ export async function createBusiness(f: FormData) {
   // FiveTap Test: 7 days with one piece and no monthly fee; then it pauses until a plan is picked.
   if (!str(f, "plan_key", 30)) fail("/admin/new", new Error("Elige qué contrató el local: FiveTap Test o un plan."));
   const isTest = str(f, "plan_key", 30).startsWith("test");
-  const noApp = str(f, "plan_key", 30) === "test-google";
-  const plan = isTest ? null : await planByKey(str(f, "plan_key", 30));
-  let spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? (isTest ? 1 : plan?.plaques ?? 10) : num(f, "spots", 10)), 0), 80);
+  // Pago único: pieces straight to Google, no FiveTap Business, never charged or paused.
+  const once = str(f, "plan_key", 30) === "once";
+  const noApp = str(f, "plan_key", 30) === "test-google" || once;
+  const plan = isTest || once ? null : await planByKey(str(f, "plan_key", 30));
+  let spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? (isTest || once ? 1 : plan?.plaques ?? 10) : num(f, "spots", 10)), 0), 80);
   let cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? (isTest ? 0 : plan?.cards ?? 0) : num(f, "cards", 0)), 0), 40);
   // Small plans (Uno, Essential): N pieces of the client's choice, split between plaques and cards.
   if (plan?.flex_pieces) {
@@ -94,7 +98,7 @@ export async function createBusiness(f: FormData) {
     if (str(f, "cards") === "") cards = str(f, "spots") === "" ? 0 : Math.max(total - spots, 0);
     if (spots + cards > total) fail("/admin/new", new Error(`${plan.name} incluye ${total} ${total === 1 ? "pieza" : "piezas"}: reparte placas + tarjetas hasta ${total}, o elige un plan más grande.`));
   }
-  const fee = isTest ? 0 : str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
+  const fee = isTest || once ? 0 : str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
   const spotLabel = str(f, "spot_label", 30) || verticalByKey(kind).spot;
   if (!name || !review) fail("/admin/new", new Error("Escribe el nombre y el enlace de reseñas de Google."));
   // The "before": how many reviews and stars the venue has in Google today. Without it,
@@ -135,6 +139,9 @@ export async function createBusiness(f: FormData) {
         mode: noApp || str(f, "mode", 10) === "google" ? "google" : "full",
         status: isTest ? "trial" : "active",
         trial_ends_at: isTest ? addDays(todayPanama(), TEST_ACTIVE_DAYS - 1) : null,
+        // Set up for its kind of business: modules and the sections of its NFC page (draft).
+        modules: presetFor(kind).modules,
+        experience_draft: { ...EMPTY_EXPERIENCE, sections: presetFor(kind).sections, catalog_title: presetFor(kind).catalog_title },
       })
       .select("id")
       .single();
@@ -188,7 +195,14 @@ export async function updateBusiness(f: FormData) {
     };
     if (!patch.name || !str(f, "review")) throw new Error("Nombre y Google son obligatorios.");
     // FiveTap Test ↔ plan: picking a plan ends the test (active); picking Test starts 7 days.
-    if (str(f, "plan_key", 30).startsWith("test")) {
+    if (str(f, "plan_key", 30) === "once") {
+      // Pago único: straight to Google, no monthly fee, never paused.
+      patch.mode = "google";
+      patch.monthly_fee = 0;
+      patch.plan_key = null;
+      patch.status = patch.status === "canceled" ? "canceled" : "active";
+      patch.trial_ends_at = null;
+    } else if (str(f, "plan_key", 30).startsWith("test")) {
       patch.mode = str(f, "plan_key", 30) === "test-google" ? "google" : "full";
       patch.status = "trial";
       if (!patch.trial_ends_at) patch.trial_ends_at = addDays(todayPanama(), TEST_ACTIVE_DAYS - 1);

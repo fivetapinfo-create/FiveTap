@@ -36,7 +36,8 @@ export function OrderForm({ businesses, methods, today, action }: { businesses: 
       </div>
       <div className="order-packs" role="group" aria-label="Packs">
         <span className="muted">Packs:</span>
-        {PLAN_TEST_PACKS.map((n) => (
+        {PLAN_TEST_PACKS[product].length === 0 && <span className="muted">sin packs para este producto</span>}
+        {PLAN_TEST_PACKS[product].map((n) => (
           <button key={n} type="button" className={`order-pack${qty === n && !manual ? " on" : ""}`} onClick={() => pick(product, n)}>
             {n} × <b className="num">{usd(packUnit(product, n) * n)}</b>
           </button>

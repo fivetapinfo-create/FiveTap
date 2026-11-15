@@ -18,6 +18,7 @@ import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData
 import { setMessageResolved, setStaffName } from "./actions";
 import { moduleOn, newOrdersCount } from "@/lib/orders";
 import { reservationGlance } from "@/lib/reservations";
+import { presetFor } from "@/lib/presets";
 import { TeamRanking } from "@/components/TeamRanking";
 import { teamPeriod, teamRanking } from "@/lib/team";
 import { getPlans } from "@/lib/plans";
@@ -82,6 +83,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const newOrders = ordersOn ? await newOrdersCount(b.id) : 0;
   const resvOn = moduleOn(b, "reservations");
   const resv = resvOn ? await reservationGlance(b.id) : { today: 0, pending: 0 };
+  // Tools that suit this kind of business and it does not have yet (only for venues with the app).
+  const rec = b.mode === "google" ? null : presetFor(b.kind).modules.reservations && !resvOn ? "reservas" : presetFor(b.kind).modules.orders && !ordersOn ? "pedidos" : null;
   const period = teamPeriod(sp.equipo);
   const team = await teamRanking(tags, period);
   const tables = tags.filter((t) => t.active && !isWaiter(t)).map(row).sort(byScans);
@@ -131,6 +134,13 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           <Link className={`alert ${resv.pending ? "alert-warn" : "alert-ok"} glance-alert`} href={`/mi/${token}/reservas`}>
             <b>{resv.today === 1 ? "1 reserva hoy" : `${resv.today} reservas hoy`}{resv.pending ? ` · ${resv.pending} por confirmar` : ""}</b> · Ver reservas →
           </Link>
+        )}
+        {rec && (
+          <a className="rec-card" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Quiero activar ${rec === "reservas" ? "las reservas" : "los pedidos"} desde la placa.`)}>
+            <span className="eyebrow-caps">Recomendado para tu negocio</span>
+            <b>{rec === "reservas" ? "Activa las reservas desde la placa" : "Activa los pedidos desde la placa"}</b>
+            <span className="muted">{rec === "reservas" ? "Tus clientes reservan tocando la placa y tú las confirmas por WhatsApp desde aquí." : "Tus clientes piden desde la mesa con tu menú y el pedido te llega aquí al instante."} Escríbenos para activarlo →</span>
+          </a>
         )}
         {pending.length > 0 && (
           <a className="alert alert-warn glance-alert" href="#mensajes">

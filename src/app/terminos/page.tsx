@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { REPLACEMENT_FEE, money } from "@/lib/contract";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_MAX_PIECES, TEST_OFFER } from "@/lib/test-kit";
+import { FOUNDER_PHONE, ONE_TIME, TEST_MAX_PIECES, TEST_OFFER } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
@@ -25,11 +25,12 @@ export default async function Terms() {
             <b>{p.name}:</b> {money(p.monthly)} al mes, con {planPieces(p).join(" y ")}, y FiveTap Business.
           </li>
         ))}
+        <li><b>Pago único:</b> placa NFC {money(ONE_TIME.plaque)}, tarjeta NFC {money(ONE_TIME.card)}, Pack Dúo (2 placas) {money(ONE_TIME.packs[0].price)} y Pack Local (4 placas) {money(ONE_TIME.packs[1].price)}, de 1 a {ONE_TIME.max} piezas. Se entregan grabadas y probadas, llevan directo a la página de reseñas de Google del local y no incluyen FiveTap Business ni mensualidad.</li>
         <li><b>{TEST_OFFER.name}:</b> de 1 a {TEST_MAX_PIECES} piezas con FiveTap Business, válido por 30 días: {money(TEST_OFFER.plaque)} cada placa FiveTap y {money(TEST_OFFER.card)} cada tarjeta de equipo con cordón. Se cancela solo al terminar el día 29 y el local elige un plan para seguir. Si el local contrata un plan al terminar, lo pagado por el Test se descuenta de su primer mes.</li>
         <li><b>Una cantidad específica de placas o tarjetas, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
       </ul>
-      <p>Todos los planes son mensuales. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>
-      <p>Todo FiveTap es un servicio por suscripción: las placas y tarjetas son propiedad de FiveTap y funcionan mientras el plan esté activo. Cada plan incluye solo lo descrito; cualquier ampliación se cotiza aparte.</p>
+      <p>Los planes mensuales se cotizan según cada negocio. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>
+      <p>En los planes mensuales, las placas y tarjetas son propiedad de FiveTap y funcionan mientras el plan esté activo. Las piezas de pago único son del cliente desde que las paga. Cada plan incluye solo lo descrito; cualquier ampliación se cotiza aparte.</p>
       <p>Los planes se cobran de forma automática por PayPal, o por Yappy o transferencia si así lo acordamos.</p>
 
       <h2>3. Instalación</h2>

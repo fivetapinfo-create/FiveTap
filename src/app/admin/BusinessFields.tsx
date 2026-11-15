@@ -1,5 +1,6 @@
 import { type Plan, planOf } from "@/lib/plans";
 import { PlanPicker, type PickPlan } from "./PlanPicker";
+import { KindSelect } from "./KindSelect";
 
 const pick = (plans: Plan[], keep?: string): PickPlan[] =>
   plans.filter((p) => p.active || p.key === keep).map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards, lanyards: p.lanyards, flex_pieces: p.flex_pieces, line: p.line }));
@@ -59,7 +60,11 @@ export function EssentialFields({ b, prefill }: { b?: Business; prefill?: Partia
 
 /** Defaults that rarely change: type, color, plan. */
 export function OptionFields({ b, plans, planKey, compact }: { b?: Business; plans: Plan[]; planKey?: string; compact?: boolean }) {
-  const current = b ? (b.status === "trial" && Number(b.monthly_fee) <= 0 ? (b.mode === "google" ? "test-google" : "test") : planOf(b, plans)?.key ?? "custom") : planKey ?? "start";
+  const current = b
+    ? b.status === "trial" && Number(b.monthly_fee) <= 0 ? (b.mode === "google" ? "test-google" : "test")
+      : b.mode === "google" && Number(b.monthly_fee) <= 0 && !b.plan_key ? "once"
+      : planOf(b, plans)?.key ?? "custom"
+    : planKey ?? "start";
   return (
     <div className="form-section">
       <div className="grid-2">
@@ -126,14 +131,7 @@ export function PlanFields({ plans, planKey, kind }: { plans: Plan[]; planKey?: 
   return (
     <div className="form-section">
       <div className="grid-2">
-        <label className="field">
-          <span>6. Tipo de negocio</span>
-          <select className="select" name="kind" defaultValue={kind ?? "restaurant"}>
-            {PANEL_KINDS.map((v) => (
-              <option key={v.key} value={v.key}>{v.label}</option>
-            ))}
-          </select>
-        </label>
+        <KindSelect kinds={PANEL_KINDS.map((v) => ({ key: v.key, label: v.label }))} defaultKind={kind} label="6. Tipo de negocio" />
         <PlanPicker plans={pick(plans)} defaultKey={planKey} pieces label="7. ¿Qué contrató?" />
       </div>
       <small className="muted">Vacío: las piezas del plan. En Uno y Essential el cliente elige: reparte las piezas entre placas y tarjetas. En el FiveTap Test escribe cuántas lleva (de 1 a 4 en total).</small>

@@ -5,8 +5,7 @@ import { Logo, LogoMark } from "./Logo";
 import { Bell, Chart, Chat, Check, Gift, Pin, Shield, Tap, Users } from "./Icons";
 import { COPY } from "@/lib/i18n";
 import { salesWhatsAppUrl } from "@/lib/site";
-import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, TEST_MAX_PIECES, TEST_OFFER, founderWhatsApp } from "@/lib/test-kit";
+import { FOUNDER_PHONE, ONE_TIME, founderWhatsApp } from "@/lib/test-kit";
 import type { Vertical } from "@/lib/verticals";
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
@@ -15,17 +14,14 @@ const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 /**
  * The public website. FiveTap is presented as a reputation and customer platform for any
  * business: the NFC pieces are the way in, the platform is the product. Only what exists
- * today is promised. Prices and plans come from the panel.
+ * today is promised. One-time prices come from lib/test-kit; monthly plans are quoted.
  */
 export async function Landing({ vertical }: { vertical: Vertical }) {
-  // If the database can't be read (e.g. while building), the page still renders and
-  // refreshes within 5 minutes; the plans section then shows a WhatsApp button.
-  const plans = await activePlans().catch(() => []);
   const faq: [string, string][] = [
     BASE_FAQ[0]!,
     [
-      "¿Qué plan me conviene?",
-      `${plans.map((p) => `${p.name}: ${planPieces(p).join(" y ")}, por ${usd(p.monthly)} al mes`).join(". ")}. ¿Necesitas una configuración específica o tienes varias sucursales? El Founder de FiveTap la diseña contigo: ${FOUNDER_PHONE}.`,
+      "¿Cuánto cuesta?",
+      `Placa NFC: ${usd(ONE_TIME.plaque)} pago único (Pack Dúo: 2 por ${usd(ONE_TIME.packs[0].price)}; Pack Local: 4 por ${usd(ONE_TIME.packs[1].price)}). Tarjeta NFC: ${usd(ONE_TIME.card)}. Llevan directo a tus reseñas de Google. El sistema completo (app FiveTap Business, mensajes privados, reportes, pedidos y reservas) se cotiza según tu negocio con el fundador: ${FOUNDER_PHONE}.`,
     ],
     ...BASE_FAQ.slice(1),
   ];
@@ -41,8 +37,8 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
           <nav className="nav-links">
             <a href="#plataforma" className="hide-sm">Plataforma</a>
             <a href="#como-funciona" className="hide-sm">Cómo funciona</a>
-            <a href="#precio" className="hide-sm">Planes</a>
-            <a className="btn btn-light btn-sm" href="/empezar">Empezar</a>
+            <a href="#precio" className="hide-sm">Precios</a>
+            <a className="btn btn-light btn-sm" href="#cotizar">Cotizar</a>
           </nav>
         </div>
       </header>
@@ -60,7 +56,7 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
                 Más reseñas auténticas en Google, clientes que vuelven y control de todo lo que se dice de ti.
               </p>
               <div className="hero-cta rise" style={i(3)}>
-                <a className="btn btn-light" href="/empezar">Activar FiveTap en mi negocio</a>
+                <a className="btn btn-light" href="#precio">Ver precios y cotizar</a>
                 <Link className="btn btn-ghost" href="/demo?n=Tu%20negocio">Ver cómo lo vive tu cliente</Link>
               </div>
               <p className="hero-note muted-d rise" style={i(4)}>Instalación incluida · Sin descargar nada · Resultados medidos desde el día 1</p>
@@ -251,66 +247,55 @@ export async function Landing({ vertical }: { vertical: Vertical }) {
         <section className="section" id="precio">
           <div className="container">
             <div className="section-head">
-              <span className="kicker eyebrow-caps">Planes</span>
-              <h2>Elige tu plan. Lo instalamos esta semana.</h2>
-              <p className="muted">Planes mensuales con placas FiveTap, tarjetas de equipo con cordón, FiveTap Business e instalación incluida. Precios de lanzamiento.</p>
+              <span className="kicker eyebrow-caps">Precios</span>
+              <h2>Empieza con tus placas. Crece con el sistema completo.</h2>
+              <p className="muted">Placas NFC de pago único que llevan a tus clientes directo a dejarte su reseña en Google. Se entregan grabadas y probadas.</p>
             </div>
-            <div className="plans plans-3">
-              {plans.filter((p) => p.line !== "compact").map((p, n) => (
-                <div key={p.key} className={`plan${n === 1 ? " plan-dark" : ""}`}>
-                  {p.badge && <span className={`plan-badge plan-badge-${p.badge_color}`}>{p.badge}</span>}
-                  <h3>{p.name}</h3>
+            <div className="plans plans-4">
+              {[
+                { key: "placa", name: "Placa NFC", price: ONE_TIME.plaque, unit: "pago único", note: "1 placa", lines: ["Abre directo tu reseña de Google", "Para mostrador, caja, recepción o mesa", "Grabada, probada y lista para colocar"], badge: null as string | null, dark: false, msg: "Hola, quiero 1 placa NFC FiveTap ($40, pago único)." },
+                ...ONE_TIME.packs.map((k, n) => ({ key: k.key, name: k.name, price: k.price, unit: "pago único", note: `${k.qty} placas · ahorras ${usd(k.qty * ONE_TIME.plaque - k.price)}`, lines: [`${k.qty} placas NFC a ${usd(k.price / k.qty)} c/u`, "Abren directo tu reseña de Google", "Grabadas, probadas y listas para colocar"], badge: n === 0 ? "Exclusivo" : "Más conveniente", dark: n === 1, msg: `Hola, quiero el ${k.name}: ${k.qty} placas NFC FiveTap por ${usd(k.price)} (pago único).` })),
+                { key: "tarjeta", name: "Tarjeta NFC", price: ONE_TIME.card, unit: "pago único", note: "1 tarjeta", lines: ["Formato tarjeta, para tu equipo o tu mostrador", "Abre directo tu reseña de Google", "Grabada y probada"], badge: null as string | null, dark: false, msg: "Hola, quiero 1 tarjeta NFC FiveTap ($35, pago único)." },
+              ].map((o) => (
+                <div key={o.key} className={`plan${o.dark ? " plan-dark" : ""}`}>
+                  {o.badge && <span className={`plan-badge plan-badge-${o.dark ? "gold" : "blue"}`}>{o.badge}</span>}
+                  <h3>{o.name}</h3>
                   <div className="price-row">
-                    <span className="price num">{usd(p.monthly)}</span>
-                    <span className="price-unit">/ mes</span>
+                    <span className="price num">{usd(o.price)}</span>
+                    <span className="price-unit">{o.unit}</span>
                   </div>
+                  <p className={o.dark ? "muted-d" : "muted"} style={{ fontSize: 14, margin: "-4px 0 4px" }}>{o.note}</p>
                   <ul className="ticks">
-                    {[...planPieces(p), ...p.features].map((t) => (
-                      <li key={t}><Check />{t}</li>
-                    ))}
+                    {o.lines.map((t) => <li key={t}><Check />{t}</li>)}
                   </ul>
-                  <a className={`btn ${n === 1 ? "btn-light" : "btn-dark"}`} href={`/empezar?plan=${p.key}#pagar`}>Elegir {p.name.replace(/^FiveTap\s+/, "")}</a>
+                  <a className={`btn ${o.dark ? "btn-light" : "btn-dark"}`} href={founderWhatsApp(o.msg)}>Pedir por WhatsApp</a>
                 </div>
               ))}
             </div>
-            {plans.length === 0 && <a className="btn btn-dark" href={talk}>Pide tu plan por WhatsApp</a>}
-            {plans.some((p) => p.line === "compact") && (
-              <div className="plans-small">
-                <div className="plans-small-head">
-                  <h3>Para negocios pequeños</h3>
-                  <p className="muted">Una caja, un mostrador o solo tu equipo. Eliges las piezas que necesitas, placas o tarjetas, con FiveTap Business incluido.</p>
-                </div>
-                <div className="plans-small-grid">
-                  {plans.filter((p) => p.line === "compact").map((p) => (
-                    <a key={p.key} className="plan-small" href={`/empezar?plan=${p.key}#pagar`}>
-                      <span className="plan-small-name">{p.name.replace(/^FiveTap\s+/, "")}</span>
-                      <span className="plan-small-price"><b className="num">{usd(p.monthly)}</b> / mes</span>
-                      <span className="plan-small-pieces">{planPieces(p)[0]}</span>
-                      <span className="plan-small-feat">{p.features.filter((f) => !f.startsWith("Todo lo de")).slice(0, 2).join(" · ")}</span>
-                      <span className="offer-link">Elegir {p.name.replace(/^FiveTap\s+/, "")} →</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="offer-row">
-              <a className="offer-card" href={founderWhatsApp(`Hola, quiero ${TEST_OFFER.name} de 30 días para mi ${kind}: ___ placas y ___ tarjetas de equipo.`)}>
-                <span className="offer-kicker">¿Quieres probar primero?</span>
-                <h3>{TEST_OFFER.name} · <span className="num">desde {usd(TEST_OFFER.price)}</span></h3>
-                <p>De 1 a {TEST_MAX_PIECES} piezas con FiveTap Business, por 30 días: cada placa FiveTap {usd(TEST_OFFER.plaque)} y cada tarjeta de equipo {usd(TEST_OFFER.card)}. Si luego eliges un plan, lo que pagaste se descuenta de tu primer mes.</p>
-                <span className="offer-link">Solicitar mi Test de 30 días →</span>
-              </a>
-              <a className="offer-card" id="cotizar" href={founderWhatsApp(`Hola, quiero diseñar un plan de FiveTap para mi ${kind}. Necesito ___ placas y ___ tarjetas de equipo.`)}>
-                <span className="offer-kicker">¿Necesitas una configuración específica?</span>
-                <h3>Diseña tu plan con el Founder</h3>
-                <p>Varias sucursales, más puntos de contacto o un equipo grande: el Founder de FiveTap diseña contigo el plan exacto para tu negocio.</p>
-                <span className="offer-link">Diseñar mi plan · WhatsApp {FOUNDER_PHONE} →</span>
-              </a>
-            </div>
-
             <p className="muted pieces-note">
-              Empiezas con un contrato de 3 meses para comprobar los resultados; luego sigues mes a mes, sin permanencia anual. Las placas y tarjetas son de FiveTap y funcionan mientras tu plan esté activo.
+              Pago único, de 1 a {ONE_TIME.max} piezas. Las placas de pago único llevan directo a Google y no incluyen la app FiveTap Business. Para más piezas o para el sistema completo, cotiza con el fundador.
             </p>
+
+            <div className="founder-quote" id="cotizar">
+              <div className="founder-quote-text">
+                <span className="eyebrow-caps muted-d">Cotización a medida</span>
+                <h3>¿Deseas una cotización específica?</h3>
+                <p className="muted-d">Placas, sistema completo con FiveTap Business, pedidos y reservas desde la placa, varias sucursales y más. Cuéntanos qué necesita tu {kind} y te preparamos la propuesta exacta.</p>
+                <ul className="founder-quote-list">
+                  <li><Check />Más de {ONE_TIME.max} placas o tarjetas</li>
+                  <li><Check />Sistema completo: app, mensajes privados, reportes y reseñas medidas</li>
+                  <li><Check />Pedidos, reservas, menú y promociones desde la placa</li>
+                  <li><Check />Instalación, capacitación y soporte en tu local</li>
+                </ul>
+              </div>
+              <div className="founder-card">
+                <div className="founder-avatar" aria-hidden="true">SV</div>
+                <b>Sebastián Vera</b>
+                <span className="muted-d">Fundador y CEO de FiveTap</span>
+                <a className="btn btn-light btn-block" href={founderWhatsApp(`Hola Sebastián, quiero una cotización de FiveTap para mi ${kind}. Necesito: ___`)}>Contactar al fundador</a>
+                <span className="founder-phone num">WhatsApp {FOUNDER_PHONE}</span>
+              </div>
+            </div>
 
             <div className="trial">
               <div className="trial-head">

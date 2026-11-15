@@ -8,6 +8,8 @@ import { experienceEditor } from "@/lib/experience";
 import { db } from "@/lib/supabase";
 import { nfcUrl } from "@/lib/site";
 import { MODULES, moduleOn, moduleSource, type ModuleKey } from "@/lib/orders";
+import { presetFor } from "@/lib/presets";
+import { verticalByKey } from "@/lib/verticals";
 import {
   deleteItemAdmin, deletePromoAdmin, publishExperienceAction, saveExperienceDraft, saveItemAdmin, savePromoAdmin,
   setModuleAdmin, toggleItemAdmin, togglePromoAdmin, unpublishExperienceAction,
@@ -37,7 +39,7 @@ const SECTIONS = [
  */
 export default async function ExperiencePage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color, modules, plan_key").eq("id", id).maybeSingle();
+  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color, modules, plan_key, kind").eq("id", id).maybeSingle();
   if (!b) notFound();
   const [x, tagRes] = await Promise.all([experienceEditor(id), db().from("tags").select("code").eq("business_id", id).eq("active", true).limit(1)]);
   const d = x.draft;
@@ -88,7 +90,7 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
           </section>
 
           <section className="panel" id="modulos">
-            <div className="panel-head"><h2>Módulos</h2><span className="muted">Pro y Enterprise los incluyen</span></div>
+            <div className="panel-head"><h2>Módulos</h2><span className="muted">{verticalByKey(b.kind).label}: {presetFor(b.kind).summary}</span></div>
             <div className="xp-modules">
               {(Object.keys(MODULES) as ModuleKey[]).map((k) => {
                 const on = moduleOn(b, k);

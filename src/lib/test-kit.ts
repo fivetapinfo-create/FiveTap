@@ -37,18 +37,30 @@ export const founderWhatsApp = (text: string) => `https://wa.me/50761719111?text
  */
 export const PLAN_TEST_PRODUCTS = {
   plaque: { name: "Placa NFC individual", short: "Placa NFC", unit: 40, kind: "table" as const, label: "Placa" },
-  card: { name: "Placa NFC con cordón para el personal", short: "Placa con cordón", unit: 30, kind: "waiter" as const, label: "Personal" },
+  card: { name: "Placa NFC con cordón para el personal", short: "Placa con cordón", unit: 35, kind: "waiter" as const, label: "Personal" },
 };
 export type PlanTestProduct = keyof typeof PLAN_TEST_PRODUCTS;
 
 /**
- * Pack prices (slight discount by quantity) for Plan Test purchases: unit price by quantity
- * tier. 1 piece pays the list price; from 10 pieces it is the lowest tier.
+ * Pago único: pieces that open the venue's Google review page directly (no FiveTap
+ * Business). From 1 to 4 pieces; more pieces or the full system are quoted by the founder.
+ * Two exclusive packs of plaques: 2 for $60 and 4 for $110.
  */
+export const ONE_TIME = {
+  plaque: 40,
+  card: 35,
+  max: 4,
+  packs: [
+    { key: "duo", name: "Pack Dúo", qty: 2, price: 60 },
+    { key: "local", name: "Pack Local", qty: 4, price: 110 },
+  ],
+} as const;
+
+/** Unit price by quantity: plaques follow the packs (2–3 at $30, 4+ at $27.50); cards stay at $35. */
 export const PLAN_TEST_TIERS: Record<PlanTestProduct, { from: number; unit: number }[]> = {
-  plaque: [{ from: 1, unit: 40 }, { from: 2, unit: 38 }, { from: 3, unit: 37 }, { from: 4, unit: 36 }, { from: 5, unit: 35 }, { from: 10, unit: 33 }],
-  card: [{ from: 1, unit: 30 }, { from: 2, unit: 28 }, { from: 3, unit: 27 }, { from: 4, unit: 26 }, { from: 5, unit: 25 }, { from: 10, unit: 24 }],
+  plaque: [{ from: 1, unit: 40 }, { from: 2, unit: 30 }, { from: 4, unit: 27.5 }],
+  card: [{ from: 1, unit: 35 }],
 };
 export const packUnit = (p: PlanTestProduct, qty: number) => PLAN_TEST_TIERS[p].filter((t) => qty >= t.from).at(-1)!.unit;
-/** The packs offered as one-tap buttons. */
-export const PLAN_TEST_PACKS = [2, 3, 4, 5, 10];
+/** One-tap packs in the sales form (only plaques have packs). */
+export const PLAN_TEST_PACKS: Record<PlanTestProduct, number[]> = { plaque: [2, 4], card: [] };
