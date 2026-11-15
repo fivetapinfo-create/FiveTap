@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { accessRole, renewCode, unlock } from "@/lib/access";
+import { accessRole, founderView, renewCode, unlock } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
@@ -190,12 +190,13 @@ async function ownerCtx(f: FormData) {
   const b = await businessByOwnerToken(token);
   const role = b ? await accessRole(b) : null;
   if (!b || !role) redirect("/");
-  return { b, role, token };
+  return { b, role, token, founder: await founderView() };
 }
 
 /** The owner or manager opens a support request. */
 export async function openSupport(f: FormData) {
-  const { b, role, token } = await ownerCtx(f);
+  const { b, role, token, founder } = await ownerCtx(f);
+  if (founder) redirect(`/mi/${token}/soporte?error=${encodeURIComponent("Estás viendo la app como el dueño. Responde desde Founder → Soporte.")}`);
   let id = "", error = "";
   try {
     id = (await openTicket({ id: b.id, name: b.name }, role, String(f.get("subject") ?? ""), String(f.get("category") ?? ""), String(f.get("body") ?? ""))).id;
@@ -208,8 +209,9 @@ export async function openSupport(f: FormData) {
 
 /** A reply in one of this business's requests. */
 export async function replySupport(f: FormData) {
-  const { b, role, token } = await ownerCtx(f);
+  const { b, role, token, founder } = await ownerCtx(f);
   const id = String(f.get("ticket_id") ?? "");
+  if (founder) redirect(`/mi/${token}/soporte?t=${encodeURIComponent(id)}&error=${encodeURIComponent("Estás viendo la app como el dueño. Responde desde Founder → Soporte.")}#hilo`);
   let error = "";
   try {
     if (f.get("resolve") === "1") await setTicketStatus(id, "resolved", { businessId: b.id });
@@ -223,8 +225,10 @@ export async function replySupport(f: FormData) {
 
 /** Marks a training guide as read (or not) for the owner or manager. */
 export async function markGuide(f: FormData) {
-  const { b, role, token } = await ownerCtx(f);
+  const { b, role, token, founder } = await ownerCtx(f);
   const guide = String(f.get("guide") ?? "").slice(0, 40);
+  // The founder looking as the owner must not count as the owner's training.
+  if (founder) redirect(`/mi/${token}/ayuda?vista=founder#${guide}`);
   if (f.get("done") === "1") await db().from("training_progress").upsert({ business_id: b.id, guide, role });
   else await db().from("training_progress").delete().eq("business_id", b.id).eq("guide", guide).eq("role", role);
   revalidatePath(`/mi/${token}/ayuda`);

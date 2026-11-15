@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AccessGate } from "@/components/AccessGate";
 import { Logo } from "@/components/Logo";
 import { SubmitButton } from "@/components/SubmitButton";
-import { accessRole } from "@/lib/access";
+import { accessRole, founderView } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { moduleOn } from "@/lib/orders";
 import { salesWhatsAppUrl } from "@/lib/site";
@@ -14,7 +14,7 @@ import { markGuide } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ token: string }> };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ vista?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** Help center: short guides for owner, manager and staff, with progress, plus support. */
-export default async function HelpPage({ params }: Props) {
-  const { token } = await params;
+export default async function HelpPage({ params, searchParams }: Props) {
+  const [{ token }, sp] = await Promise.all([params, searchParams]);
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
   const role = await accessRole(b);
@@ -47,6 +47,8 @@ export default async function HelpPage({ params }: Props) {
           <h1 className="owner-title">Ayuda y capacitación</h1>
           <p className="muted">Guías cortas para ti, tu gerente y tu equipo. Márcalas cuando las leas.</p>
         </div>
+
+        {(sp.vista === "founder" || (await founderView())) && <p className="alert alert-warn" role="status">Estás viendo la app como el dueño desde Founder: tus marcas no cuentan en su capacitación.</p>}
 
         <div className="panel tr-progress">
           <div>

@@ -21,6 +21,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 type Row = { key: string; name: string; phone: string | null; club: boolean; bday: string | null; bdayMonth: number | null; visits: number; reservations: number; noShows: number; last: string | null; next: string | null; joined: string | null };
 type Resv = { customer_name: string; phone: string | null; reserved_on: string; status: string };
 
+/** 50760001234 → +507 6000-1234; other numbers keep their digits with a + in front. */
+const showPhone = (v: string | null) => {
+  if (!v) return "Sin teléfono";
+  const d = v.replace(/\D/g, "");
+  if (d.length === 11 && d.startsWith("507")) return `+507 ${d.slice(3, 7)}-${d.slice(7)}`;
+  if (d.length === 8) return `${d.slice(0, 4)}-${d.slice(4)}`;
+  return d.length > 8 ? `+${d}` : v;
+};
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const fmtDate = (d: string) => { const [y, m, day] = d.split("-").map(Number); return `${day} ${MONTHS[m - 1]} ${y}`; };
 
@@ -109,7 +117,7 @@ export default async function ClientsPage({ params, searchParams }: Props) {
                 <li key={r.key}>
                   <div className="cl-main">
                     <b>{r.name}</b>
-                    <small className="muted">{r.phone ?? "Sin teléfono"}{r.bday ? ` · 🎂 ${r.bday}` : ""}</small>
+                    <small className="muted">{showPhone(r.phone)}{r.bday ? ` · 🎂 ${r.bday}` : ""}</small>
                     <span className="cl-tags">
                       {r.club && <span className="sp-pill sp-answered">Club</span>}
                       {r.next && <span className="sp-pill sp-open">Reserva {fmtDate(r.next)}</span>}

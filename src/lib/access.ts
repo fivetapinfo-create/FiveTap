@@ -76,6 +76,11 @@ const sign = (b: Keys, role: AccessRole) =>
   createHmac("sha256", b.owner_token).update(`${role}:${role === "owner" ? b.owner_code_enc : b.manager_code_enc}`).digest("hex");
 
 /** Who is using this phone: the owner, the manager, or nobody yet (asks for the code). */
+/** True when the founder, signed in to the panel, is looking at a business's app as its owner. */
+export async function founderView() {
+  return isAdminSession((await cookies()).get(ADMIN_COOKIE)?.value);
+}
+
 export async function accessRole(b: Keys): Promise<AccessRole | null> {
   const jar = await cookies();
   // The founder, signed in to the panel, sees the app as the owner.
