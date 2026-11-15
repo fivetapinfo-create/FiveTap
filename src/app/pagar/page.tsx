@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
 import { Logo } from "@/components/Logo";
-import { AcceptedPayments, Amex, Bank, Mastercard, PayPal, Visa, Yappy } from "@/components/PaymentBadges";
+import { AcceptedPayments, Bank, Yappy } from "@/components/PaymentBadges";
 import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, ONE_TIME } from "@/lib/test-kit";
-import { salesWhatsAppUrl } from "@/lib/site";
+import { FOUNDER_PHONE, ONE_TIME, founderWhatsApp } from "@/lib/test-kit";
 
 export const metadata: Metadata = { title: "Pagar — FiveTap", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -18,7 +17,7 @@ const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 export default async function Pay({ searchParams }: Props) {
   const [{ n }, plans] = await Promise.all([searchParams, activePlans()]);
   const PLANS = [
-    ...plans.map((p) => ({ name: p.name, note: `Cada mes · ${planPieces(p).join(" · ")} · FiveTap Business`, price: `${usd(p.monthly)}/mes` })),
+    ...plans.map((p) => ({ name: `${p.name} · referencia`, note: `Cada mes · ${planPieces(p).join(" · ")} · FiveTap Business · se ajusta a tu negocio`, price: `${usd(p.monthly)}/mes` })),
     { name: "Placa NFC · pago único", note: `Abre directo tu reseña de Google · sin app ni mensualidad · de 1 a ${ONE_TIME.max} piezas`, price: usd(ONE_TIME.plaque) },
     ...ONE_TIME.packs.map((k) => ({ name: `${k.name} · pago único`, note: `${k.qty} placas NFC directas a Google`, price: usd(k.price) })),
     { name: "Tarjeta NFC · pago único", note: "Formato tarjeta · abre directo tu reseña de Google", price: usd(ONE_TIME.card) },
@@ -27,7 +26,7 @@ export default async function Pay({ searchParams }: Props) {
   const business = n?.slice(0, 80);
   const env = process.env;
   const forWho = business ? ` para ${business}` : "";
-  const proof = salesWhatsAppUrl(`Hola, ya pagué FiveTap${forWho}. Te envío el comprobante.`);
+  const proof = founderWhatsApp(`Hola Sebastián, ya pagué FiveTap${forWho}. Te envío el comprobante.`);
   const yappy = env.YAPPY_HANDLE;
   const bank = env.BANK_NAME && env.BANK_ACCOUNT_NUMBER;
 
@@ -53,14 +52,6 @@ export default async function Pay({ searchParams }: Props) {
         </ul>
       </section>
 
-      <section className="pay-method rise" style={{ "--i": 2 } as React.CSSProperties}>
-        <div className="pay-method-head">
-          <h3>Suscribirte con tarjeta o PayPal</h3>
-          <span className="pm-row pm-row-sm"><Visa /><Mastercard /><Amex /><PayPal /></span>
-        </div>
-        <p className="muted">Elige tu plan y se cobra solo cada mes con tu tarjeta Visa, Mastercard, American Express o PayPal.</p>
-        <a className="btn btn-dark" href={`/empezar${business ? `?n=${encodeURIComponent(business)}` : ""}`}>Elegir mi plan</a>
-      </section>
 
       {yappy && (
         <section className="pay-method rise" style={{ "--i": 3 } as React.CSSProperties}>
@@ -95,7 +86,7 @@ export default async function Pay({ searchParams }: Props) {
       <a className="btn btn-dark btn-block rise" style={{ "--i": 5 } as React.CSSProperties} href={proof}>
         Enviar comprobante por WhatsApp
       </a>
-      <p className="muted pay-foot">Tu servicio se activa en cuanto confirmamos el pago.</p>
+      <p className="muted pay-foot">Tu servicio se activa en cuanto confirmamos el pago. Dudas: WhatsApp {FOUNDER_PHONE} (Sebastián Vera, fundador).</p>
     </main>
   );
 }

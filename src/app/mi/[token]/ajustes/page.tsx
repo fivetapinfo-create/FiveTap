@@ -127,7 +127,7 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
           </dl>
           <div className="msg">
             <div className="row">
-              {charge && !charge.auto && !b.cancel_requested_at && !canceled && <a className="btn btn-dark btn-sm" href={`/pagar?n=${encodeURIComponent(b.name)}`}>Ver cómo pagar</a>}
+              {charge && !charge.auto && !b.cancel_requested_at && !canceled && <a className="btn btn-dark btn-sm" href={`${home}/renovar`}>Renovar</a>}
               <Link className="btn btn-ghost btn-sm" href={`${home}/pagos`}>Facturación y pagos</Link>
             </div>
           </div>

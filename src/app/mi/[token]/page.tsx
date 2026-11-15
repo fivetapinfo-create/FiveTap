@@ -95,7 +95,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const charge = nextCharge(b, payments);
   const planName = planLabel(b, charge, 0, await getPlans());
   const today = todayPanama();
-  const payHref = `/pagar?n=${encodeURIComponent(b.name)}`;
+  const payHref = `/mi/${token}/renovar`;
 
   return (
     <div className="admin">
@@ -160,9 +160,10 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           </a>
         )}
         {role === "owner" && charge && !charge.auto && b.status === "active" && charge.due <= addDays(today, 3) && (
-          <a className="alert alert-warn glance-alert" href={payHref}>
-            <b>{charge.due < today ? "Tienes un pago pendiente" : `Tu pago vence el ${shortDate(charge.due)}`}</b> · {money(charge.amount)} · Ver cómo pagar →
-          </a>
+          <Link className="alert alert-warn glance-alert rn-alert" href={`/mi/${token}/renovar`}>
+            <span><b>{charge.due < today ? "Tu plan está vencido" : charge.due === today ? "Tu plan vence hoy" : charge.due === addDays(today, 1) ? "Tu plan vence mañana" : `Tu plan vence el ${shortDate(charge.due)}`}</b> · {money(charge.amount)}</span>
+            <span className="rn-cta">Renovar</span>
+          </Link>
         )}
 
         {/* 2. The result, in one look. */}
@@ -280,7 +281,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
                 </p>
               )}
               <div className="row msg-actions">
-                {!charge.auto && !b.cancel_requested_at && <a className="btn btn-dark btn-sm" href={payHref}>Ver cómo pagar</a>}
+                {!charge.auto && !b.cancel_requested_at && <a className="btn btn-dark btn-sm" href={payHref}>Renovar</a>}
                 <Link className="btn btn-ghost btn-sm" href={`/mi/${token}/pagos`}>Facturación y pagos</Link>
                 <Link className="btn btn-ghost btn-sm" href={`/mi/${token}/pagina`}>Mi página: promociones y catálogo</Link>
               </div>

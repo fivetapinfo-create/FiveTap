@@ -1482,3 +1482,16 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 /* Founder → Planes: how FiveTap is sold. */
 .plan-rules { margin-bottom: 20px; }
 .plan-rules ol { margin: 0; padding: 16px 20px 18px 40px; display: grid; gap: 10px; line-height: 1.5; }
+
+/* Renewal in FiveTap Business: summary, payment method and contact. */
+.rn-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px 20px; }
+.rn-sum div { display: grid; gap: 2px; min-width: 0; }
+.rn-sum b { overflow-wrap: anywhere; }
+@media (max-width: 520px) { .rn-sum { grid-template-columns: 1fr 1fr; } .rn-sum div:first-child { grid-column: 1 / -1; } }
+.rn-methods { margin-bottom: 4px; }
+.rn-box { display: grid; gap: 12px; padding: 14px 0 4px; }
+.rn-proof { margin-top: 12px; }
+.rn-contact { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 20px; }
+.rn-contact div { display: grid; gap: 2px; }
+.rn-alert { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.rn-cta { flex: none; font-weight: 700; padding: 6px 14px; border-radius: 99px; background: var(--ink); color: var(--surface); font-size: 14px; }

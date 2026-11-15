@@ -1,4 +1,4 @@
-import { agenda, billingAll, cheerOfTheWeek, todayPanama } from "@/lib/agenda";
+import { addDays, agenda, billingAll, cheerOfTheWeek, todayPanama } from "@/lib/agenda";
 import { sendPushOnce } from "@/lib/push";
 import { successLine } from "@/lib/report-copy";
 import { snapshotFromGoogle } from "@/lib/data";
@@ -86,7 +86,20 @@ export async function GET(req: Request) {
     }
     sent.payments += await sendPushOnce(`owner-${key}`, { role: "owner", businessId: t.businessId }, {
       ...t.push,
-      url: t.push.url || `/mi/${tokenOf.get(t.businessId)}`,
+      // Payment notices open the renewal screen inside FiveTap Business.
+      url: t.push.url.startsWith("/pagar") ? `/mi/${tokenOf.get(t.businessId)}/renovar` : t.push.url || `/mi/${tokenOf.get(t.businessId)}`,
+    });
+  }
+
+  // 2b. The day before a manual payment is due: "your plan expires tomorrow", with Renovar.
+  const tomorrow = addDays(today, 1);
+  for (const r of billing) {
+    const c = r.billing.charge;
+    if (!c || c.auto || c.due !== tomorrow || r.billing.blocked || !tokenOf.has(r.business.id)) continue;
+    sent.payments += await sendPushOnce(`renew-${r.business.id}-${c.due}`, { role: "owner", businessId: r.business.id }, {
+      title: `Tu plan vence mañana · ${r.business.name}`,
+      body: `Renueva tu plan de $${Number(c.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}: efectivo, Yappy o transferencia. Toca para renovar.`,
+      url: `/mi/${tokenOf.get(r.business.id)}/renovar`,
     });
   }
 

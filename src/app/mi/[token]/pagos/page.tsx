@@ -86,7 +86,7 @@ export default async function OwnerBilling({ params }: Props) {
             <dd>{receiptMoney(total)} · {paid.length} {paid.length === 1 ? "pago" : "pagos"}</dd>
           </dl>
           {c && !c.auto && b.status !== "canceled" && (
-            <div className="msg"><a className="btn btn-dark btn-sm" style={{ width: "fit-content" }} href={`/pagar?n=${encodeURIComponent(b.name)}`}>Ver cómo pagar</a></div>
+            <div className="msg"><a className="btn btn-dark btn-sm" style={{ width: "fit-content" }} href={`${home}/renovar`}>Renovar</a></div>
           )}
         </section>
 

@@ -86,7 +86,7 @@ export async function createBusiness(f: FormData) {
   // The plan sets the price and how many table plaques and waiter cards to create;
   // each one can be changed in the form (an empty field means "the plan's").
   // FiveTap Test: 7 days with one piece and no monthly fee; then it pauses until a plan is picked.
-  if (!str(f, "plan_key", 30)) fail("/admin/new", new Error("Elige qué contrató el local: FiveTap Test o un plan."));
+  if (!str(f, "plan_key", 30)) fail("/admin/new", new Error("Elige qué contrató el local: pago único o un plan mensual."));
   const isTest = str(f, "plan_key", 30).startsWith("test");
   // Pago único: pieces straight to Google, no FiveTap Business, never charged or paused.
   const once = str(f, "plan_key", 30) === "once";

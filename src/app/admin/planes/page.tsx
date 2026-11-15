@@ -26,8 +26,8 @@ export default async function Plans({ searchParams }: { searchParams: Promise<{ 
         <div className="panel-head"><h2>Cómo se vende FiveTap</h2></div>
         <ol className="form-section">
           <li><b>De 1 a {ONE_TIME.max} piezas: pago único.</b> Placa {usd(ONE_TIME.plaque)}, tarjeta {usd(ONE_TIME.card)}, {ONE_TIME.packs.map((k) => `${k.name} ${k.qty} por ${usd(k.price)}`).join(", ")}. Van directo a Google, sin app ni mensualidad.</li>
-          <li><b>Desde {ONE_TIME.max + 1} piezas: plan mensual.</b> Estos planes son la referencia que ve el cliente en la web; al registrar el negocio eliges uno o “Plan a la medida”.</li>
-          <li><b>Cada cliente se cotiza contigo.</b> Evalúas sus piezas NFC y lo que le sirve, y le armas la mensualidad que le salga beneficiosa. Se escribe en su ficha y se cobra en Cobros. No hay cobro automático por PayPal.</li>
+          <li><b>Desde {ONE_TIME.max + 1} piezas: plan mensual.</b> Estos planes son la referencia que ve el cliente en la web; al registrar el negocio eliges uno o “Plan a la medida”. Una sola placa con FiveTap Business (por ejemplo, el mostrador de un restaurante) también puede ir en plan mensual a la medida.</li>
+          <li><b>Cada cliente se cotiza contigo.</b> Evalúas sus piezas NFC y lo que le sirve, y le armas la mensualidad que le salga beneficiosa. Se escribe en su ficha y se cobra en Cobros. No hay cobro automático: un día antes del vencimiento, al dueño le llega el aviso y renueva desde su app por efectivo, Yappy o transferencia, y te envía el comprobante.</li>
         </ol>
       </section>
       <div className="plan-admin">

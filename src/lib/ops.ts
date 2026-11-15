@@ -111,7 +111,7 @@ async function upload(bucket: "media" | "logos", path: string, file: File) {
   return db().storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
 
-const PLAN_KEYS_ALLOWED = ["once", "test"];
+const PLAN_KEYS_ALLOWED = ["once"];
 
 // ---------------- the tools ----------------
 
@@ -138,7 +138,7 @@ export const TOOLS = {
       const plans = (await getPlans()).filter((p) => p.active);
       return {
         kinds: PANEL_KINDS.map((v) => ({ key: v.key, label: v.label, setup: presetFor(v.key).summary })),
-        plans: [{ key: "once", name: `Pago único de 1 a ${ONE_TIME.max} piezas (directas a Google, sin sistema)` }, { key: "test", name: "FiveTap Test 30 días" }, ...plans.map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards }))],
+        plans: [{ key: "once", name: `Pago único de 1 a ${ONE_TIME.max} piezas (directas a Google, sin sistema)` }, ...plans.map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards }))],
       };
     },
   },
@@ -148,7 +148,7 @@ export const TOOLS = {
       type: "object",
       properties: {
         name: { type: "string" }, kind: { type: "string", description: "Clave de list_options.kinds" },
-        plan_key: { type: "string", description: "Clave de list_options.plans (once, test o un plan)" },
+        plan_key: { type: "string", description: "Clave de list_options.plans (once o un plan)" },
         google_review_url: { type: "string", description: "Enlace de reseñas de Google o Place ID" },
         plaques: { type: "integer", minimum: 0, maximum: 80 }, team_cards: { type: "integer", minimum: 0, maximum: 40 },
         reviews_start: { type: "integer", minimum: 0, description: "Reseñas que tiene hoy en Google (el antes)" },
