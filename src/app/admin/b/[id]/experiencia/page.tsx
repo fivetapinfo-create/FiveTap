@@ -44,8 +44,8 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
   const hidden = { business_id: id };
   const today = todayPanama();
   const status = !x.published ? { cls: "paused", label: "Sin publicar", text: "Sus placas muestran la tarjeta de reseña simple." }
-    : x.pending ? { cls: "trial", label: "Publicada · con cambios sin publicar", text: `Publicada el ${dateTime(x.publishedAt ?? "")}. Tienes cambios en el borrador.` }
-    : { cls: "active", label: "Publicada", text: `Desde el ${dateTime(x.publishedAt ?? "")}. Promociones y productos se actualizan al instante.` };
+    : x.pending ? { cls: "trial", label: "Publicada · con cambios sin publicar", text: `Publicada el ${dateTime(x.publishedAt ?? "")} · Tienes cambios en el borrador sin publicar.` }
+    : { cls: "active", label: "Publicada", text: `Desde el ${dateTime(x.publishedAt ?? "")} · Promociones y productos se actualizan al instante.` };
 
   return (
     <main className="container admin-main xp">
