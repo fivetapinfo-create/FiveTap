@@ -588,3 +588,34 @@ alter table plans add column if not exists flex_pieces boolean not null default 
 alter table plans add column if not exists line text not null default 'main';
 alter table plans drop constraint if exists plans_line_check;
 alter table plans add constraint plans_line_check check (line in ('main', 'compact'));
+
+-- ============ NFC experience: profile (draft/published), promotions, catalog ============
+alter table businesses add column if not exists experience jsonb;
+alter table businesses add column if not exists experience_draft jsonb;
+alter table businesses add column if not exists experience_published_at timestamptz;
+create table if not exists promotions (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  title text not null check (char_length(title) between 2 and 80),
+  body text check (char_length(body) <= 400),
+  image_url text, starts_on date, ends_on date,
+  active boolean not null default true, sort int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists promotions_business_idx on promotions (business_id, sort, created_at);
+alter table promotions enable row level security;
+create table if not exists catalog_items (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  category text check (char_length(category) <= 40),
+  name text not null check (char_length(name) between 2 and 80),
+  description text check (char_length(description) <= 300),
+  price numeric(10, 2) check (price is null or price >= 0),
+  image_url text, active boolean not null default true, sort int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists catalog_items_business_idx on catalog_items (business_id, category, sort);
+alter table catalog_items enable row level security;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('media', 'media', true, 3000000, array['image/png', 'image/jpeg', 'image/webp'])
+on conflict (id) do nothing;

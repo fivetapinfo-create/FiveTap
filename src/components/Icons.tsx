@@ -145,3 +145,45 @@ export const Megaphone = (p: P) => (
     <path d="M17.5 9a4 4 0 0 1 0 6M7.5 15l1 4.5" />
   </svg>
 );
+
+export const Phone = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M5 4.5h3.2l1.6 4-2 1.3a10.5 10.5 0 0 0 6.4 6.4l1.3-2 4 1.6V19a1.5 1.5 0 0 1-1.6 1.5A15.5 15.5 0 0 1 3.5 6.1 1.5 1.5 0 0 1 5 4.5z" />
+  </svg>
+);
+
+export const Clock = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+);
+
+export const Route = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z" />
+    <circle cx="12" cy="10" r="2.4" />
+  </svg>
+);
+
+export const Camera = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+    <circle cx="12" cy="12" r="3.8" />
+    <path d="M17 7h.01" strokeWidth={2.4} />
+  </svg>
+);
+
+export const LinkIcon = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" />
+    <path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" />
+  </svg>
+);
+
+export const Tag = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1.4 1.4 0 0 1 0 2l-6.7 6.7a1.4 1.4 0 0 1-2 0L3.5 12.2z" />
+    <path d="M8 8h.01" strokeWidth={2.4} />
+  </svg>
+);

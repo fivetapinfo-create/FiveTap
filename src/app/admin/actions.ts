@@ -18,6 +18,7 @@ import { audit, deliverReceipt, issueReceipt, logSend, receiptMoney, receiptUrl 
 import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
+import { deleteItem, deletePromotion, publishExperience, saveDraft, saveItem, savePromotion, setActive, unpublishExperience } from "@/lib/experience";
 import { PANEL_KINDS, verticalByKey } from "@/lib/verticals";
 
 const str = (f: FormData, k: string, max = 200) => String(f.get(k) ?? "").trim().slice(0, max);
@@ -763,6 +764,9 @@ export async function deleteBusiness(f: FormData) {
       redo: { name: b.name, kind: b.kind, plan_key: b.plan_key ?? (b.status === "trial" ? (b.mode === "google" ? "test-google" : "test") : null), google_review_url: b.google_review_url, google_place_id: b.google_place_id, manager_name: b.manager_name, manager_phone: b.manager_phone, manager_email: b.manager_email, billing_name: b.billing_name, billing_phone: b.billing_phone, billing_email: b.billing_email } } });
     const logo = b.logo_url?.split("/logos/")[1];
     if (logo) await db().storage.from("logos").remove([decodeURIComponent(logo)]);
+    // Its experience images (cover, photos, promotions, products) go too: nothing left behind.
+    const media = await db().storage.from("media").list(id, { limit: 1000 });
+    if (media.data?.length) await db().storage.from("media").remove(media.data.map((m) => `${id}/${m.name}`));
   } catch (e) {
     fail(back, e);
   }
@@ -873,4 +877,55 @@ export async function setStaff(f: FormData) {
   }
   revalidatePath(back);
   redirect(`${back}?ok=equipo#equipo`);
+}
+
+// ---------- Experiencia NFC (founder) ----------
+
+const xBack = (f: FormData) => `/admin/b/${str(f, "business_id", 60)}/experiencia`;
+const xId = (f: FormData) => {
+  const id = str(f, "business_id", 60);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("Negocio no encontrado.");
+  return id;
+};
+async function xRun(f: FormData, ok: string, anchor: string, run: (id: string) => Promise<unknown>) {
+  const back = xBack(f);
+  try {
+    await run(xId(f));
+  } catch (e) {
+    if (e && typeof e === "object" && "digest" in e) throw e;
+    fail(`${back}#${anchor}`, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=${ok}#${anchor}`);
+}
+
+export async function saveExperienceDraft(f: FormData) {
+  await xRun(f, "x-borrador", "estado", (id) => saveDraft(id, f));
+}
+export async function publishExperienceAction(f: FormData) {
+  await xRun(f, "x-publicada", "estado", async (id) => {
+    await publishExperience(id);
+    await audit("experience.published", { businessId: id, entity: "business", entityId: id });
+  });
+}
+export async function unpublishExperienceAction(f: FormData) {
+  await xRun(f, "x-oculta", "estado", (id) => unpublishExperience(id));
+}
+export async function savePromoAdmin(f: FormData) {
+  await xRun(f, "x-promo", "promos", (id) => savePromotion(id, f));
+}
+export async function deletePromoAdmin(f: FormData) {
+  await xRun(f, "x-promo-borrada", "promos", (id) => deletePromotion(id, str(f, "id", 60)));
+}
+export async function togglePromoAdmin(f: FormData) {
+  await xRun(f, "guardado", "promos", (id) => setActive(id, "promotions", str(f, "id", 60), str(f, "active", 1) === "1"));
+}
+export async function saveItemAdmin(f: FormData) {
+  await xRun(f, "x-item", "catalogo", (id) => saveItem(id, f));
+}
+export async function deleteItemAdmin(f: FormData) {
+  await xRun(f, "x-item-borrado", "catalogo", (id) => deleteItem(id, str(f, "id", 60)));
+}
+export async function toggleItemAdmin(f: FormData) {
+  await xRun(f, "guardado", "catalogo", (id) => setActive(id, "catalog_items", str(f, "id", 60), str(f, "active", 1) === "1"));
 }

@@ -1,6 +1,13 @@
 const OK: Record<string, string> = {
   creado: "Negocio creado. Graba cada enlace en su placa NFC con NFC Tools.",
   guardado: "Cambios guardados.",
+  "x-borrador": "Borrador guardado. Revisa la vista previa y publícalo cuando esté listo.",
+  "x-publicada": "¡Publicada! Todas sus placas ya abren esta experiencia.",
+  "x-oculta": "Experiencia oculta: sus placas vuelven a la tarjeta de reseña simple. El borrador sigue guardado.",
+  "x-promo": "Promoción guardada. Si está activa y en fecha, ya se ve en la placa.",
+  "x-promo-borrada": "Promoción eliminada.",
+  "x-item": "Producto guardado. Si está visible, ya aparece en la placa.",
+  "x-item-borrado": "Producto eliminado.",
   equipo: "Tarjeta guardada. El ranking ya muestra el nombre.",
   placas: "Placas nuevas generadas.",
   pago: "Pago registrado y comprobante emitido.",

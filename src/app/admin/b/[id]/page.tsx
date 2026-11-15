@@ -114,6 +114,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
 
       {/* Every section of the venue, one tap away; stays at the top while scrolling. */}
       <nav className="biz-tabs" aria-label="Secciones del negocio">
+        <Link href={`/admin/b/${b.id}/experiencia`} className="biz-tab-strong">Experiencia NFC →</Link>
         <a href="#mensajes">Mensajes{feedback.some((f) => !f.read_at) ? " •" : ""}</a>
         <a href="#pagos">Pagos</a>
         <a href="#resenas">Reseñas</a>
@@ -517,13 +518,12 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                 <th>Enlace para grabar en el NFC</th>
                 <th className="right">Toques</th>
                 <th className="right">A Google</th>
-                <th>QR de respaldo</th>
                 <th />
               </tr>
             </thead>
             {[{ title: "Placas de mesa", list: tables }, { title: "Tarjetas de meseros", list: waiters }].filter((g) => g.list.length).map((g) => (
             <tbody key={g.title}>
-              <tr className="group-row"><th colSpan={7}>{g.title} · {g.list.length}</th></tr>
+              <tr className="group-row"><th colSpan={6}>{g.title} · {g.list.length}</th></tr>
               {g.list.map((t) => {
                 const ts = tagStats.get(t.id);
                 return (
@@ -545,12 +545,6 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                     </td>
                     <td className="right num">{ts?.scans_30d ?? 0}</td>
                     <td className="right num">{ts?.reviews_30d ?? 0}</td>
-                    <td>
-                      <div className="row">
-                        <a className="btn btn-ghost btn-sm" href={`/admin/qr/${t.code}?format=png`} download>PNG</a>
-                        <a className="btn btn-ghost btn-sm" href={`/admin/qr/${t.code}?format=svg`} download>SVG</a>
-                      </div>
-                    </td>
                     <td>
                       {nextStep(pieceState(t)) ? (
                         <form action={setTagStatus}>

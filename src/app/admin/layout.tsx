@@ -38,7 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {siteUrlIsLocal && process.env.NODE_ENV === "production" && (
         <div className="container no-print" style={{ paddingTop: 16 }}>
           <p className="alert alert-warn">
-            Falta <b>NEXT_PUBLIC_SITE_URL</b>: los enlaces NFC y QR apuntan a localhost. Configúralo antes de grabar placas.
+            Falta <b>NEXT_PUBLIC_SITE_URL</b>: los enlaces NFC apuntan a localhost. Configúralo antes de grabar placas.
           </p>
         </div>
       )}

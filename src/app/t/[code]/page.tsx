@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { GuestCard } from "@/components/GuestCard";
+import { GuestExperience } from "@/components/GuestExperience";
+import { publishedExperience } from "@/lib/experience";
+import { hasContent } from "@/lib/experience-shape";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-session";
 import { guestClosed, logEvent, tagByCode } from "@/lib/data";
 import { PIECE_LABEL, pieceState } from "@/lib/pieces";
@@ -48,6 +51,26 @@ export default async function TapPage({ params, searchParams }: Props) {
   }
 
   const q = source === "qr" ? "?s=q" : "";
+  // A published experience (cover, promotions, catalog…) wraps the same review card.
+  const x = await publishedExperience(tag.business_id);
+  if (x && hasContent(x.experience, x.promos.length, x.items.length)) {
+    return (
+      <>
+        {banner}
+        <GuestExperience
+          business={tag.business}
+          experience={x.experience}
+          promos={x.promos}
+          items={x.items}
+          copy={req.copy}
+          lang={req.lang}
+          reviewHref={`/t/${code}/go${q}`}
+          managerHref={`/t/${code}/mensaje${q}`}
+          clubHref={`/t/${code}/club${q}`}
+        />
+      </>
+    );
+  }
   return (
     <>
     {banner}

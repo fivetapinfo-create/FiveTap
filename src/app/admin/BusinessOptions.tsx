@@ -65,6 +65,7 @@ export function BusinessOptions({ id, name, delivered, counts, action, variant =
                   <li>Mensajes de clientes</li>
                   <li>Club{counts.contacts != null ? `: ${counts.contacts} ${counts.contacts === 1 ? "contacto" : "contactos"}` : " de clientes"}</li>
                   <li>Accesos y avisos de su app FiveTap Business</li>
+                  <li>Su página NFC: portada, fotos, promociones y catálogo</li>
                 </ul>
               </div>
               <div>

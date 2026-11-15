@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
   const ua = req.headers.get("user-agent") || "";
   // The founder's own test taps are not counted.
   if (!isBot(ua) && !(await isAdminSession(req.cookies.get(ADMIN_COOKIE)?.value))) {
-    const source = req.nextUrl.searchParams.get("s") === "q" ? "qr" : "nfc";
+    const source = "nfc" as const; // NFC only; old "?s=q" links still work
     after(() =>
       logEvent({ business_id: tag.business_id, tag_id: tag.id, type: "review_click", source, device: deviceFrom(ua), user_agent: ua }),
     );

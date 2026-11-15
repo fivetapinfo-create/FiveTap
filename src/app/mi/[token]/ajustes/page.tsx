@@ -74,6 +74,11 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
         {sp.ok === "codigo" && <p className="alert alert-ok" role="status">Listo: el gerente tiene un código nuevo. Envíaselo; el anterior ya no funciona.</p>}
         {sp.error && <p className="alert alert-error" role="alert">{sp.error === "motivo" ? "Elige un motivo para continuar." : "No se pudo guardar. Inténtalo otra vez."}</p>}
 
+        <Link className="panel settings-link" href={`${home}/pagina`}>
+          <b>Mi página NFC</b>
+          <span className="muted">Promociones y catálogo que ven tus clientes al tocar la placa →</span>
+        </Link>
+
         <AppSetup
           endpoint={`${home}/push`}
           benefits={["Avisos al instante de cada mensaje privado.", "Tu resumen cada mañana y tu recuento de reseñas a fin de mes."]}

@@ -6,6 +6,7 @@ import { accessRole, renewCode, unlock } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
+import { deleteItem, deletePromotion, saveItem, savePromotion, setActive } from "@/lib/experience";
 
 /** The owner or manager closes a private message once it is handled (or opens it again). */
 export async function setMessageResolved(f: FormData) {
@@ -58,3 +59,28 @@ export async function setStaffName(f: FormData) {
   revalidatePath(`/mi/${token}`);
   redirect(`/mi/${token}#equipo`);
 }
+
+// ---------- Mi página NFC: promotions and catalog, edited by the owner or the manager ----------
+
+async function pageRun(f: FormData, ok: string, anchor: string, run: (businessId: string) => Promise<unknown>) {
+  const token = String(f.get("token") ?? "");
+  const b = await businessByOwnerToken(token);
+  if (!b || !(await accessRole(b))) redirect("/");
+  const back = `/mi/${token}/pagina`;
+  let error = "";
+  try {
+    await run(b.id);
+  } catch (e) {
+    error = e instanceof Error ? e.message : "No se pudo guardar.";
+  }
+  revalidatePath(back);
+  redirect(error ? `${back}?error=${encodeURIComponent(error)}#${anchor}` : `${back}?ok=${ok}#${anchor}`);
+}
+const fid = (f: FormData) => String(f.get("id") ?? "");
+
+export async function savePromoOwner(f: FormData) { await pageRun(f, "promo", "promos", (id) => savePromotion(id, f)); }
+export async function deletePromoOwner(f: FormData) { await pageRun(f, "promo-borrada", "promos", (id) => deletePromotion(id, fid(f))); }
+export async function togglePromoOwner(f: FormData) { await pageRun(f, "guardado", "promos", (id) => setActive(id, "promotions", fid(f), f.get("active") === "1")); }
+export async function saveItemOwner(f: FormData) { await pageRun(f, "item", "catalogo", (id) => saveItem(id, f)); }
+export async function deleteItemOwner(f: FormData) { await pageRun(f, "item-borrado", "catalogo", (id) => deleteItem(id, fid(f))); }
+export async function toggleItemOwner(f: FormData) { await pageRun(f, "guardado", "catalogo", (id) => setActive(id, "catalog_items", fid(f), f.get("active") === "1")); }

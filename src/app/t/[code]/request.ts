@@ -10,4 +10,5 @@ export async function guestRequest() {
   return { ua, bot: isBot(ua), device: deviceFrom(ua), copy: COPY[lang], lang };
 }
 
-export const sourceFrom = (s: string | string[] | undefined) => (s === "q" ? "qr" : "nfc") as "qr" | "nfc";
+// FiveTap works only with NFC. Old "?s=q" links still open, counted as NFC.
+export const sourceFrom = (_s: string | string[] | undefined) => "nfc" as "qr" | "nfc";
