@@ -344,7 +344,7 @@ export const TOOLS = {
       await createTags(b.id, label, count, (existing ?? 0) + 1, kind);
       const { data: fresh } = await db().from("tags").select("label, code").eq("business_id", b.id).order("created_at", { ascending: false }).limit(count);
       await log("add_plaques", b, { count, kind, label });
-      return { created: count, pieces: ((fresh ?? []) as { label: string; code: string }[]).reverse().map((t) => ({ label: t.label, nfc_url: nfcUrl(t.code) })), note: "Graba cada enlace en su placa con NFC Tools." };
+      return { created: count, pieces: ((fresh ?? []) as { label: string; code: string }[]).sort((x, y) => x.label.localeCompare(y.label, "es", { numeric: true })).map((t) => ({ label: t.label, nfc_url: nfcUrl(t.code) })), note: "Graba cada enlace en su placa con NFC Tools." };
     },
   },
   publish_experience: {
