@@ -1478,3 +1478,7 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .ref-plans { margin-top: 64px; }
 .ref-plans-head { margin-bottom: 24px; }
 .ref-plans-head h3 { font-size: clamp(24px, 3vw, 32px); margin: 6px 0 8px; }
+
+/* Founder → Planes: how FiveTap is sold. */
+.plan-rules { margin-bottom: 20px; }
+.plan-rules ol { margin: 0; padding: 16px 20px 18px 40px; display: grid; gap: 10px; line-height: 1.5; }

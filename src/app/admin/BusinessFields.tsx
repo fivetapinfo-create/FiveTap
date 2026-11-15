@@ -134,7 +134,7 @@ export function PlanFields({ plans, planKey, kind }: { plans: Plan[]; planKey?: 
         <KindSelect kinds={PANEL_KINDS.map((v) => ({ key: v.key, label: v.label }))} defaultKind={kind} label="6. Tipo de negocio" />
         <PlanPicker plans={pick(plans)} defaultKey={planKey} pieces label="7. ¿Qué contrató?" />
       </div>
-      <small className="muted">Vacío: las piezas del plan. En Uno y Essential el cliente elige: reparte las piezas entre placas y tarjetas. En el FiveTap Test escribe cuántas lleva (de 1 a 4 en total).</small>
+      <small className="muted">De 1 a 4 piezas es pago único; desde 5 piezas, plan mensual (de referencia o a la medida del cliente). Vacío: las piezas del plan de referencia.</small>
     </div>
   );
 }

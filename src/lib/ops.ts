@@ -13,6 +13,7 @@ import { audit } from "./receipts";
 import { SITE_URL, nfcUrl, reviewUrlFrom } from "./site";
 import { db } from "./supabase";
 import { PANEL_KINDS, verticalByKey } from "./verticals";
+import { ONE_TIME } from "./test-kit";
 
 // FiveTap operations for Claude (the MCP endpoint at /api/ops/mcp). Every tool works on ONE
 // business named by its id; the important ones also need its exact name, so Claude cannot
@@ -137,7 +138,7 @@ export const TOOLS = {
       const plans = (await getPlans()).filter((p) => p.active);
       return {
         kinds: PANEL_KINDS.map((v) => ({ key: v.key, label: v.label, setup: presetFor(v.key).summary })),
-        plans: [{ key: "once", name: "Pago único (placas directas a Google, sin sistema)" }, { key: "test", name: "FiveTap Test 30 días" }, ...plans.map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards }))],
+        plans: [{ key: "once", name: `Pago único de 1 a ${ONE_TIME.max} piezas (directas a Google, sin sistema)` }, { key: "test", name: "FiveTap Test 30 días" }, ...plans.map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards }))],
       };
     },
   },
@@ -177,6 +178,7 @@ export const TOOLS = {
       const preset = presetFor(kind);
       const spots = Math.min(Math.max(Math.round(Number(a.plaques ?? (once || test ? 1 : plan!.plaques))), 0), 80);
       const cards = Math.min(Math.max(Math.round(Number(a.team_cards ?? (once || test ? 0 : plan!.cards))), 0), 40);
+      if (once && (spots + cards < 1 || spots + cards > ONE_TIME.max)) fail(`El pago único es de 1 a ${ONE_TIME.max} piezas; desde ${ONE_TIME.max + 1} va un plan mensual.`);
       const { data, error } = await db().from("businesses").insert({
         slug: `${slugify(name)}-${newCode(4)}`, name, kind, brand_color: safeColor(str(a.brand_color, 7)), google_review_url: review,
         manager_name: opt(a.manager_name, 80), manager_phone: phone(a.manager_phone), billing_name: opt(a.billing_name, 80), billing_phone: phone(a.billing_phone),

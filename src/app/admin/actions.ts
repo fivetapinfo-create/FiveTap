@@ -8,7 +8,7 @@ import { normalizePhone } from "@/lib/phone";
 import { placeIdFrom, reviewUrlFrom } from "@/lib/site";
 import { addDays, todayPanama } from "@/lib/agenda";
 import { AGREEMENT_METHODS, SIGNER_ROLES, endOf } from "@/lib/agreement";
-import { PLAN_TEST_PRODUCTS, TEST_ACTIVE_DAYS, type PlanTestProduct } from "@/lib/test-kit";
+import { ONE_TIME, PLAN_TEST_PRODUCTS, TEST_ACTIVE_DAYS, type PlanTestProduct } from "@/lib/test-kit";
 import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot, snapshotFromGoogle } from "@/lib/data";
 import { placesReady } from "@/lib/places";
@@ -94,7 +94,9 @@ export async function createBusiness(f: FormData) {
   const plan = isTest || once ? null : await planByKey(str(f, "plan_key", 30));
   let spots = Math.min(Math.max(Math.round(str(f, "spots") === "" ? (isTest || once ? 1 : plan?.plaques ?? 10) : num(f, "spots", 10)), 0), 80);
   let cards = Math.min(Math.max(Math.round(str(f, "cards") === "" ? (isTest ? 0 : plan?.cards ?? 0) : num(f, "cards", 0)), 0), 40);
-  // Small plans (Uno, Essential): N pieces of the client's choice, split between plaques and cards.
+  // Pago único is 1 to 4 pieces; from 5 pieces the client goes on a monthly plan.
+  if (once && (spots + cards < 1 || spots + cards > ONE_TIME.max)) fail("/admin/new", new Error(`El pago único es de 1 a ${ONE_TIME.max} piezas. Desde ${ONE_TIME.max + 1} piezas elige un plan mensual (de referencia o a la medida).`));
+  // Plans with flexible pieces: the client splits them between plaques and cards.
   if (plan?.flex_pieces) {
     const total = plan.plaques;
     if (str(f, "spots") === "" && str(f, "cards") !== "") spots = Math.max(total - cards, 0);
@@ -168,7 +170,7 @@ export async function updateBusiness(f: FormData) {
   const id = str(f, "id", 60);
   const back = `/admin/b/${id}`;
   try {
-    // Changing plan (e.g. Test → Essential) takes the new plan's price unless another one was typed.
+    // Changing plan (e.g. Test → Star) takes the new plan's price unless another one was typed.
     const before = (await db().from("businesses").select("plan_key, monthly_fee, status").eq("id", id).maybeSingle()).data as { plan_key: string | null; monthly_fee: number; status: string } | null;
     const chosenPlan = await planByKey(str(f, "plan_key", 30));
     const typedFee = str(f, "monthly_fee") === "" ? null : num(f, "monthly_fee", 0);

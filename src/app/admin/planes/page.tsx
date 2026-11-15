@@ -4,10 +4,11 @@ import { db } from "@/lib/supabase";
 import { updatePlan } from "../actions";
 import { Flash } from "../Flash";
 import { usd } from "../format";
+import { ONE_TIME } from "@/lib/test-kit";
 
 export const dynamic = "force-dynamic";
 
-/** The three commercial plans: price, pieces, what each includes and its PayPal plan. */
+/** The monthly reference plans (5 pieces or more): price, pieces and what each includes. */
 export default async function Plans({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
   const [plans, sp, biz] = await Promise.all([getPlans(), searchParams, db().from("businesses").select("plan_key, status")]);
   const using = (key: string) => ((biz.data ?? []) as { plan_key: string | null; status: string }[]).filter((b) => b.plan_key === key && b.status !== "canceled").length;
@@ -17,10 +18,18 @@ export default async function Plans({ searchParams }: { searchParams: Promise<{ 
       <div className="admin-head">
         <div>
           <h1>Planes</h1>
-          <p>Precios de lanzamiento. Lo que cambies aquí se ve al instante en la web, /empezar y /pagar. Los clientes actuales conservan su precio.</p>
+          <p>Planes mensuales de referencia. Lo que cambies aquí se ve en la web y en /empezar en unos minutos. Los clientes actuales conservan su precio.</p>
         </div>
       </div>
       <Flash ok={sp.ok} error={sp.error} />
+      <section className="panel plan-rules">
+        <div className="panel-head"><h2>Cómo se vende FiveTap</h2></div>
+        <ol className="form-section">
+          <li><b>De 1 a {ONE_TIME.max} piezas: pago único.</b> Placa {usd(ONE_TIME.plaque)}, tarjeta {usd(ONE_TIME.card)}, {ONE_TIME.packs.map((k) => `${k.name} ${k.qty} por ${usd(k.price)}`).join(", ")}. Van directo a Google, sin app ni mensualidad.</li>
+          <li><b>Desde {ONE_TIME.max + 1} piezas: plan mensual.</b> Estos planes son la referencia que ve el cliente en la web; al registrar el negocio eliges uno o “Plan a la medida”.</li>
+          <li><b>Cada cliente se cotiza contigo.</b> Evalúas sus piezas NFC y lo que le sirve, y le armas la mensualidad que le salga beneficiosa. Se escribe en su ficha y se cobra en Cobros. No hay cobro automático por PayPal.</li>
+        </ol>
+      </section>
       <div className="plan-admin">
         {plans.map((p) => (
           <form key={p.key} id={p.key} action={updatePlan} className="panel plan-edit">
@@ -51,11 +60,6 @@ export default async function Plans({ searchParams }: { searchParams: Promise<{ 
                 <span>Qué incluye (una línea por punto)</span>
                 <textarea className="input" name="features" rows={6} defaultValue={p.features.join("\n")} />
                 <small>Las placas, tarjetas y cordones se muestran solos arriba de esta lista. Escribe solo lo que FiveTap ya hace o tú ya ofreces.</small>
-              </label>
-              <label className="field">
-                <span>ID del plan en PayPal (cobro automático)</span>
-                <input className="input" name="paypal_plan" defaultValue={p.paypal_plan ?? ""} placeholder="P-…" />
-                <small>{p.paypal_plan ? "Si cambias el precio aquí, cámbialo también en PayPal o crea un plan nuevo y pega su ID." : "Sin ID: en /empezar este plan se pide por WhatsApp y se paga por Yappy o transferencia."}</small>
               </label>
               <label className="check"><input type="checkbox" name="active" value="1" defaultChecked={p.active} /><span>Visible en la web</span></label>
               <SubmitButton className="btn btn-dark" pending="Guardando…">Guardar {p.name}</SubmitButton>

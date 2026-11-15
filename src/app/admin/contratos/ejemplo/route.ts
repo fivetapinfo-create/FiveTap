@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 /**
  * A sample 3-month contract to show a prospect (founder only, under /admin). Nothing is
- * saved and no number is used. ?plan=<plan key> (uno, equipo, essential, start…) and ?n=<venue> personalize it;
+ * saved and no number is used. ?plan=<plan key> (start, pro, enterprise…) and ?n=<venue> personalize it;
  * ?dl=1 downloads it.
  */
 export async function GET(req: Request) {
