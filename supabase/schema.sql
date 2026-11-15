@@ -619,3 +619,32 @@ alter table catalog_items enable row level security;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('media', 'media', true, 3000000, array['image/png', 'image/jpeg', 'image/webp'])
 on conflict (id) do nothing;
+
+-- ============ Orders from the plaque (module) ============
+alter table businesses add column if not exists modules jsonb not null default '{}'::jsonb;
+create table if not exists guest_orders (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses (id) on delete cascade,
+  tag_id uuid references tags (id) on delete set null,
+  table_label text, number int not null,
+  token text not null unique default encode(gen_random_bytes(12), 'hex'),
+  customer_name text not null check (char_length(customer_name) between 1 and 60),
+  people int check (people is null or people between 1 and 99),
+  notes text check (char_length(notes) <= 400),
+  status text not null default 'new' check (status in ('new', 'preparing', 'ready', 'delivered', 'canceled')),
+  total numeric(10, 2) not null default 0, modified boolean not null default false, cancel_reason text,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  unique (business_id, number)
+);
+create index if not exists guest_orders_business_idx on guest_orders (business_id, created_at desc);
+create index if not exists guest_orders_status_idx on guest_orders (business_id, status);
+alter table guest_orders enable row level security;
+create table if not exists guest_order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references guest_orders (id) on delete cascade,
+  item_id uuid references catalog_items (id) on delete set null,
+  name text not null, unit_price numeric(10, 2) not null check (unit_price >= 0),
+  qty int not null check (qty between 0 and 99), line_total numeric(10, 2) not null
+);
+create index if not exists guest_order_items_order_idx on guest_order_items (order_id);
+alter table guest_order_items enable row level security;

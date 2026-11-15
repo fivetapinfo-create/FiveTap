@@ -1,7 +1,7 @@
 import { onColor, safeColor } from "@/lib/brand";
 import type { Copy } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
-import { Chat, Gift, StarSolid } from "./Icons";
+import { Bag, Chat, Gift, StarSolid } from "./Icons";
 import { LogoMark } from "./Logo";
 
 export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string };
@@ -13,6 +13,7 @@ export function GuestCard({
   reviewHref,
   managerHref,
   clubHref,
+  orderHref,
   embedded = false,
 }: {
   business: GuestBusiness;
@@ -21,6 +22,8 @@ export function GuestCard({
   managerHref: string;
   /** Optional third, quieter action: join the venue's WhatsApp club. */
   clubHref?: string;
+  /** Ordering from the plaque (Orders module). */
+  orderHref?: string;
   /** Rendered inside another page (landing mockup): no <main>, links inert. */
   embedded?: boolean;
 }) {
@@ -58,6 +61,12 @@ export function GuestCard({
             </span>
           </a>
         </nav>
+
+        {orderHref && (
+          <a className="gx-order rise" href={orderHref} tabIndex={tab} style={{ "--i": 5, marginTop: 12 } as React.CSSProperties}>
+            <Bag /><span>{copy.oOrder}</span><b aria-hidden="true">→</b>
+          </a>
+        )}
 
         {clubHref && (
           <a className="guest-club rise" href={clubHref} tabIndex={tab} style={{ "--i": 5 } as React.CSSProperties}>

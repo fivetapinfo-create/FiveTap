@@ -1,6 +1,7 @@
 const OK: Record<string, string> = {
   creado: "Negocio creado. Graba cada enlace en su placa NFC con NFC Tools.",
   guardado: "Cambios guardados.",
+  "x-modulo": "Módulo actualizado. Sus placas ya lo reflejan.",
   "x-borrador": "Borrador guardado. Revisa la vista previa y publícalo cuando esté listo.",
   "x-publicada": "¡Publicada! Todas sus placas ya abren esta experiencia.",
   "x-oculta": "Experiencia oculta: sus placas vuelven a la tarjeta de reseña simple. El borrador sigue guardado.",

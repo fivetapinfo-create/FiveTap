@@ -18,6 +18,7 @@ import { audit, deliverReceipt, issueReceipt, logSend, receiptMoney, receiptUrl 
 import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
+import { setModule, type ModuleKey } from "@/lib/orders";
 import { deleteItem, deletePromotion, publishExperience, saveDraft, saveItem, savePromotion, setActive, unpublishExperience } from "@/lib/experience";
 import { PANEL_KINDS, verticalByKey } from "@/lib/verticals";
 
@@ -928,4 +929,15 @@ export async function deleteItemAdmin(f: FormData) {
 }
 export async function toggleItemAdmin(f: FormData) {
   await xRun(f, "guardado", "catalogo", (id) => setActive(id, "catalog_items", str(f, "id", 60), str(f, "active", 1) === "1"));
+}
+
+/** Founder: a module on, off, or back to what the plan includes. */
+export async function setModuleAdmin(f: FormData) {
+  await xRun(f, "x-modulo", "modulos", async (id) => {
+    const key = (["orders", "reservations"] as ModuleKey[]).find((k) => k === str(f, "module", 20));
+    if (!key) throw new Error("Módulo no válido.");
+    const v = str(f, "value", 5);
+    await setModule(id, key, v === "on" ? true : v === "off" ? false : null);
+    await audit("module.changed", { businessId: id, entity: "business", entityId: id, details: { module: key, value: v } });
+  });
 }

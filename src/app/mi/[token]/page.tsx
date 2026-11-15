@@ -16,6 +16,7 @@ import { addDays, billingState, human, nextCharge, planLabel, todayPanama } from
 import { after } from "next/server";
 import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
 import { setMessageResolved, setStaffName } from "./actions";
+import { moduleOn, newOrdersCount } from "@/lib/orders";
 import { TeamRanking } from "@/components/TeamRanking";
 import { teamPeriod, teamRanking } from "@/lib/team";
 import { getPlans } from "@/lib/plans";
@@ -76,6 +77,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   // Waiters ranked by guests sent to Google; table plaques by taps.
   // Only pieces in use: deactivated ones stay in the founder's panel, not in the owner's app.
   const waiters = tags.filter((t) => t.active && isWaiter(t)).map(row).sort(byReviews);
+  const ordersOn = moduleOn(b, "orders");
+  const newOrders = ordersOn ? await newOrdersCount(b.id) : 0;
   const period = teamPeriod(sp.equipo);
   const team = await teamRanking(tags, period);
   const tables = tags.filter((t) => t.active && !isWaiter(t)).map(row).sort(byScans);
@@ -116,6 +119,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         </div>
 
         {/* 1. Only what needs you now. */}
+        {ordersOn && (
+          <Link className={`alert ${newOrders ? "alert-warn" : "alert-ok"} glance-alert`} href={`/mi/${token}/pedidos`}>
+            <b>{newOrders ? (newOrders === 1 ? "1 pedido nuevo" : `${newOrders} pedidos nuevos`) : "Pedidos desde la placa"}</b> · {newOrders ? "Atender →" : "Ver pedidos →"}
+          </Link>
+        )}
         {pending.length > 0 && (
           <a className="alert alert-warn glance-alert" href="#mensajes">
             <b>{pending.length === 1 ? "1 mensaje de un cliente por resolver" : `${pending.length} mensajes de clientes por resolver`}</b> · Ver →

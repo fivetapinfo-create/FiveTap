@@ -1281,3 +1281,64 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .gx-preview.in-frame .gx-wrap, .gx-preview.in-frame .guest-wrap { max-width: none; }
 .biz-tabs .biz-tab-strong { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .settings-link { display: grid; gap: 4px; padding: 18px 20px; text-decoration: none; color: inherit; transition: border-color 0.2s; } .settings-link:hover { border-color: var(--line-strong); }
+
+/* ================= Orders from the plaque ================= */
+.gx-order { display: flex; align-items: center; gap: 12px; margin-top: 4px; padding: 16px 18px; border-radius: var(--radius-sm); background: var(--brand, var(--ink)); color: var(--on-brand, var(--paper)); font-weight: 600; font-size: 16px; transition: transform 0.15s var(--ease-out); }
+.gx-order:active { transform: scale(0.98); }
+.gx-order svg { width: 22px; height: 22px; }
+.gx-order b { margin-left: auto; }
+.gx-wrap > .gx-order + .gx-quick { margin-top: 10px; }
+.gx-h-row { justify-content: space-between; }
+.gx-h-btn { font-size: 13px; }
+.ob-head { display: flex; gap: 12px; align-items: center; margin: 12px 0 18px; }
+.ob-head .biz-logo { width: 48px; height: 48px; border-radius: 14px; }
+.ob-group + .ob-group { margin-top: 18px; }
+.ob-item { transition: border-color 0.2s, box-shadow 0.2s; }
+.ob-item.on { border-color: var(--brand, var(--ink)); box-shadow: 0 0 0 1px var(--brand, var(--ink)); }
+.ob-add { flex: none; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); font: inherit; font-weight: 600; font-size: 14px; color: inherit; cursor: pointer; }
+.ob-step { flex: none; display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 999px; background: var(--brand, var(--ink)); color: var(--on-brand, var(--paper)); }
+.ob-step button { width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; color: inherit; font: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+.ob-step span { min-width: 18px; text-align: center; font-weight: 700; }
+.ob-form { margin-top: 26px; padding: 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); scroll-margin-top: 16px; }
+.ob-summary { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14px; }
+.ob-summary li { display: flex; justify-content: space-between; gap: 12px; }
+.ob-summary .ob-total { padding-top: 8px; border-top: 1px solid var(--line); font-weight: 700; font-size: 16px; }
+.ob-send { margin-top: 4px; }
+.ob-send:disabled { opacity: 0.5; }
+.ob-bar { position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 6; display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 16px 20px; border-radius: 999px; background: var(--brand, var(--ink)); color: var(--on-brand, var(--paper)); font-weight: 600; box-shadow: var(--shadow-lg); animation: rise 280ms var(--ease-out) both; }
+.ob-done { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 4vh; }
+.ob-done .check-badge.ob-canceled { background: var(--danger); }
+.ob-steps { list-style: none; margin: 22px 0 16px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 12px; text-align: center; color: var(--muted); }
+.ob-steps li { display: grid; gap: 8px; justify-items: center; }
+.ob-steps li span { width: 100%; height: 5px; border-radius: 99px; background: var(--line-strong); transition: background 0.4s var(--ease-out); }
+.ob-steps li.on { color: var(--ink); font-weight: 600; }
+.ob-steps li.on span { background: var(--brand, var(--ok)); }
+
+/* ================= Orders in FiveTap Business ================= */
+.orders-kpis .kpi small { display: block; font-size: 11px; }
+.orders { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.order { margin: 0; padding: 16px 18px; display: grid; gap: 10px; animation: rise 360ms var(--ease-out) both; }
+.order-new { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink), var(--shadow); }
+.order-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.order-num { font-size: 22px; letter-spacing: -0.02em; margin-right: 8px; }
+.order-where { font-weight: 600; }
+.order-pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--paper); border: 1px solid var(--line-strong); }
+.order-pill-new { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.order-pill-preparing { background: #fff4d6; border-color: #e7c766; color: #6b4e00; }
+.order-pill-ready { background: #e3f4ea; border-color: #8fcfa9; color: var(--ok); }
+.order-pill-canceled { color: var(--danger); }
+.order-who { font-size: 14px; }
+.order-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.order-lines li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+.order-lines li.removed span { text-decoration: line-through; color: var(--faint); }
+.order-adjust { grid-column: 1 / -1; font-size: 13px; }
+.order-adjust summary { color: var(--muted); cursor: pointer; width: fit-content; }
+.order-notes { font-size: 14px; padding: 8px 12px; border-radius: 10px; background: var(--paper); }
+.order-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
+.order-cancel summary { list-style: none; }
+.order-cancel summary::-webkit-details-marker { display: none; }
+.order-cancel[open] { flex-basis: 100%; }
+@media (prefers-reduced-motion: reduce) { .order, .ob-bar { animation: none; } }
+.xp-modules { display: grid; }
+.xp-module { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--line); }
+.xp-module > div:first-child { display: grid; gap: 2px; }

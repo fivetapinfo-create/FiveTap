@@ -7,9 +7,10 @@ import { todayPanama } from "@/lib/agenda";
 import { experienceEditor } from "@/lib/experience";
 import { db } from "@/lib/supabase";
 import { nfcUrl } from "@/lib/site";
+import { MODULES, moduleOn, moduleSource, type ModuleKey } from "@/lib/orders";
 import {
   deleteItemAdmin, deletePromoAdmin, publishExperienceAction, saveExperienceDraft, saveItemAdmin, savePromoAdmin,
-  toggleItemAdmin, togglePromoAdmin, unpublishExperienceAction,
+  setModuleAdmin, toggleItemAdmin, togglePromoAdmin, unpublishExperienceAction,
 } from "../../../actions";
 import { Flash } from "../../../Flash";
 import { dateTime } from "../../../format";
@@ -36,7 +37,7 @@ const SECTIONS = [
  */
 export default async function ExperiencePage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color").eq("id", id).maybeSingle();
+  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color, modules, plan_key").eq("id", id).maybeSingle();
   if (!b) notFound();
   const [x, tagRes] = await Promise.all([experienceEditor(id), db().from("tags").select("code").eq("business_id", id).eq("active", true).limit(1)]);
   const d = x.draft;
@@ -83,6 +84,34 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
                   </form>
                 )}
               </div>
+            </div>
+          </section>
+
+          <section className="panel" id="modulos">
+            <div className="panel-head"><h2>Módulos</h2><span className="muted">Pro y Enterprise los incluyen</span></div>
+            <div className="xp-modules">
+              {(Object.keys(MODULES) as ModuleKey[]).map((k) => {
+                const on = moduleOn(b, k);
+                const src = moduleSource(b, k);
+                const soon = k === "reservations";
+                return (
+                  <div key={k} className="xp-module">
+                    <div>
+                      <b>{MODULES[k]}</b>
+                      <small className="muted">{soon ? "Próximamente (Etapa C)" : `${on ? "Activo" : "Apagado"} · ${src === "plan" ? "según su plan" : "activado a mano"}`}</small>
+                      {k === "orders" && on && <small className="muted">Sus clientes piden desde la placa con los productos con precio del catálogo.</small>}
+                    </div>
+                    {!soon && (
+                      <form action={setModuleAdmin} className="row" style={{ gap: 6 }}>
+                        <input type="hidden" name="business_id" value={id} />
+                        <input type="hidden" name="module" value={k} />
+                        {src === "manual" && <button className="btn btn-ghost btn-sm" name="value" value="plan">Según plan</button>}
+                        <button className={`btn btn-sm ${on ? "btn-ghost" : "btn-dark"}`} name="value" value={on ? "off" : "on"}>{on ? "Apagar" : "Activar"}</button>
+                      </form>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 

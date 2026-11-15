@@ -187,3 +187,10 @@ export const Tag = (p: P) => (
     <path d="M8 8h.01" strokeWidth={2.4} />
   </svg>
 );
+
+export const Bag = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M5.5 8h13l-1 12a1.5 1.5 0 0 1-1.5 1.4H8a1.5 1.5 0 0 1-1.5-1.4L5.5 8z" />
+    <path d="M9 10V7a3 3 0 0 1 6 0v3" />
+  </svg>
+);

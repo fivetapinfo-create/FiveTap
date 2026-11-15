@@ -1,6 +1,8 @@
 export type BusinessStatus = "trial" | "active" | "paused" | "canceled";
 
 export type Business = {
+  /** Optional modules (orders, reservations); a missing key means the plan decides. */
+  modules?: Record<string, unknown> | null;
   id: string;
   slug: string;
   name: string;

@@ -6,6 +6,7 @@ import { GuestCard } from "@/components/GuestCard";
 import { GuestExperience } from "@/components/GuestExperience";
 import { publishedExperience } from "@/lib/experience";
 import { hasContent } from "@/lib/experience-shape";
+import { moduleOn } from "@/lib/orders";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-session";
 import { guestClosed, logEvent, tagByCode } from "@/lib/data";
 import { PIECE_LABEL, pieceState } from "@/lib/pieces";
@@ -51,6 +52,7 @@ export default async function TapPage({ params, searchParams }: Props) {
   }
 
   const q = source === "qr" ? "?s=q" : "";
+  const orderHref = moduleOn(tag.business, "orders") ? `/t/${code}/pedir` : undefined;
   // A published experience (cover, promotions, catalog…) wraps the same review card.
   const x = await publishedExperience(tag.business_id);
   if (x && hasContent(x.experience, x.promos.length, x.items.length)) {
@@ -67,6 +69,7 @@ export default async function TapPage({ params, searchParams }: Props) {
           reviewHref={`/t/${code}/go${q}`}
           managerHref={`/t/${code}/mensaje${q}`}
           clubHref={`/t/${code}/club${q}`}
+          orderHref={orderHref}
         />
       </>
     );
@@ -80,6 +83,7 @@ export default async function TapPage({ params, searchParams }: Props) {
       reviewHref={`/t/${code}/go${q}`}
       managerHref={`/t/${code}/mensaje${q}`}
       clubHref={`/t/${code}/club${q}`}
+      orderHref={orderHref}
     />
     </>
   );

@@ -2,7 +2,7 @@ import { onColor, safeColor } from "@/lib/brand";
 import { openState, socialUrl, waDigits, type CatalogItem, type Experience, type Promotion } from "@/lib/experience-shape";
 import type { Copy, Lang } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
-import { Camera, Chat, Clock, Gift, Globe, LinkIcon, Phone, Route, StarSolid, Tag } from "./Icons";
+import { Bag, Camera, Chat, Clock, Gift, Globe, LinkIcon, Phone, Route, StarSolid, Tag } from "./Icons";
 import { LogoMark } from "./Logo";
 import type { GuestBusiness } from "./GuestCard";
 
@@ -16,6 +16,8 @@ type Props = {
   reviewHref: string;
   managerHref: string;
   clubHref?: string;
+  /** Ordering from the plaque, when the business has the Orders module. */
+  orderHref?: string;
   /** Founder preview: links inside the page do nothing, nothing is counted. */
   preview?: boolean;
 };
@@ -41,7 +43,7 @@ const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits
  * published: its cover and identity, the review card (same as always, never filtered),
  * and only the sections the business turned on and filled in.
  */
-export function GuestExperience({ business, experience: e, promos, items, copy, lang, reviewHref, managerHref, clubHref, preview }: Props) {
+export function GuestExperience({ business, experience: e, promos, items, copy, lang, reviewHref, managerHref, clubHref, orderHref, preview }: Props) {
   const brand = safeColor(business.brand_color, "#0a0a0a");
   const custom = brand.toLowerCase() !== "#0a0a0a" && brand.toLowerCase() !== "#111111";
   const style = { "--brand": custom ? brand : undefined, "--on-brand": custom ? onColor(brand) : undefined } as React.CSSProperties;
@@ -98,6 +100,11 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
       </header>
 
       <div className="guest-wrap gx-wrap">
+        {orderHref && (
+          <a className="gx-order rise" href={preview ? "#" : orderHref} style={i(4)}>
+            <Bag /><span>{copy.oOrder}</span><b aria-hidden="true">→</b>
+          </a>
+        )}
         {(wa || tel || maps) && (
           <div className="gx-quick rise" style={i(4)}>
             {wa && <Ext className="gx-quick-btn" href={`https://wa.me/${wa}`}><Chat /><span>{copy.xWhatsApp}</span></Ext>}
@@ -150,7 +157,7 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
 
         {showCatalog && (
           <section className="gx-section" id="catalogo">
-            <h2 className="gx-h">{e.catalog_title || copy.xCatalog}</h2>
+            <h2 className="gx-h gx-h-row">{e.catalog_title || copy.xCatalog}{orderHref && <a className="btn btn-dark btn-sm gx-h-btn" href={preview ? "#" : orderHref}>{copy.oOrder}</a>}</h2>
             {groups.map((g) => (
               <div key={g.name || "all"} className="gx-group">
                 {g.name && <h3 className="gx-group-name">{g.name}</h3>}
