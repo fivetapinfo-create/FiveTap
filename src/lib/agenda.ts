@@ -382,7 +382,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
               ? `${hi}, te escribe FiveTap. Las placas de ${b.name} están pausadas porque tenemos pendiente tu ${label} de ${money(amount)}. Puedes pagar por Yappy o transferencia aquí: ${payLink(b.name)} y se reactivan el mismo día. Tus datos están seguros. 🙏`
               : overdue
                 ? `${hi}, te escribe FiveTap. Tu ${label} de ${money(amount)} (${plan}) venció el ${human(due)}. Para que tus placas sigan funcionando, puedes pagar hasta el ${human(lastDay)} por Yappy o transferencia aquí: ${payLink(b.name)}. ¡Gracias! 🙏`
-                : `${hi}, te escribe FiveTap. Hoy toca tu ${label} de ${money(amount)} (${plan}). Puedes pagar por Yappy o transferencia aquí: ${payLink(b.name)}. ¡Gracias! 🙏`),
+                : `${hi}, te escribe FiveTap. Hoy toca renovar ${renewalWhat(plaques)}: ${money(amount)}. Puedes pagar en efectivo, por Yappy o transferencia (datos aquí: ${payLink(b.name)}) o desde tu app, en Renovar. ¡Gracias! 🙏`),
         due,
         push: ownerPush,
       });
@@ -397,7 +397,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
         title: `Recordar pago a ${b.name}`,
         detail: `${plan}. Su ${label} de ${money(amount)} vence el ${human(due)}.`,
         businessId: b.id,
-        whatsapp: wa(to.phone, `${hi}, te escribe FiveTap 😊 Te recuerdo que el ${human(due)} toca tu ${label} de ${money(amount)} (${plan}). Puedes pagar por Yappy o transferencia aquí: ${payLink(b.name)}. ¡Que tengas un excelente día!`),
+        whatsapp: wa(to.phone, `${hi}, te escribe FiveTap 😊 Te recuerdo que el ${human(due)} toca renovar ${renewalWhat(plaques)}: ${money(amount)}. Puedes pagar en efectivo, por Yappy o transferencia (datos aquí: ${payLink(b.name)}) o desde tu app, en Renovar. ¡Que tengas un excelente día!`),
         due,
         push: { title: `Recordatorio · ${b.name}`, body: `${cap(renewalWhat(plaques))} vence el ${human(due)}: ${money(amount)}. Toca para renovar por efectivo, Yappy o transferencia.`, url: pay },
       });

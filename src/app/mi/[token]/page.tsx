@@ -167,6 +167,23 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           </Link>
         )}
 
+        <AppSetup
+          endpoint={`/mi/${token}/push`}
+          benefits={[
+            "Te avisamos al instante cuando un cliente deja un mensaje privado.",
+            "Cada mañana, tu resumen del día anterior.",
+            "Tu reporte a fin de mes.",
+          ]}
+          guided={sp.instalar === "1"}
+          compactWhenOn
+          initialRole={role}
+          roles={[
+            role === "owner"
+              ? { value: "owner", label: "Dueño/a", hint: "Recibes todo, incluidos los recordatorios de pago." }
+              : { value: "manager", label: "Gerente", hint: "Recibes los mensajes de clientes y el resumen diario. Sin recordatorios de pago." },
+          ]}
+        />
+
         {/* 2. The result, in one look. */}
         <section className="owner-hero glance">
           <span>Este mes, clientes que fueron a dejarte reseña</span>
@@ -186,23 +203,6 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <a href="#club"><b className="num">{now!.club}</b><span>Nuevos en el club</span></a>
           </div>
         </section>
-
-        <AppSetup
-          endpoint={`/mi/${token}/push`}
-          benefits={[
-            "Te avisamos al instante cuando un cliente deja un mensaje privado.",
-            "Cada mañana, tu resumen del día anterior.",
-            "Tu reporte a fin de mes.",
-          ]}
-          guided={sp.instalar === "1"}
-          compactWhenOn
-          initialRole={role}
-          roles={[
-            role === "owner"
-              ? { value: "owner", label: "Dueño/a", hint: "Recibes todo, incluidos los recordatorios de pago." }
-              : { value: "manager", label: "Gerente", hint: "Recibes los mensajes de clientes y el resumen diario. Sin recordatorios de pago." },
-          ]}
-        />
 
         {/* 3. Messages from guests: open ones first. */}
         <section className="panel" id="mensajes">
