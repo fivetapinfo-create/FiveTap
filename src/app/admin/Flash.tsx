@@ -14,6 +14,8 @@ const OK: Record<string, string> = {
   pago: "Pago registrado y comprobante emitido.",
   "pago-reactivado": "Pago registrado y comprobante emitido. Sus placas y su app ya funcionan otra vez.",
   "comprobante-correo": "Pago registrado. Comprobante emitido y enviado al correo del dueño y a su app.",
+  "pago-confirmado": "Pago confirmado: quedó registrado, se emitió el recibo y al cliente le llegó el aviso para guardarlo.",
+  "pago-rechazado": "Aviso rechazado. El cliente ve el motivo en su app y puede avisar de nuevo.",
   "comprobante-app": "Pago registrado y comprobante emitido. Se envió a su app; el correo no salió (mira el detalle en Recibos y facturación).",
   "comprobante-correo-reactivado": "Pago registrado y comprobante enviado por correo y a su app. Sus placas ya funcionan otra vez.",
   "comprobante-app-reactivado": "Pago registrado y comprobante enviado a su app (el correo no salió). Sus placas ya funcionan otra vez.",

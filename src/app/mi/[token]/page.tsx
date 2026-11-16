@@ -23,6 +23,7 @@ import { TeamRanking } from "@/components/TeamRanking";
 import { teamPeriod, teamRanking } from "@/lib/team";
 import { getPlans } from "@/lib/plans";
 import { answeredTicketsCount } from "@/lib/support";
+import { claimsFor } from "@/lib/claims";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
 import { dateTime } from "../../admin/format";
@@ -85,6 +86,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const resvOn = moduleOn(b, "reservations");
   const resv = resvOn ? await reservationGlance(b.id) : { today: 0, pending: 0 };
   const answered = await answeredTicketsCount(b.id);
+  const claimPending = role === "owner" ? (await claimsFor(b.id, 1))[0]?.status === "pending" : false;
   // Tools that suit this kind of business and it does not have yet (only for venues with the app).
   const rec = b.mode === "google" ? null : presetFor(b.kind).modules.reservations && !resvOn ? "reservas" : presetFor(b.kind).modules.orders && !ordersOn ? "pedidos" : null;
   const period = teamPeriod(sp.equipo);
@@ -163,7 +165,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         {role === "owner" && charge && !charge.auto && b.status === "active" && charge.due <= addDays(today, 3) && (
           <Link className="alert alert-warn glance-alert rn-alert" href={`/mi/${token}/renovar`}>
             <span><b>{charge.due < today ? `Venció ${renewalWhat(pieces, false)}` : charge.due === today ? `Hoy vence ${renewalWhat(pieces, false)}` : charge.due === addDays(today, 1) ? `Mañana vence ${renewalWhat(pieces, false)}` : `${renewalWhat(pieces, false).replace(/^t/, "T")} vence el ${shortDate(charge.due)}`}</b> · {money(charge.amount)}</span>
-            <span className="rn-cta">Renovar</span>
+            <span className="rn-cta">{claimPending ? "En verificación" : "Renovar"}</span>
           </Link>
         )}
 

@@ -93,7 +93,9 @@ export async function GET(req: Request) {
 
   // 2b. The day before a manual payment is due: "your plan expires tomorrow", with Renovar.
   const tomorrow = addDays(today, 1);
+  const reported = new Set(((await db().from("payment_claims").select("business_id").eq("status", "pending")).data ?? []).map((x: { business_id: string }) => x.business_id));
   for (const r of billing) {
+    if (reported.has(r.business.id)) continue; // already said they paid: no reminder while it is checked
     const c = r.billing.charge;
     if (!c || c.auto || c.due !== tomorrow || r.billing.blocked || !tokenOf.has(r.business.id)) continue;
     sent.payments += await sendPushOnce(`renew-${r.business.id}-${c.due}`, { role: "owner", businessId: r.business.id }, {

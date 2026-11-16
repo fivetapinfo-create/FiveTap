@@ -3,7 +3,9 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, billingAll, human, planLabel, todayPanama, type BillingKind } from "@/lib/agenda";
 import { getPlans } from "@/lib/plans";
 import { SITE_URL } from "@/lib/site";
-import { extendGrace } from "../actions";
+import { decideClaim, extendGrace } from "../actions";
+import { CLAIM_METHOD, pendingClaims } from "@/lib/claims";
+import { dateTime } from "../format";
 import { Flash } from "../Flash";
 import { usd } from "../format";
 
@@ -22,7 +24,7 @@ const HINT: Partial<Record<BillingKind, string>> = {
 
 /** Who owes what: suspended, late (in grace), due soon, paused and up to date. */
 export default async function Collections({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
-  const [rows, sp, plans] = await Promise.all([billingAll(), searchParams, getPlans()]);
+  const [rows, sp, plans, claims] = await Promise.all([billingAll(), searchParams, getPlans(), pendingClaims()]);
   const today = todayPanama();
   const owed = (k: BillingKind[]) => rows.filter((r) => k.includes(r.billing.kind));
   const sum = (list: typeof rows) => list.reduce((n, r) => n + Number(r.billing.charge?.amount ?? 0), 0);
@@ -37,6 +39,42 @@ export default async function Collections({ searchParams }: { searchParams: Prom
         </div>
       </div>
       <Flash ok={sp.ok} error={sp.error} />
+
+      <section className="panel" id="por-confirmar">
+        <div className="panel-head">
+          <h2>Pagos por confirmar {claims.length > 0 && <span className="badge num">{claims.length}</span>}</h2>
+          <span className="muted">Lo que tus clientes avisan desde su app. Nada se registra hasta que confirmes que el dinero llegó.</span>
+        </div>
+        {claims.length === 0 ? (
+          <div className="empty"><p>No hay avisos de pago pendientes.</p></div>
+        ) : (
+          <ul className="claim-list">
+            {claims.map((c) => (
+              <li key={c.id} className="claim">
+                <div className="claim-main">
+                  <b>{c.business?.name ?? "Negocio"}</b>
+                  <span className="num claim-amount">{usd(Number(c.amount))}</span>
+                  <small className="muted">{CLAIM_METHOD[c.method]}{c.reference ? ` · ref. ${c.reference}` : ""} · avisó {dateTime(c.created_at)}{c.due_on ? ` · vencía ${human(c.due_on)}` : ""}</small>
+                </div>
+                <form action={decideClaim} className="claim-ok">
+                  <input type="hidden" name="claim_id" value={c.id} />
+                  <label className="check"><input type="checkbox" name="confirm" value="1" required /><span>El dinero ya llegó</span></label>
+                  <SubmitButton className="btn btn-dark btn-sm" pending="Confirmando…">Confirmar y emitir recibo</SubmitButton>
+                </form>
+                <details className="claim-no">
+                  <summary>No llegó</summary>
+                  <form action={decideClaim} className="row">
+                    <input type="hidden" name="claim_id" value={c.id} />
+                    <input type="hidden" name="decision" value="reject" />
+                    <input className="input" name="reason" required minLength={3} maxLength={300} placeholder="Ej. No vemos el Yappy; revisa el número" />
+                    <SubmitButton className="btn btn-ghost btn-sm" pending="…">Rechazar aviso</SubmitButton>
+                  </form>
+                </details>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="kpis">
         <div className="kpi"><span>Pendiente de cobro</span><b className="num">{usd(sum(unpaid))}</b><small className="muted">{unpaid.length} moroso{unpaid.length === 1 ? "" : "s"}</small></div>

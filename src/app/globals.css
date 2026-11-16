@@ -1555,3 +1555,34 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
   :root:not([data-theme="light"]) .gx { background: var(--paper); }
   :root:not([data-theme="light"]) .gx-tile-ic { background: color-mix(in srgb, var(--gx-accent) 22%, var(--surface)); color: color-mix(in srgb, var(--gx-accent) 55%, #fff); }
 }
+
+/* Founder → Cobros: renewals reported by clients, waiting for confirmation. */
+.claim-list { list-style: none; margin: 0; padding: 0; }
+.claim { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--line); }
+.claim:first-child { border-top: 0; }
+.claim-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; }
+.claim-main small { grid-column: 1 / -1; }
+.claim-amount { font-weight: 700; font-size: 18px; }
+.claim-ok { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.claim-no { grid-column: 1 / -1; }
+.claim-no summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.claim-no form { margin-top: 8px; gap: 8px; }
+.claim-no .input { flex: 1; min-width: 200px; }
+@media (max-width: 640px) { .claim { grid-template-columns: 1fr; } .claim-ok { justify-content: flex-start; } }
+.rc-actions { width: 100%; display: grid; gap: 10px; margin-top: 6px; opacity: 0; transform: translateY(6px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out); pointer-events: none; }
+.rc-actions.on { opacity: 1; transform: none; pointer-events: auto; }
+.rc-save { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Renewal states: reported (waiting for the founder), confirmed with its receipt. */
+.rn-receipt { padding: 8px 0 4px; }
+.rc-save-title { text-align: center; letter-spacing: 0.12em; font-size: 13px; }
+.rn-steps { list-style: none; margin: 0; padding: 6px 20px 4px; display: grid; gap: 0; }
+.rn-steps li { position: relative; display: grid; gap: 2px; padding: 0 0 18px 34px; }
+.rn-steps li::before { content: ""; position: absolute; left: 0; top: 2px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line-strong); background: var(--surface); }
+.rn-steps li::after { content: ""; position: absolute; left: 10px; top: 24px; bottom: 2px; width: 2px; background: var(--line); }
+.rn-steps li:last-child::after { display: none; }
+.rn-steps li.done::before { background: var(--ok); border-color: var(--ok); }
+.rn-steps li.now::before { border-color: var(--ink); animation: rn-pulse 1.6s ease-in-out infinite; }
+.rn-steps li:not(.done):not(.now) b { color: var(--muted); }
+@keyframes rn-pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--ink) 12%, transparent); } }
+.rn-report { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }

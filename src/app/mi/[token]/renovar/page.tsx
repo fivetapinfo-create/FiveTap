@@ -9,11 +9,16 @@ import { billingState, human, planLabel, renewalWhat } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail } from "@/lib/data";
 import { getPlans } from "@/lib/plans";
 import { FOUNDER_PHONE, founderWhatsApp } from "@/lib/test-kit";
+import { Receipt as ReceiptAnim } from "@/components/Receipt";
+import { SubmitButton } from "@/components/SubmitButton";
+import { CLAIM_METHOD, claimsFor } from "@/lib/claims";
+import { METHOD_LABEL, receiptsForBusiness } from "@/lib/receipts";
+import { reportRenewal } from "../actions";
 
 export const dynamic = "force-dynamic";
 
 type Method = "efectivo" | "yappy" | "transferencia";
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ m?: string }> };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ m?: string; ok?: string; error?: string; recibo?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
@@ -36,7 +41,7 @@ export default async function RenewPage({ params, searchParams }: Props) {
   const home = `/mi/${token}`;
   // Payments are the owner's: the manager goes back to the summary.
   if (role !== "owner") redirect(home);
-  const [d, plans] = await Promise.all([businessDetail(b.id), getPlans()]);
+  const [d, plans, claims, receipts] = await Promise.all([businessDetail(b.id), getPlans(), claimsFor(b.id), receiptsForBusiness(b.id)]);
   const billing = billingState(b, d?.payments ?? []);
   const charge = billing.charge;
   const plaques = (d?.tags ?? []).filter((t) => t.active).length;
@@ -56,6 +61,14 @@ export default async function RenewPage({ params, searchParams }: Props) {
   const methodName = m === "efectivo" ? "efectivo" : m === "yappy" ? "Yappy" : "transferencia";
   const proof = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Renové mi placa NFC y mi app (${plan}) de ${amount} por ${methodName}. Te envío el comprobante.`);
   const cash = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Quiero renovar mi placa NFC y mi app (${plan}) de ${amount} y pagar en efectivo. ¿Cuándo coordinamos la entrega?`);
+  // Where the renewal stands: reported and waiting, refused, or confirmed with its receipt.
+  const pending = claims.find((c) => c.status === "pending") ?? null;
+  const lastClaim = claims[0] ?? null;
+  const rejected = lastClaim?.status === "rejected" ? lastClaim : null;
+  const DAY = 86_400_000;
+  const confirmed = claims.find((c) => c.status === "confirmed" && c.payment_id && c.decided_at && Date.now() - Date.parse(c.decided_at) < 30 * DAY) ?? null;
+  const shown = (sp.recibo && receipts.find((r) => r.number === sp.recibo && r.status === "paid")) || (confirmed && receipts.find((r) => r.payment_id === confirmed.payment_id && r.status === "paid")) || null;
+  const animateReceipt = Boolean(sp.recibo && shown);
   const ask = founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Tengo una duda sobre la renovación de mi plan FiveTap.`);
 
   const status = !charge
@@ -84,15 +97,66 @@ export default async function RenewPage({ params, searchParams }: Props) {
           <p className="muted">{b.name}</p>
         </div>
 
-        {!charge ? (
-          <section className="panel">
-            <div className="msg">
-              <p>No tienes pagos pendientes. Tu servicio sigue activo.</p>
-              <a className="btn btn-ghost btn-sm" href={ask}>Escribir a FiveTap</a>
-            </div>
+        {sp.ok === "enviado" && <p className="alert alert-ok" role="status">Listo: le avisamos a Sebastián. En cuanto confirme tu pago, te llega el aviso y tu recibo.</p>}
+        {sp.error && <p className="alert alert-error" role="alert">{sp.error}</p>}
+
+        {shown && (
+          <section className="rn-receipt" id="recibo">
+            <ReceiptAnim
+              animate={animateReceipt}
+              homeHref={home}
+              data={{
+                item: shown.concept,
+                detail: shown.plan_label,
+                amount: Number(shown.amount),
+                per: "",
+                venue: shown.venue_name,
+                order: shown.number,
+                paidWith: (METHOD_LABEL as Record<string, string>)[shown.method] ?? shown.method,
+                date: human(shown.paid_on),
+                extra: [
+                  ...(shown.period_start && shown.period_end ? [["Período", `${human(shown.period_start)} – ${human(shown.period_end)}`] as [string, string]] : []),
+                  ["Estado", "Pagado y confirmado"],
+                  ...(shown.reference ? [["Transacción", shown.reference] as [string, string]] : []),
+                ],
+                thanks: `¡Gracias por seguir con FiveTap, ${shown.venue_name}! Tu placa NFC y tu app siguen activas.`,
+              }}
+              actions={
+                <>
+                  <b className="rc-save-title">GUARDAR FACTURA</b>
+                  <div className="rc-save">
+                    <a className="btn btn-dark" href={`/recibo/${shown.token}/pdf?dl=1`}>PDF</a>
+                    <a className="btn btn-ghost" href={`/recibo/${shown.token}/imagen?dl=1`}>Imagen</a>
+                  </div>
+                  <small className="muted">Es tu recibo oficial {shown.number}. También queda en Facturación y pagos.</small>
+                </>
+              }
+            />
           </section>
+        )}
+
+        {pending ? (
+          <section className="panel rn-wait" id="estado">
+            <div className="panel-head"><h2>Tu pago está en verificación</h2></div>
+            <ol className="rn-steps" aria-label="Estado del pago">
+              <li className="done"><b>Aviso enviado</b><small>{CLAIM_METHOD[pending.method]} · {money(Number(pending.amount))}{pending.reference ? ` · ref. ${pending.reference}` : ""}</small></li>
+              <li className="now"><b>Verificando el pago</b><small>Sebastián confirma que el dinero llegó.</small></li>
+              <li><b>Confirmado y recibo listo</b><small>Te llega un aviso para guardar tu factura.</small></li>
+            </ol>
+            <div className="msg"><a className="btn btn-ghost btn-sm" href={founderWhatsApp(`Hola Sebastián, soy de ${b.name}. Te aviso que pagué ${money(Number(pending.amount))} por ${CLAIM_METHOD[pending.method]}. Te envío el comprobante.`)}>Enviar comprobante por WhatsApp</a></div>
+          </section>
+        ) : !charge ? (
+          !shown && (
+            <section className="panel">
+              <div className="msg">
+                <p>No tienes pagos pendientes. Tu servicio sigue activo.</p>
+                <a className="btn btn-ghost btn-sm" href={ask}>Escribir a FiveTap</a>
+              </div>
+            </section>
+          )
         ) : (
           <>
+            {rejected && <p className="alert alert-error" role="alert">No pudimos confirmar tu último aviso de pago: {rejected.reason} Revisa y vuelve a avisarnos.</p>}
             {status && <p className={`alert ${status.tone}`} role="status">{status.text}</p>}
             <section className="panel rn-sum">
               <div><small className="muted">Lo que renuevas</small><b>{plaques ? `${plaques} ${plaques === 1 ? "placa NFC" : "placas NFC"} + app FiveTap Business` : "App FiveTap Business"}</b></div>
@@ -140,8 +204,17 @@ export default async function RenewPage({ params, searchParams }: Props) {
                       <p className="muted">En la descripción escribe: {b.name}.</p>
                     </div>
                   )}
-                  {(m === "yappy" || m === "transferencia") && (
-                    <a className="btn btn-dark btn-block rn-proof" href={proof}>Enviar comprobante a Sebastián</a>
+                  {m && (
+                    <form action={reportRenewal} className="rn-report">
+                      <input type="hidden" name="token" value={token} />
+                      <input type="hidden" name="method" value={m === "efectivo" ? "cash" : m === "yappy" ? "yappy" : "ach"} />
+                      {m !== "efectivo" && (
+                        <label className="field"><span>Número de operación (opcional)</span><input className="input" name="reference" maxLength={120} placeholder="Lo ves en tu comprobante" autoComplete="off" /></label>
+                      )}
+                      <SubmitButton className="btn btn-dark btn-block" pending="Enviando…">{m === "efectivo" ? "Ya entregué el efectivo" : "Ya pagué"}</SubmitButton>
+                      <small className="muted">Tu pago queda en verificación hasta que Sebastián confirme que llegó. Después te llega tu recibo.</small>
+                      {m !== "efectivo" && <a className="btn btn-ghost btn-sm" href={proof}>Enviar también el comprobante por WhatsApp</a>}
+                    </form>
                   )}
                 </div>
               </div>

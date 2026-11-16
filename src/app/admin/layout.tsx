@@ -8,6 +8,7 @@ import { agenda, billingAll, todayPanama } from "@/lib/agenda";
 import { unreadCount } from "@/lib/data";
 import { siteUrlIsLocal } from "@/lib/site";
 import { openTicketsCount } from "@/lib/support";
+import { pendingClaimsCount } from "@/lib/claims";
 import { AdminNav } from "./AdminNav";
 
 export const metadata: Metadata = {
@@ -22,11 +23,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // The sign-in page shares this layout: show nothing of the panel until signed in.
   if ((await headers()).get(ADMIN_HEADER) !== "1") return <div className="admin">{children}</div>;
   const day = todayPanama();
-  const [unread, todo, late, support] = await Promise.all([
+  const [unread, todo, late, support, claims] = await Promise.all([
     unreadCount().catch(() => 0),
     agenda(day, day).then((t) => t.filter((x) => x.kind !== "mensajes").length).catch(() => 0),
     billingAll(day).then((r) => r.filter((x) => x.billing.kind === "late" || x.billing.kind === "suspended").length).catch(() => 0),
     openTicketsCount().catch(() => 0),
+    pendingClaimsCount().catch(() => 0),
   ]);
   return (
     <div className="admin">
@@ -34,7 +36,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="admin-top no-print">
         <div className="container">
           <Link href="/admin"><Logo size={20} /></Link>
-          <AdminNav todo={todo} unread={unread} late={late} support={support} />
+          <AdminNav todo={todo} unread={unread} late={late + claims} support={support} />
         </div>
       </header>
       {siteUrlIsLocal && process.env.NODE_ENV === "production" && (

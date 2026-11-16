@@ -704,3 +704,25 @@ create table if not exists training_progress (
 alter table support_tickets enable row level security;
 alter table support_messages enable row level security;
 alter table training_progress enable row level security;
+
+-- ---------- Secondary brand color (NFC page icons and accents) ----------
+alter table businesses add column if not exists brand_accent text check (brand_accent is null or brand_accent ~ '^#[0-9a-fA-F]{6}$');
+
+-- ---------- Renewals reported by the owner, confirmed by the founder ----------
+create table if not exists payment_claims (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  amount numeric(10,2) not null check (amount > 0),
+  method text not null check (method in ('cash','yappy','ach','paypal','other')),
+  reference text check (reference is null or char_length(reference) <= 120),
+  due_on date,
+  status text not null default 'pending' check (status in ('pending','confirmed','rejected')),
+  reason text check (reason is null or char_length(reason) <= 300),
+  payment_id uuid references payments(id) on delete set null,
+  created_at timestamptz not null default now(),
+  decided_at timestamptz
+);
+create index if not exists payment_claims_business_idx on payment_claims(business_id, created_at desc);
+create index if not exists payment_claims_status_idx on payment_claims(status, created_at desc);
+create index if not exists payment_claims_payment_idx on payment_claims(payment_id);
+alter table payment_claims enable row level security;

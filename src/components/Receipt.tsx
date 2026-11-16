@@ -15,6 +15,12 @@ export type ReceiptData = {
   venue: string;
   order: string;
   paidWith: string;
+  /** The receipt's real date (confirmed payments); without it, now. */
+  date?: string;
+  /** Rows under the totals (period, status, transaction), for confirmed renewals. */
+  extra?: [string, string][];
+  /** The closing line; the welcome message by default. */
+  thanks?: string;
 };
 
 const money = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -40,13 +46,14 @@ function Barcode({ code }: { code: string }) {
  * Payment confirmation: a small printer that prints the receipt. Processing, then
  * printing (the paper slides out of the slot), then a green check. ~5 seconds.
  */
-export function Receipt({ data }: { data: ReceiptData }) {
-  const [stage, setStage] = useState<"processing" | "printing" | "done">("processing");
-  const date = new Intl.DateTimeFormat("es-PA", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Panama" })
+export function Receipt({ data, animate = true, actions, homeHref = "/" }: { data: ReceiptData; animate?: boolean; actions?: React.ReactNode; homeHref?: string }) {
+  const [stage, setStage] = useState<"processing" | "printing" | "done">(animate ? "processing" : "done");
+  const date = data.date ?? new Intl.DateTimeFormat("es-PA", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Panama" })
     .format(new Date())
     .toUpperCase();
 
   useEffect(() => {
+    if (!animate) return;
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return setStage("done");
     const a = setTimeout(() => setStage("printing"), 1300);
@@ -55,7 +62,7 @@ export function Receipt({ data }: { data: ReceiptData }) {
       clearTimeout(a);
       clearTimeout(b);
     };
-  }, []);
+  }, [animate]);
 
   const status = { processing: "Procesando tu pago", printing: "Imprimiendo tu recibo", done: "¡Pago completado!" }[stage];
 
@@ -64,7 +71,7 @@ export function Receipt({ data }: { data: ReceiptData }) {
       <div className="rc-printer">
         <div className="rc-top">
           <LogoMark size={22} className="rc-mark" />
-          <Link href="/" className="rc-home">Inicio</Link>
+          <Link href={homeHref} className="rc-home">Inicio</Link>
         </div>
         <div className="rc-screen">
           <div className="rc-screen-row">
@@ -104,13 +111,15 @@ export function Receipt({ data }: { data: ReceiptData }) {
             <span>Pedido</span><span>{data.order}</span>
             <span>Pagado con</span><span>{data.paidWith}</span>
             <span>Fecha</span><span>{date}</span>
+            {data.extra?.flatMap(([k, v]) => [<span key={`k-${k}`}>{k}</span>, <span key={`v-${k}`}>{v}</span>])}
           </div>
           <hr />
-          <p className="rc-thanks">¡Bienvenido a FiveTap, {data.venue}! Tus clientes felices ahora te dejan sus reseñas. 🚀</p>
+          <p className="rc-thanks">{data.thanks ?? `¡Bienvenido a FiveTap, ${data.venue}! Tus clientes felices ahora te dejan sus reseñas. 🚀`}</p>
           <Barcode code={data.order} />
           <p className="rc-code">{data.order}</p>
         </div>
       </div>
+      {actions && <div className={`rc-actions${stage === "done" ? " on" : ""}`}>{actions}</div>}
     </div>
   );
 }

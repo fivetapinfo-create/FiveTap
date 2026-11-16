@@ -19,6 +19,7 @@ import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
 import { replyTicket, setTicketStatus } from "@/lib/support";
+import { confirmClaim, rejectClaim } from "@/lib/claims";
 import { setModule, type ModuleKey } from "@/lib/orders";
 import { presetFor } from "@/lib/presets";
 import { EMPTY_EXPERIENCE } from "@/lib/experience-shape";
@@ -979,4 +980,23 @@ export async function replySupportAdmin(f: FormData) {
   revalidatePath("/admin/soporte");
   revalidatePath(back);
   redirect(`${back}?ok=guardado`);
+}
+
+/** Founder: the money of a reported renewal arrived (registers it and issues the receipt) or not. */
+export async function decideClaim(f: FormData) {
+  const id = str(f, "claim_id", 60);
+  const back = "/admin/cobros";
+  let receipt = "";
+  try {
+    if (str(f, "decision", 10) === "reject") await rejectClaim(id, str(f, "reason", 300));
+    else {
+      if (str(f, "confirm", 3) !== "1") throw new Error("Marca que el dinero ya llegó antes de confirmar.");
+      receipt = (await confirmClaim(id, str(f, "kind", 10) === "annual" ? "annual" : "monthly")).number;
+    }
+  } catch (e) {
+    fail(`${back}#por-confirmar`, e);
+  }
+  revalidatePath(back);
+  revalidatePath("/admin/comprobantes");
+  redirect(receipt ? `${back}?ok=pago-confirmado&r=${encodeURIComponent(receipt)}#por-confirmar` : `${back}?ok=pago-rechazado#por-confirmar`);
 }

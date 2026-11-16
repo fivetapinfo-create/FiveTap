@@ -11,6 +11,8 @@ import { adjustLine, setOrderStatus, type OrderStatus } from "@/lib/orders";
 import { addManualReservation, saveReservationSettings, setReservationStatus, type ReservationStatus } from "@/lib/reservations";
 import { phoneDigits } from "@/lib/reservation-rules";
 import { openTicket, replyTicket, setTicketStatus } from "@/lib/support";
+import { billingState } from "@/lib/agenda";
+import { reportPayment } from "@/lib/claims";
 
 /** The owner or manager closes a private message once it is handled (or opens it again). */
 export async function setMessageResolved(f: FormData) {
@@ -233,4 +235,23 @@ export async function markGuide(f: FormData) {
   else await db().from("training_progress").delete().eq("business_id", b.id).eq("guide", guide).eq("role", role);
   revalidatePath(`/mi/${token}/ayuda`);
   redirect(`/mi/${token}/ayuda#${guide}`);
+}
+
+/** The owner reports a renewal payment. The amount comes from the server, never from the form. */
+export async function reportRenewal(f: FormData) {
+  const { b, role, token, founder } = await ownerCtx(f);
+  const back = `/mi/${token}/renovar`;
+  if (role !== "owner") redirect(`/mi/${token}`);
+  if (founder) redirect(`${back}?error=${encodeURIComponent("Estás viendo la app como el dueño. Registra el pago desde Founder → Cobros.")}`);
+  let error = "";
+  try {
+    const { data: pays } = await db().from("payments").select("kind, method, paid_at, amount").eq("business_id", b.id);
+    const charge = billingState(b, (pays ?? []) as Parameters<typeof billingState>[1]).charge;
+    if (!charge) throw new Error("No tienes pagos pendientes.");
+    await reportPayment(b, { method: String(f.get("method") ?? ""), amount: Number(charge.amount), reference: String(f.get("reference") ?? ""), due_on: charge.due });
+  } catch (e) {
+    error = e instanceof Error ? e.message : "No se pudo enviar el aviso.";
+  }
+  revalidatePath(back);
+  redirect(error ? `${back}?error=${encodeURIComponent(error)}` : `${back}?ok=enviado#estado`);
 }
