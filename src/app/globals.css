@@ -1715,7 +1715,7 @@ html[data-ft-intro-founder="skip"] .fi { display: none; }
 .fs-card { width: min(100%, 400px); display: grid; gap: 16px; padding: 30px 26px; border-radius: 26px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); backdrop-filter: blur(12px); animation: rise 600ms var(--ease-out) both; }
 html[data-ft-intro-founder="play"] .fs-card { animation-delay: 3.85s; }
 .fs-brand { display: grid; justify-items: center; gap: 6px; text-align: center; }
-.fs-brand svg { width: 44px; height: 44px; fill: #d4af37; }
+.fs-brand svg { width: 44px; height: 44px; fill: #f6f5f1; }
 .fs-brand h1 { margin: 4px 0 0; font-size: 24px; letter-spacing: -0.02em; color: #fff; }
 .fs-brand p { margin: 0; color: rgba(246, 245, 241, 0.6); font-size: 14px; }
 .fs .btn-dark { background: #f6f5f1; color: #0a0a0a; }
