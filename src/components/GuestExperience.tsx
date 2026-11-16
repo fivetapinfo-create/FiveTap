@@ -138,6 +138,11 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
               <span className="gx-tile-txt"><b>{copy.review}</b><span className="rate-stars" aria-hidden="true"><StarSolid /><StarSolid /><StarSolid /><StarSolid /><StarSolid /></span></span>
               <Chevron />
             </a>
+            <a className="gx-tile rise" style={i(6)} href={managerHref}>
+              <span className="gx-tile-ic"><Chat /></span>
+              <span className="gx-tile-txt"><b>{copy.manager}</b><small>{copy.managerHint}</small></span>
+              <Chevron />
+            </a>
             {clubHref && (
               <a className="gx-tile rise" style={i(6)} href={clubHref}>
                 <span className="gx-tile-ic"><Gift /></span>
@@ -188,11 +193,6 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
                 </div>
               </details>
             )}
-            <a className="gx-tile rise" style={i(9)} href={managerHref}>
-              <span className="gx-tile-ic"><Chat /></span>
-              <span className="gx-tile-txt"><b>{copy.manager}</b><small>{copy.managerHint}</small></span>
-              <Chevron />
-            </a>
             {maps && s.location && (
               <Ext className="gx-tile rise" href={maps}>
                 <span className="gx-tile-ic"><Route /></span>
