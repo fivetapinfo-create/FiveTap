@@ -21,6 +21,9 @@ export type Experience = {
   facebook: string | null;
   tiktok: string | null;
   website: string | null;
+  /** Guest Wi-Fi shown on the NFC page (name and password), when the business wants it. */
+  wifi_ssid: string | null;
+  wifi_password: string | null;
   gallery: string[];
   sections: Sections;
 };
@@ -32,7 +35,7 @@ export const ALL_SECTIONS: Sections = { promos: true, catalog: true, gallery: tr
 
 export const EMPTY_EXPERIENCE: Experience = {
   cover_url: null, tagline: null, about: null, policies: null, catalog_title: null, hours: [],
-  address: null, maps_url: null, phone: null, whatsapp: null, instagram: null, facebook: null, tiktok: null, website: null,
+  address: null, maps_url: null, phone: null, whatsapp: null, instagram: null, facebook: null, tiktok: null, website: null, wifi_ssid: null, wifi_password: null,
   gallery: [], sections: ALL_SECTIONS,
 };
 
@@ -103,7 +106,7 @@ export function socialUrl(kind: "instagram" | "facebook" | "tiktok", v: string |
 
 /** True when a published experience has something beyond the review card. */
 export function hasContent(e: Experience, promos: number, items: number) {
-  return Boolean(e.cover_url || e.tagline || e.about || e.hours.length || e.address || e.whatsapp || e.phone || e.gallery.length || promos || items);
+  return Boolean(e.cover_url || e.tagline || e.about || e.hours.length || e.address || e.whatsapp || e.phone || e.wifi_ssid || e.gallery.length || promos || items);
 }
 
 const SOCIAL_HOSTS = { instagram: ["instagram.com"], facebook: ["facebook.com", "fb.com", "m.facebook.com"], tiktok: ["tiktok.com"] } as const;

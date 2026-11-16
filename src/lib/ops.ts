@@ -196,7 +196,7 @@ export const TOOLS = {
     },
   },
   update_experience_draft: {
-    description: "Cambia el BORRADOR de la experiencia NFC (no se publica): frase, descripción, políticas, nombre del catálogo, horario, dirección, Maps, teléfono, WhatsApp, Instagram, TikTok, Facebook, web y apartados visibles. Solo cambia los campos que envíes. Valida redes (solo su dominio) y WhatsApp.",
+    description: "Cambia el BORRADOR de la experiencia NFC (no se publica): frase, descripción, políticas, nombre del catálogo, horario, dirección, Maps, teléfono, WhatsApp, Instagram, TikTok, Facebook, web, Wi-Fi de clientes (wifi_ssid, wifi_password) y apartados visibles. Solo cambia los campos que envíes. Valida redes (solo su dominio) y WhatsApp.",
     inputSchema: {
       type: "object",
       properties: {
@@ -205,6 +205,7 @@ export const TOOLS = {
         hours: { type: "array", description: "7 elementos, domingo=0..sábado=6: {open:'HH:MM', close:'HH:MM'} o null si cierra", items: { type: ["object", "null"] } },
         address: { type: "string" }, maps_url: { type: "string" }, phone: { type: "string" }, whatsapp: { type: "string" },
         instagram: { type: "string" }, tiktok: { type: "string" }, facebook: { type: "string" }, website: { type: "string" },
+        wifi_ssid: { type: "string", description: "Solo la red de clientes" }, wifi_password: { type: "string" },
         sections: { type: "object", description: "promos, catalog, gallery, info, location, contact, social: true/false" },
       },
       required: ["business_id"],
@@ -220,6 +221,8 @@ export const TOOLS = {
       const url = (v: unknown, name: string) => { const s = str(v, 400); if (!s) return null; try { const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`); return u.toString(); } catch { return fail(`Revisa el enlace de ${name}.`); } };
       if ("maps_url" in a) { next.maps_url = url(a.maps_url, "Maps"); changed.push("maps_url"); }
       if ("website" in a) { next.website = url(a.website, "la web"); changed.push("website"); }
+      if ("wifi_ssid" in a) { next.wifi_ssid = str(a.wifi_ssid, 64) || null; if (!next.wifi_ssid) next.wifi_password = null; changed.push("wifi_ssid"); }
+      if ("wifi_password" in a) { next.wifi_password = next.wifi_ssid ? str(a.wifi_password, 64) || null : null; changed.push("wifi_password"); }
       if ("whatsapp" in a) { const w = str(a.whatsapp, 30); if (w && !waDigits(w)) fail("WhatsApp no válido: 8 dígitos o con código de país."); next.whatsapp = w || null; changed.push("whatsapp"); }
       for (const k of ["instagram", "tiktok", "facebook"] as const) if (k in a) { const r = checkSocial(k, typeof a[k] === "string" ? (a[k] as string) : null); if (r.error) fail(r.error); next[k] = r.value; changed.push(k); }
       if ("hours" in a) {
@@ -235,6 +238,22 @@ export const TOOLS = {
       if (error) fail(error.message);
       await log("update_experience_draft", b, { fields: changed });
       return { saved: true, published: false, changed, preview_url: `${SITE_URL}/admin/b/${b.id}/experiencia/vista`, note: "Es borrador: usa publish_experience cuando el fundador lo apruebe." };
+    },
+  },
+  set_brand_colors: {
+    description: "Fija los colores del negocio en su página NFC: primary (portada y botón de reseña) y accent (iconos), en hex #RRGGBB. Úsalo después de mirar el logo y elegir colores fieles a su identidad; el texto siempre se ajusta para leerse bien. Se ve al instante (no es borrador). Requiere confirm_business_name.",
+    inputSchema: { type: "object", properties: { business_id: { type: "string" }, primary: { type: "string" }, accent: { type: "string" }, confirm_business_name: { type: "string" } }, required: ["business_id", "primary", "confirm_business_name"] },
+    async run(a: Record<string, unknown>) {
+      const b = await biz(a.business_id); confirmName(b, a.confirm_business_name);
+      const ok = (v: unknown) => /^#[0-9a-f]{6}$/i.test(str(v, 7));
+      if (!ok(a.primary)) fail("primary debe ser un color hex como #1F6F5C.");
+      if (a.accent != null && !ok(a.accent)) fail("accent debe ser un color hex como #E0A93B.");
+      const before = (await db().from("businesses").select("brand_color, brand_accent").eq("id", b.id).maybeSingle()).data;
+      const patch = { brand_color: str(a.primary, 7).toLowerCase(), brand_accent: a.accent ? str(a.accent, 7).toLowerCase() : null };
+      const { error } = await db().from("businesses").update(patch).eq("id", b.id);
+      if (error) fail(error.message);
+      await log("set_brand_colors", b, { from: before, to: patch });
+      return { saved: true, ...patch, preview_url: `${SITE_URL}/admin/b/${b.id}/experiencia/vista` };
     },
   },
   upload_image: {

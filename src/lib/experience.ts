@@ -122,6 +122,8 @@ export async function saveDraft(businessId: string, f: FormData) {
     facebook: social("facebook"),
     tiktok: social("tiktok"),
     website: url(f, "website"),
+    wifi_ssid: text(f, "wifi_ssid", 64),
+    wifi_password: text(f, "wifi_ssid", 64) ? text(f, "wifi_password", 64) : null,
     gallery,
     sections,
   };

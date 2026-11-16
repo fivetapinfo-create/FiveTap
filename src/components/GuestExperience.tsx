@@ -1,7 +1,8 @@
-import { onColor, safeColor } from "@/lib/brand";
+import { palette } from "@/lib/brand";
 import { openState, socialUrl, waDigits, type CatalogItem, type Experience, type Promotion } from "@/lib/experience-shape";
 import type { Copy, Lang } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
+import { CopyText } from "./CopyText";
 import { Bag, Calendar, Camera, Facebook, TikTok, Chat, Clock, Gift, Globe, Phone, Route, StarSolid, Tag } from "./Icons";
 import { LogoMark } from "./Logo";
 import type { GuestBusiness } from "./GuestCard";
@@ -23,6 +24,20 @@ type Props = {
   /** Founder preview: links inside the page do nothing, nothing is counted. */
   preview?: boolean;
 };
+
+const Chevron = () => (
+  <svg className="gx-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+);
+const Wifi = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 15.9a5 5 0 0 1 6.8 0" /><path d="M12 19.5h.01" strokeWidth="2.6" /></svg>
+);
+const Menu = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2.5" /><path d="M8.5 8h7M8.5 12h7M8.5 16h4" /></svg>
+);
+/** Google's "G", in its own colors (the review button points to Google). */
+const GoogleG = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" /><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" /><path fill="#FBBC05" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14z" /><path fill="#EA4335" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10c.8-2.3 3-4.1 5.6-4.1z" /></svg>
+);
 
 const i = (n: number) => ({ "--i": n }) as React.CSSProperties;
 const fill = (s: string, k: string, v: string) => s.replace(`{${k}}`, v);
@@ -46,9 +61,16 @@ const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits
  * and only the sections the business turned on and filled in.
  */
 export function GuestExperience({ business, experience: e, promos, items, copy, lang, reviewHref, managerHref, clubHref, orderHref, reserveHref, preview }: Props) {
-  const brand = safeColor(business.brand_color, "#0a0a0a");
-  const custom = brand.toLowerCase() !== "#0a0a0a" && brand.toLowerCase() !== "#111111";
-  const style = { "--brand": custom ? brand : undefined, "--on-brand": custom ? onColor(brand) : undefined } as React.CSSProperties;
+  // Each business wears its own colors: main (cover, review button), secondary (icons), a soft page tint.
+  const pal = palette(business.brand_color, business.brand_accent);
+  const brand = pal.brand;
+  const style = {
+    "--brand": pal.custom ? pal.brand : undefined,
+    "--on-brand": pal.custom ? pal.onBrand : undefined,
+    "--gx-accent": pal.accent,
+    "--gx-accent-soft": pal.accentSoft,
+    "--gx-tint": pal.tint ?? undefined,
+  } as React.CSSProperties;
   const link = (href: string | null) => (preview ? "#" : href ?? "#");
   const state = openState(e.hours);
   const wa = waDigits(e.whatsapp);
@@ -107,34 +129,90 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
       </header>
 
       <div className="guest-wrap gx-wrap">
-        {(orderHref || reserveHref) && (
-          <div className={`gx-mods rise${orderHref && reserveHref ? " two" : ""}`} style={i(4)}>
-            {orderHref && <a className="gx-order" href={preview ? "#" : orderHref}><Bag /><span>{copy.oOrder}</span><b aria-hidden="true">→</b></a>}
-            {reserveHref && <a className={`gx-order${orderHref ? " gx-order-alt" : ""}`} href={preview ? "#" : reserveHref}><Calendar /><span>{copy.rReserve}</span><b aria-hidden="true">→</b></a>}
-          </div>
-        )}
-        {(wa || tel || maps) && (
-          <div className="gx-quick rise" style={i(4)}>
-            {wa && <Ext className="gx-quick-btn" href={`https://wa.me/${wa}`}><Chat /><span>{copy.xWhatsApp}</span></Ext>}
-            {tel && <a className="gx-quick-btn" href={preview ? "#" : `tel:${tel}`}><Phone /><span>{copy.xCall}</span></a>}
-            {maps && s.location && <Ext className="gx-quick-btn" href={maps}><Route /><span>{copy.xDirections}</span></Ext>}
-          </div>
-        )}
-
-        <section className="gx-review rise" style={i(5)} aria-labelledby="gx-q">
-          <h2 id="gx-q" className="gx-q">{copy.question}</h2>
-          <nav className="guest-actions gx-actions" aria-label={copy.question}>
-            {/* Plain <a>: the click is counted server-side and must never be prefetched. */}
-            <a className="choice choice-primary choice-rate" href={reviewHref}>
-              <span>{copy.review}</span>
-              <span className="rate-stars" aria-hidden="true"><StarSolid /><StarSolid /><StarSolid /><StarSolid /><StarSolid /></span>
+        <section className="gx-review" aria-labelledby="gx-q">
+          <h2 id="gx-q" className="gx-q rise" style={i(4)}>{copy.question}</h2>
+          <nav className="gx-tiles" aria-label={copy.question}>
+            {/* Plain <a>: the click is counted server-side and must never be prefetched. Shown to everyone, always. */}
+            <a className="gx-tile gx-tile-main rise" style={i(5)} href={reviewHref}>
+              <span className="gx-tile-ic gx-g"><GoogleG /></span>
+              <span className="gx-tile-txt"><b>{copy.review}</b><span className="rate-stars" aria-hidden="true"><StarSolid /><StarSolid /><StarSolid /><StarSolid /><StarSolid /></span></span>
+              <Chevron />
             </a>
-            <a className="choice choice-two" href={managerHref}>
-              <Chat />
-              <span><b>{copy.manager}</b><small>{copy.managerHint}</small></span>
+            {clubHref && (
+              <a className="gx-tile rise" style={i(6)} href={clubHref}>
+                <span className="gx-tile-ic"><Gift /></span>
+                <span className="gx-tile-txt"><b>{copy.club}</b></span>
+                <Chevron />
+              </a>
+            )}
+            {orderHref && (
+              <a className="gx-tile rise" style={i(6)} href={preview ? "#" : orderHref}>
+                <span className="gx-tile-ic"><Bag /></span>
+                <span className="gx-tile-txt"><b>{copy.oOrder}</b></span>
+                <Chevron />
+              </a>
+            )}
+            {reserveHref && (
+              <a className="gx-tile rise" style={i(7)} href={preview ? "#" : reserveHref}>
+                <span className="gx-tile-ic"><Calendar /></span>
+                <span className="gx-tile-txt"><b>{copy.rReserve}</b></span>
+                <Chevron />
+              </a>
+            )}
+            {showCatalog && (
+              <a className="gx-tile rise" style={i(7)} href="#catalogo">
+                <span className="gx-tile-ic"><Menu /></span>
+                <span className="gx-tile-txt"><b>{`${copy.xView} ${(e.catalog_title || copy.xCatalog).toLowerCase()}`}</b></span>
+                <Chevron />
+              </a>
+            )}
+            {showPromos && (
+              <a className="gx-tile rise" style={i(8)} href="#promos">
+                <span className="gx-tile-ic"><Tag /></span>
+                <span className="gx-tile-txt"><b>{copy.xPromos}</b><small>{fill(copy.xPromosHint, "n", String(promos.length))}</small></span>
+                <Chevron />
+              </a>
+            )}
+            {e.wifi_ssid && (
+              <details className="gx-tile gx-tile-wifi rise" style={i(8)}>
+                <summary>
+                  <span className="gx-tile-ic"><Wifi /></span>
+                  <span className="gx-tile-txt"><b>{copy.xWifi}</b><small>{e.wifi_ssid}</small></span>
+                  <Chevron />
+                </summary>
+                <div className="gx-wifi">
+                  <div><small>{copy.xWifiNet}</small><b>{e.wifi_ssid}</b></div>
+                  {e.wifi_password ? (
+                    <div className="gx-wifi-pass"><span><small>{copy.xWifiPass}</small><b className="num">{e.wifi_password}</b></span><CopyText value={e.wifi_password} label={copy.xCopy} done={copy.xCopied} /></div>
+                  ) : <small>{copy.xWifiOpen}</small>}
+                </div>
+              </details>
+            )}
+            <a className="gx-tile rise" style={i(9)} href={managerHref}>
+              <span className="gx-tile-ic"><Chat /></span>
+              <span className="gx-tile-txt"><b>{copy.manager}</b><small>{copy.managerHint}</small></span>
+              <Chevron />
             </a>
+            {maps && s.location && (
+              <Ext className="gx-tile rise" href={maps}>
+                <span className="gx-tile-ic"><Route /></span>
+                <span className="gx-tile-txt"><b>{copy.xDirections}</b>{e.address && <small>{e.address}</small>}</span>
+                <Chevron />
+              </Ext>
+            )}
+            {wa && (
+              <Ext className="gx-tile rise" href={`https://wa.me/${wa}`}>
+                <span className="gx-tile-ic"><Phone /></span>
+                <span className="gx-tile-txt"><b>{copy.xWhatsApp}</b><small>{e.whatsapp}</small></span>
+                <Chevron />
+              </Ext>
+            )}
           </nav>
-          {clubHref && <a className="guest-club" href={clubHref}><Gift /> {copy.club}</a>}
+          {networks.length > 0 && (
+            <div className="gx-netrow rise" style={i(10)}>
+              {networks.map((x) => <Ext key={x.k} className={`gx-netdot gx-net-${x.k}`} href={x.url!}>{x.icon}<span className="sr-only">{x.label}</span></Ext>)}
+            </div>
+          )}
         </section>
 
         {nav.length > 1 && (

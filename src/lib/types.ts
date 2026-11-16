@@ -9,6 +9,8 @@ export type Business = {
   kind: string;
   logo_url: string | null;
   brand_color: string;
+  /** Secondary brand color (icons and accents on the NFC page). */
+  brand_accent: string | null;
   google_review_url: string;
   manager_email: string | null;
   manager_name: string | null;

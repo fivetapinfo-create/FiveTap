@@ -1,6 +1,7 @@
 import { type Plan, planOf } from "@/lib/plans";
 import { PlanPicker, type PickPlan } from "./PlanPicker";
 import { KindSelect } from "./KindSelect";
+import { BrandColors } from "./BrandColors";
 
 const pick = (plans: Plan[], keep?: string): PickPlan[] =>
   plans.filter((p) => p.active || p.key === keep).map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards, lanyards: p.lanyards, flex_pieces: p.flex_pieces, line: p.line }));
@@ -91,10 +92,7 @@ export function OptionFields({ b, plans, planKey, compact }: { b?: Business; pla
             <small>Vacío: el precio del plan elegido arriba.</small>
           </label>
         )}
-        <label className="field">
-          <span>Color del botón principal</span>
-          <input className="input" type="color" name="brand_color" defaultValue={b?.brand_color ?? "#0a0a0a"} />
-        </label>
+        <BrandColors primary={b?.brand_color} accent={b?.brand_accent} logoUrl={b?.logo_url} />
       </div>
       {/* One-time pieces are no longer sold; kept only for venues that already had them. */}
       <input type="hidden" name="mode" value={b?.mode === "google" ? "google" : "full"} />

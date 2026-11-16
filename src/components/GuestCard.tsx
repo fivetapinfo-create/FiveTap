@@ -4,7 +4,7 @@ import { BusinessLogo } from "./BusinessLogo";
 import { Bag, Calendar, Chat, Gift, StarSolid } from "./Icons";
 import { LogoMark } from "./Logo";
 
-export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string };
+export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string; brand_accent?: string | null };
 
 /** The page a guest sees after tapping. One question, two choices. */
 export function GuestCard({

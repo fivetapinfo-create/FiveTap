@@ -170,6 +170,11 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
                 <label className="field"><span>TikTok</span><input className="input" name="tiktok" maxLength={120} defaultValue={d.tiktok ?? ""} placeholder="@negocio" /></label>
                 <label className="field"><span>Sitio web</span><input className="input" name="website" maxLength={400} defaultValue={d.website ?? ""} placeholder="negocio.com" /></label>
               </div>
+              <div className="grid-2">
+                <label className="field"><span>Wi-Fi para clientes · nombre de la red (opcional)</span><input className="input" name="wifi_ssid" maxLength={64} defaultValue={d.wifi_ssid ?? ""} placeholder="Cafe_Clientes" autoComplete="off" /></label>
+                <label className="field"><span>Contraseña del Wi-Fi</span><input className="input" name="wifi_password" maxLength={64} defaultValue={d.wifi_password ?? ""} placeholder="Vacío si es abierta" autoComplete="off" /></label>
+              </div>
+              <small className="muted">Solo el Wi-Fi de clientes, nunca el de la caja o la oficina. En la placa se muestra con un botón para copiar la contraseña.</small>
               <small className="muted">Instagram, TikTok y Facebook aceptan @usuario o el enlace del perfil, y solo de su propio dominio. FiveTap no puede confirmar que el perfil exista: ábrelo y revísalo antes de publicar.</small>
               {(["instagram", "tiktok", "facebook"] as const).some((k) => d[k]) || waDigits(d.whatsapp) ? (
                 <div className="row xp-verify">
