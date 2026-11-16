@@ -59,21 +59,21 @@ export function Report({ business, periods, snapshots = [] }: { business: string
 function reportText(business: string, p: ReportPeriod, stars: string, count: string, before?: ReviewSnapshot) {
   const rate = p.scans ? Math.min(100, Math.round((p.reviews / p.scans) * 100)) : 0;
   const lines = [
-    `Hola 👋 Este es el reporte de FiveTap de *${business}* — ${p.label}.`,
+    `Hola. Este es el reporte de FiveTap de *${business}* — ${p.label}.`,
     "",
-    `📲 *${p.scans}* ${p.scans === 1 ? "cliente tocó" : "clientes tocaron"} las placas.`,
-    `⭐ *${p.reviews}* ${p.reviews === 1 ? "fue" : "fueron"} a dejar su reseña en Google${p.scans ? ` (${rate}% de los que la tocaron)` : ""}.`,
-    `💬 *${p.feedback}* ${p.feedback === 1 ? "mensaje privado llegó" : "mensajes privados llegaron"} directo a ti, sin pasar por Google.`,
+    `· *${p.scans}* ${p.scans === 1 ? "cliente tocó" : "clientes tocaron"} las placas.`,
+    `· *${p.reviews}* ${p.reviews === 1 ? "fue" : "fueron"} a dejar su reseña en Google${p.scans ? ` (${rate}% de los que la tocaron)` : ""}.`,
+    `· *${p.feedback}* ${p.feedback === 1 ? "mensaje privado llegó" : "mensajes privados llegaron"} directo a ti, sin pasar por Google.`,
   ];
-  if (p.club > 0) lines.push(`🎁 *${p.club}* ${p.club === 1 ? "cliente nuevo se unió" : "clientes nuevos se unieron"} a tu club de WhatsApp.`);
-  if (p.top && p.top.scans > 0) lines.push(`🏆 Con más actividad: ${p.top.label} (${p.top.scans}).`);
+  if (p.club > 0) lines.push(`· *${p.club}* ${p.club === 1 ? "cliente nuevo se unió" : "clientes nuevos se unieron"} a tu club de WhatsApp.`);
+  if (p.top && p.top.scans > 0) lines.push(`· Con más actividad: ${p.top.label} (${p.top.scans}).`);
   if (stars || count) {
     const parts = [stars && `${stars} estrellas`, count && `${count} reseñas`].filter(Boolean).join(" · ");
-    lines.push(`📍 Tu perfil de Google hoy: ${parts}.`);
+    lines.push(`· Tu perfil de Google hoy: ${parts}.`);
   }
   const now = Number(count);
   if (before && count && Number.isFinite(now) && now > before.reviews) {
-    lines.push(`📈 Antes de FiveTap tenías *${before.reviews}* reseñas. Hoy tienes *${now}*: *+${now - before.reviews}* gracias a tus clientes felices.`);
+    lines.push(`· Antes de FiveTap tenías *${before.reviews}* reseñas. Hoy tienes *${now}*: *+${now - before.reviews}* gracias a tus clientes felices.`);
   }
   lines.push("", "Cualquier cosa me escribes. — FiveTap");
   return lines.join("\n");

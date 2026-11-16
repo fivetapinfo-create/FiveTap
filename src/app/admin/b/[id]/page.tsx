@@ -70,7 +70,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const preview = firstActive ? `/t/${firstActive.code}?preview=1` : null;
   const payLink = `${SITE_URL}/pagar?n=${encodeURIComponent(b.name)}`;
   const access = (name: string | null, rol: "dueno" | "gerente") =>
-    `Hola${name ? ` ${name.split(" ")[0]}` : ""} 👋 Este es tu acceso privado a FiveTap de *${b.name}*:\n${ownerLink}?instalar=1&rol=${rol}\n\nAhí ves en tiempo real cuántos clientes tocan tus placas y van a dejarte reseña en Google, tus mensajes privados y tu club.\n\n📲 Para tenerlo como app: ábrelo en Safari (iPhone) o Chrome (Android) y sigue los 3 pasos que salen arriba. Al final toca “Activar avisos”.\n\n🔒 Es privado: la primera vez te pide tu código de acceso, que te envío en el siguiente mensaje. Sin el código nadie más puede entrar. — FiveTap`;
+    `Hola${name ? ` ${name.split(" ")[0]}` : ""}. Este es tu acceso privado a FiveTap de *${b.name}*:\n${ownerLink}?instalar=1&rol=${rol}\n\nAhí ves en tiempo real cuántos clientes tocan tus placas y van a dejarte reseña en Google, tus mensajes privados y tu club.\n\n Para tenerlo como app: ábrelo en Safari (iPhone) o Chrome (Android) y sigue los 3 pasos que salen arriba. Al final toca “Activar avisos”.\n\n Es privado: la primera vez te pide tu código de acceso, que te envío en el siguiente mensaje. Sin el código nadie más puede entrar. — FiveTap`;
   const codeText = (name: string | null, rol: "dueno" | "gerente") =>
     `${name ? `${name.split(" ")[0]}, este` : "Este"} es tu código de acceso a FiveTap Business de *${b.name}* (${rol === "dueno" ? "dueño/a" : "gerente"}):\n\n*${rol === "dueno" ? codes.owner : codes.manager}*\n\nNo lo compartas: es solo para ti. — FiveTap`;
   const accessFor = [
