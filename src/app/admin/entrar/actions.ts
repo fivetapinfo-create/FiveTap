@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ADMIN_COOKIE, ADMIN_COOKIE_DAYS, adminPasswords, adminSessionValue, safeEqual } from "@/lib/admin-session";
+import { ADMIN_COOKIE, ADMIN_COOKIE_DAYS, LOCK_COOKIE, UNLOCK_COOKIE, UNLOCK_MINUTES, adminPasswords, adminSessionValue, lockCookieOptions, safeEqual, unlockValue } from "@/lib/admin-session";
 import { passkeyOnly } from "@/lib/passkeys";
 
 const safeNext = (v: string) => (v.startsWith("/admin") && !v.startsWith("/admin/entrar") ? v : "/admin");
@@ -21,17 +21,22 @@ export async function signIn(f: FormData) {
     await new Promise((r) => setTimeout(r, 800)); // Slows down guessing.
     redirect(`/admin/entrar?error=1&next=${encodeURIComponent(next)}`);
   }
-  (await cookies()).set(ADMIN_COOKIE, await adminSessionValue(password), {
+  const jar = await cookies();
+  jar.set(ADMIN_COOKIE, await adminSessionValue(password), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: ADMIN_COOKIE_DAYS * 86_400,
   });
+  // The password also unlocks a Face ID device (for when Face ID fails); it stays a Face ID device.
+  if (jar.get(LOCK_COOKIE)?.value === "1") jar.set(UNLOCK_COOKIE, await unlockValue(), { ...lockCookieOptions, maxAge: UNLOCK_MINUTES * 60 });
   redirect(next);
 }
 
 export async function signOut() {
-  (await cookies()).delete(ADMIN_COOKIE);
+  const jar = await cookies();
+  jar.delete(ADMIN_COOKIE);
+  jar.delete(UNLOCK_COOKIE);
   redirect("/admin/entrar");
 }

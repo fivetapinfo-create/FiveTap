@@ -18,10 +18,33 @@ const FaceIcon = () => (
 );
 
 /** "Entrar con Face ID": the device proves it is the founder; no password typed. */
-export function PasskeyLogin({ next }: { next: string }) {
+export function PasskeyLogin({ next, auto = false }: { next: string; auto?: boolean }) {
   const [state, setState] = useState<"idle" | "working" | "error" | "unsupported">("idle");
   const [msg, setMsg] = useState("");
-  useEffect(() => { if (!browserSupportsWebAuthn()) setState("unsupported"); }, []);
+  const run = async (silent: boolean) => {
+    setState("working"); setMsg("");
+    try {
+      const options = await call({ step: "login-options" });
+      const response = await startAuthentication({ optionsJSON: options });
+      await call({ step: "login-verify", response });
+      window.location.assign(next);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "";
+      // When Face ID was opened on its own and the phone did not allow it, just wait for the tap.
+      if (silent && /NotAllowed|cancel|abort|gesture|activation/i.test(m)) { setState("idle"); return; }
+      setMsg(/NotAllowed|cancel|abort/i.test(m) ? "Cancelaste la verificación. Inténtalo otra vez." : m || "No se pudo entrar.");
+      setState("error");
+    }
+  };
+  useEffect(() => {
+    if (!browserSupportsWebAuthn()) { setState("unsupported"); return; }
+    // Face ID opens by itself once the entrance animation (if any) has finished.
+    if (!auto) return;
+    const playing = document.documentElement.getAttribute("data-ft-intro-founder") === "play";
+    const t = setTimeout(() => void run(true), playing ? 4400 : 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   if (state === "unsupported") return null;
   return (
     <div className="pk-login">
@@ -29,19 +52,7 @@ export function PasskeyLogin({ next }: { next: string }) {
         type="button"
         className="btn btn-dark btn-block pk-btn"
         disabled={state === "working"}
-        onClick={async () => {
-          setState("working"); setMsg("");
-          try {
-            const options = await call({ step: "login-options" });
-            const response = await startAuthentication({ optionsJSON: options });
-            await call({ step: "login-verify", response });
-            window.location.assign(next);
-          } catch (e) {
-            const m = e instanceof Error ? e.message : "";
-            setMsg(/NotAllowed|cancel|abort/i.test(m) ? "Cancelaste la verificación. Inténtalo otra vez." : m || "No se pudo entrar.");
-            setState("error");
-          }
-        }}
+        onClick={() => void run(false)}
       >
         <FaceIcon /> {state === "working" ? "Verificando…" : "Entrar con Face ID o huella"}
       </button>

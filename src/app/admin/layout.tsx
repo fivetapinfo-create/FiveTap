@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import Link from "next/link";
 import { FounderIntro } from "@/components/FounderIntro";
+import { PanelLock } from "@/components/PanelLock";
 import { Logo } from "@/components/Logo";
-import { ADMIN_HEADER } from "@/lib/admin-session";
+import { ADMIN_HEADER, LOCK_COOKIE, UNLOCK_MINUTES } from "@/lib/admin-session";
 import { agenda, billingAll, todayPanama } from "@/lib/agenda";
 import { unreadCount } from "@/lib/data";
 import { siteUrlIsLocal } from "@/lib/site";
@@ -30,9 +31,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     openTicketsCount().catch(() => 0),
     pendingClaimsCount().catch(() => 0),
   ]);
+  const faceId = (await cookies()).get(LOCK_COOKIE)?.value === "1";
   return (
     <div className="admin">
       <FounderIntro />
+      {faceId && <PanelLock minutes={UNLOCK_MINUTES} />}
       <header className="admin-top no-print">
         <div className="container">
           <Link href="/admin"><Logo size={20} /></Link>

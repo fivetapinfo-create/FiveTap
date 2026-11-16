@@ -8,11 +8,12 @@ import { signIn } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ next?: string; error?: string }> };
+type Props = { searchParams: Promise<{ next?: string; error?: string; bloqueado?: string }> };
 
 /** The founder's door: the entrance animation, then Face ID (or fingerprint) first, password as the alternative. */
 export default async function SignIn({ searchParams }: Props) {
-  const { next = "/admin", error } = await searchParams;
+  const { next = "/admin", error, bloqueado } = await searchParams;
+  const locked = bloqueado === "1";
   const safeNext = next.startsWith("/admin") && !next.startsWith("/admin/entrar") ? next : "/admin";
   const [{ rpID }, only] = await Promise.all([relyingParty(), passkeyOnly().catch(() => false)]);
   const hasKeys = (await listPasskeys(rpID).catch(() => [])).length > 0;
@@ -38,9 +39,9 @@ export default async function SignIn({ searchParams }: Props) {
         <div className="fs-brand">
           <svg viewBox="0 0 100 100" aria-hidden="true"><path d={MARK_PATH} /></svg>
           <h1>FiveTap Founder</h1>
-          <p>Acceso privado del fundador</p>
+          <p>{locked && hasKeys ? "Tu panel se bloqueó. Desbloquéalo con Face ID." : "Acceso privado del fundador"}</p>
         </div>
-        {hasKeys && <PasskeyLogin next={safeNext} />}
+        {hasKeys && <PasskeyLogin next={safeNext} auto />}
         {hasKeys ? (
           <details className="fs-alt" open={Boolean(error)}>
             <summary>{only ? "¿Perdiste tu dispositivo? Usa la contraseña de respaldo" : "Entrar con usuario y contraseña"}</summary>

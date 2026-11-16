@@ -6,7 +6,7 @@ import {
   type AuthenticationResponseJSON, type AuthenticatorTransportFuture, type RegistrationResponseJSON,
 } from "@simplewebauthn/server";
 import { isoBase64URL, isoUint8Array } from "@simplewebauthn/server/helpers";
-import { ADMIN_COOKIE, ADMIN_COOKIE_DAYS, adminSessionValue } from "./admin-session";
+import { ADMIN_COOKIE, ADMIN_COOKIE_DAYS, LOCK_COOKIE, UNLOCK_COOKIE, UNLOCK_MINUTES, adminSessionValue, lockCookieOptions, unlockValue } from "./admin-session";
 import { db } from "./supabase";
 
 // Founder sign-in with a passkey (Face ID, Touch ID, fingerprint or the phone's screen lock),
@@ -82,6 +82,14 @@ export async function finishRegistration(response: RegistrationResponseJSON, dev
     transports: c.transports ?? [], device_name: deviceName.trim().slice(0, 60) || "Mi dispositivo", rp_id: rpID,
   });
   if (error) throw new Error(error.message);
+  await markFaceIdDevice();
+}
+
+/** From now on this device asks for Face ID when the panel is opened after a few minutes away. */
+async function markFaceIdDevice() {
+  const jar = await cookies();
+  jar.set(LOCK_COOKIE, "1", { ...lockCookieOptions, maxAge: ADMIN_COOKIE_DAYS * 86_400 });
+  jar.set(UNLOCK_COOKIE, await unlockValue(), { ...lockCookieOptions, maxAge: UNLOCK_MINUTES * 60 });
 }
 
 /** Sign-in step 1: a challenge any of the founder's passkeys on this domain can answer. */
@@ -114,6 +122,7 @@ export async function finishAuthentication(response: AuthenticationResponseJSON)
   const main = process.env.ADMIN_PASSWORD;
   if (!main) throw new Error("Falta la configuración del panel.");
   (await cookies()).set(ADMIN_COOKIE, await adminSessionValue(main), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: ADMIN_COOKIE_DAYS * 86_400 });
+  await markFaceIdDevice();
 }
 
 export async function passkeyOnly() {
