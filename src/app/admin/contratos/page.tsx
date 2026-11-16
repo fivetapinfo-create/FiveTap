@@ -216,7 +216,7 @@ export default async function Contracts({ searchParams }: Props) {
                     <tr key={a.id} className={sp.c === a.id ? "row-new" : undefined}>
                       <td><b>{a.number}</b></td>
                       <td>{a.business_id ? <Link href={`/admin/b/${a.business_id}`}>{a.venue_name}</Link> : a.venue_name}<br /><small className="muted">Firma: {a.signer_name}</small></td>
-                      <td>{a.plan_name}<br /><small className="muted">{money2(a.monthly_fee)}/mes · {a.plaques} placas · {a.cards} tarjetas</small></td>
+                      <td>{a.plan_name}<br /><small className="muted">{money2(a.monthly_fee)}/mes · {a.plaques} {a.plaques === 1 ? "placa" : "placas"} · {a.cards} {a.cards === 1 ? "tarjeta" : "tarjetas"}</small></td>
                       <td>{longDay(a.start_date)} al {longDay(a.end_date)}<br /><small className="muted">{status}</small></td>
                       <td>
                         <span className={`pill ${st === "both" ? "bill-ok" : st === "client" ? "bill-soon" : st === "changed" ? "bill-late" : ""}`}>{SIGN_LABEL[st]}</span>

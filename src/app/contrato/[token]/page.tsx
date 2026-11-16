@@ -38,7 +38,7 @@ export default async function ContractPage({ params, searchParams }: { params: P
         <div><small>Mensualidad</small><b>{money2(a.monthly_fee)} USD</b></div>
         <div><small>Duración</small><b>{AGREEMENT_MONTHS} meses</b></div>
         <div><small>Vigencia</small><b>{longDay(a.start_date)} al {longDay(a.end_date)}</b></div>
-        <div><small>Placas y tarjetas</small><b>{a.plaques} placas · {a.cards} tarjetas</b></div>
+        <div><small>Placas y tarjetas</small><b>{a.plaques} {a.plaques === 1 ? "placa" : "placas"} · {a.cards} {a.cards === 1 ? "tarjeta" : "tarjetas"}</b></div>
         <div><small>Forma de pago</small><b>{a.payment_method}</b></div>
         <div><small>Firma por el negocio</small><b>{a.signer_name} · {a.signer_role}</b></div>
       </section>
