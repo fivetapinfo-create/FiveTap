@@ -20,6 +20,7 @@ const MORE: { href: string; label: string; hint: string }[] = [
   { href: "/admin/empresa", label: "Empresa", hint: "Datos de FiveTap e ingresos" },
   { href: "/admin/soporte", label: "Soporte", hint: "Solicitudes de tus clientes" },
   { href: "/admin/claude", label: "Actividad de Claude", hint: "Lo que Claude hizo y cómo conectarlo" },
+  { href: "/admin/seguridad", label: "Seguridad", hint: "Face ID y llaves de acceso" },
 ];
 
 /** Panel menu; the current section is highlighted the moment it's tapped. */

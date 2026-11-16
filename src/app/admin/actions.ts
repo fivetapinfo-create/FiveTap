@@ -1120,3 +1120,32 @@ export async function contractSigning(f: FormData) {
   revalidatePath(back);
   redirect(`${back}?ok=contrato-firma&c=${id}`);
 }
+
+/** Founder: remove a passkey, or turn "passkey only" sign-in on or off. */
+export async function managePasskeys(f: FormData) {
+  const back = "/admin/seguridad";
+  const op = str(f, "op", 20);
+  try {
+    if (op === "remove") {
+      const { count } = await db().from("admin_passkeys").select("id", { count: "exact", head: true });
+      const only = (await db().from("company").select("passkey_only").limit(1).maybeSingle()).data?.passkey_only;
+      if (only && (count ?? 0) <= 1) throw new Error("Es tu única llave de acceso y el modo solo llave está activo. Agrega otra o vuelve a permitir la contraseña antes de quitarla.");
+      await db().from("admin_passkeys").delete().eq("id", str(f, "id", 60));
+    } else if (op === "passkey-only" || op === "allow-password") {
+      if (op === "passkey-only") {
+        if (str(f, "confirm", 3) !== "1") throw new Error("Confirma que ya probaste entrar con Face ID.");
+        const { count } = await db().from("admin_passkeys").select("id", { count: "exact", head: true });
+        if (!count) throw new Error("Primero agrega al menos un dispositivo.");
+        if (!process.env.ADMIN_BACKUP_PASSWORD) throw new Error("Falta la contraseña de respaldo (ADMIN_BACKUP_PASSWORD): sin ella podrías quedarte fuera.");
+      }
+      const { data: c } = await db().from("company").select("id").limit(1).maybeSingle();
+      if (!c) throw new Error("Faltan los datos de la empresa.");
+      await db().from("company").update({ passkey_only: op === "passkey-only" }).eq("id", c.id);
+    } else throw new Error("Acción no válida.");
+    await audit(`founder.${op}`, { entity: "admin_passkey" });
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=seguridad`);
+}

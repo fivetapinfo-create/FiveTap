@@ -14,6 +14,7 @@ const OK: Record<string, string> = {
   pago: "Pago registrado y comprobante emitido.",
   "pago-reactivado": "Pago registrado y comprobante emitido. Sus placas y su app ya funcionan otra vez.",
   "comprobante-correo": "Pago registrado. Comprobante emitido y enviado al correo del dueño y a su app.",
+  seguridad: "Seguridad actualizada.",
   "contrato-firma": "Contrato actualizado: su estado de firma ya está al día.",
   funciones: "Listo: cada función llega solo a los niveles que marcaste. Las excepciones por negocio se respetan.",
   permisos: "Contratación y permisos guardados. El negocio ya ve exactamente lo que tiene contratado.",

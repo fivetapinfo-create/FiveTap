@@ -778,3 +778,18 @@ alter table entitlement_log enable row level security;
 alter table feature_rollout enable row level security;
 alter table business_users enable row level security;
 alter table agreement_signatures enable row level security;
+
+-- ---------- Founder passkeys (Face ID / Touch ID / fingerprint) ----------
+create table if not exists admin_passkeys (
+  id uuid primary key default gen_random_uuid(),
+  credential_id text not null unique,
+  public_key text not null,
+  counter bigint not null default 0,
+  transports text[] not null default '{}',
+  device_name text check (device_name is null or char_length(device_name) <= 60),
+  rp_id text not null,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz
+);
+alter table admin_passkeys enable row level security;
+alter table company add column if not exists passkey_only boolean not null default false;
