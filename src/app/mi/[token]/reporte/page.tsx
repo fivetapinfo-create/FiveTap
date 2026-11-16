@@ -82,12 +82,12 @@ export default async function MonthlyReport({ params, searchParams }: Props) {
           <dl className="kv settings-kv">
             <dt>Clientes enviados a Google</dt>
             <dd className="num">{report.sinceReviews} en total</dd>
-            {p.top && p.top.scans > 0 && (<><dt>Placa con más actividad</dt><dd>🏆 {p.top.label} ({p.top.scans} toques)</dd></>)}
+            {p.top && p.top.scans > 0 && (<><dt>Placa con más actividad</dt><dd>{p.top.label} ({p.top.scans} toques)</dd></>)}
             {before && (<><dt>Reseñas antes de FiveTap</dt><dd className="num">{before.reviews}{before.rating ? ` · ${before.rating.toFixed(1)} ★` : ""} <span className="muted">({human(before.taken_on)})</span></dd></>)}
             {latest && before && (
               <>
                 <dt>Último conteo en Google</dt>
-                <dd className="num">{latest.reviews}{latest.rating ? ` · ${latest.rating.toFixed(1)} ★` : ""} <span className="muted">({human(latest.taken_on)})</span>{latest.reviews > before.reviews ? <b> · +{latest.reviews - before.reviews} 🎉</b> : null}</dd>
+                <dd className="num">{latest.reviews}{latest.rating ? ` · ${latest.rating.toFixed(1)} ★` : ""} <span className="muted">({human(latest.taken_on)})</span>{latest.reviews > before.reviews ? <b> · +{latest.reviews - before.reviews}</b> : null}</dd>
               </>
             )}
           </dl>

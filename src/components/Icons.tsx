@@ -215,3 +215,65 @@ export const Facebook = (p: P) => (
     <path d="M15 8h-1.6A1.9 1.9 0 0 0 11.5 9.9V20.5M9.5 13h5" />
   </svg>
 );
+
+export const Refresh = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M19.5 11a7.5 7.5 0 0 0-13.3-4.4L4.5 8.5M4.5 4v4.5H9" />
+    <path d="M4.5 13a7.5 7.5 0 0 0 13.3 4.4l1.7-1.9M19.5 20v-4.5H15" />
+  </svg>
+);
+
+export const Flask = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M9.5 3.5h5M10.5 3.5v5.2L5.2 18.2A1.5 1.5 0 0 0 6.5 20.5h11a1.5 1.5 0 0 0 1.3-2.3l-5.3-9.5V3.5" />
+    <path d="M7.6 14.5h8.8" />
+  </svg>
+);
+
+export const Wrench = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M14.7 6.3a4 4 0 0 0 5 5L20.5 12a5.5 5.5 0 0 1-7.2 1.9L7 20.2a2 2 0 0 1-2.8-2.8l6.3-6.3A5.5 5.5 0 0 1 12.4 4l.7.8a4 4 0 0 0 1.6 1.5z" />
+  </svg>
+);
+
+export const Alert = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M10.3 4.2 2.9 17.5A2 2 0 0 0 4.6 20.5h14.8a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z" />
+    <path d="M12 9.5v4.5M12 17h.01" />
+  </svg>
+);
+
+export const Card = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <rect x="3" y="5.5" width="18" height="13" rx="2.5" />
+    <path d="M3 10h18M7 14.5h4" />
+  </svg>
+);
+
+export const Lock = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+  </svg>
+);
+
+export const Sparkle = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1-5.1-1.9 5.1-1.9L12 3.5z" />
+    <path d="M18.5 16v4M16.5 18h4" />
+  </svg>
+);
+
+export const Trophy = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M7.5 4.5h9v4a4.5 4.5 0 0 1-9 0v-4zM7.5 6.5H4.5a3 3 0 0 0 3 3.5M16.5 6.5h3a3 3 0 0 1-3 3.5" />
+    <path d="M12 13v3.5M8.5 20h7M9.5 20l.5-3.5h4l.5 3.5" />
+  </svg>
+);
+
+export const Cake = (p: P) => (
+  <svg viewBox="0 0 24 24" {...base} {...p} aria-hidden="true">
+    <path d="M4.5 20.5h15v-6a2 2 0 0 0-2-2h-11a2 2 0 0 0-2 2v6zM4.5 16c1.3 1 2.5 1 3.75 0s2.5-1 3.75 0 2.5 1 3.75 0 2.5-1 3.75 0" />
+    <path d="M12 12.5V9M12 6.5c-.8-.8-.8-1.8 0-3 .8 1.2.8 2.2 0 3z" />
+  </svg>
+);

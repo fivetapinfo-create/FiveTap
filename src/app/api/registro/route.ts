@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   await sendPush(
     { role: "founder" },
     {
-      title: subscription ? `🎉 Nuevo cliente · ${venue}` : `Nuevo registro · ${venue}`,
+      title: subscription ? `Nuevo cliente · ${venue}` : `Nuevo registro · ${venue}`,
       body: `${owner} · +${phone}. ${plan.name}: $${plan.monthly} al mes. ${subscription ? "Se suscribió por PayPal." : "Aún sin pagar."} Crea el negocio y coordina la instalación.`,
       url: "/admin/agenda",
     },

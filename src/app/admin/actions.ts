@@ -398,7 +398,7 @@ export async function recordPayment(f: FormData) {
       const out = await deliverReceipt(receipt, { email: true, push: true, ownerToken: before.owner_token, reactivated });
       result = out.email?.status === "sent" ? "comprobante-correo" : "comprobante-app";
     } else if (reactivated) {
-      await sendPush({ role: "owner", businessId: id }, { title: `¡Listo, ${before.name}!`, body: "Recibimos tu pago. Tus placas ya funcionan otra vez. ¡Gracias! 🙌", url: `/mi/${before.owner_token}` }).catch(() => 0);
+      await sendPush({ role: "owner", businessId: id }, { title: `¡Listo, ${before.name}!`, body: "Recibimos tu pago. Tus placas ya funcionan otra vez. ¡Gracias!", url: `/mi/${before.owner_token}` }).catch(() => 0);
     }
     if (reactivated) result += "-reactivado";
   } catch (e) {
@@ -714,7 +714,7 @@ export async function testOwnerPush(f: FormData) {
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   const { data: b } = await db().from("businesses").select("name, owner_token").eq("id", id).maybeSingle();
-  const sent = b ? await sendPush({ role: ["owner", "manager"], businessId: id }, { title: `FiveTap · ${b.name}`, body: "¡Listo! Las notificaciones de FiveTap están activas en este celular. 🎉", url: `/mi/${b.owner_token}` }) : 0;
+  const sent = b ? await sendPush({ role: ["owner", "manager"], businessId: id }, { title: `FiveTap · ${b.name}`, body: "¡Listo! Las notificaciones de FiveTap están activas en este celular.", url: `/mi/${b.owner_token}` }) : 0;
   redirect(`${back}?${sent ? "ok=push" : "error=" + encodeURIComponent("Ningún celular del local tiene las notificaciones activas todavía.")}#app`);
 }
 

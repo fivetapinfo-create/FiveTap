@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   }
   await sendPush(
     { role: "founder" },
-    { title: `💵 Pago recibido · $${item.amount.toLocaleString("en-US")} · ${venue}`, body: `${item.name} por PayPal (pedido ${orderId}). Verifícalo en PayPal y regístralo en el negocio.`, url: "/admin/agenda" },
+    { title: `Pago recibido · $${item.amount.toLocaleString("en-US")} · ${venue}`, body: `${item.name} por PayPal (pedido ${orderId}). Verifícalo en PayPal y regístralo en el negocio.`, url: "/admin/agenda" },
   );
   return Response.json({ ok: true });
 }

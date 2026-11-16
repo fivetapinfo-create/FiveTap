@@ -116,7 +116,7 @@ export function Receipt({ data, animate = true, actions, homeHref = "/" }: { dat
             {data.extra?.flatMap(([k, v]) => [<span key={`k-${k}`}>{k}</span>, <span key={`v-${k}`}>{v}</span>])}
           </div>
           <hr />
-          <p className="rc-thanks">{data.thanks ?? `¡Bienvenido a FiveTap, ${data.venue}! Tus clientes felices ahora te dejan sus reseñas. 🚀`}</p>
+          <p className="rc-thanks">{data.thanks ?? `¡Bienvenido a FiveTap, ${data.venue}! Tus clientes felices ahora te dejan sus reseñas.`}</p>
           <Barcode code={data.order} />
           <p className="rc-code">{data.order}</p>
         </div>

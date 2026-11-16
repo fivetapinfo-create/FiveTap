@@ -1,20 +1,22 @@
 import Link from "next/link";
 import type { Task, TaskKind } from "@/lib/agenda";
 import { markWebPaymentHandled } from "./actions";
+import { Alert, Card, Chart, Chat, Clock, FileText, Flask, Megaphone, Refresh, Sparkle, Wallet, Wrench } from "@/components/Icons";
 
-export const ICON: Record<TaskKind, string> = {
-  cobro: "💵",
-  recordatorio: "⏰",
-  prueba: "🧪",
-  renovacion: "🔁",
-  reporte: "📊",
-  contrato: "📝",
-  mensajes: "💬",
-  instalacion: "🔧",
-  animo: "☀️",
-  cancelacion: "⚠️",
-  registro: "🆕",
-  pagoweb: "💳",
+// Line icons in the panel's own ink (no colored emoji).
+export const ICON: Record<TaskKind, React.ReactNode> = {
+  cobro: <Wallet />,
+  recordatorio: <Clock />,
+  prueba: <Flask />,
+  renovacion: <Refresh />,
+  reporte: <Chart />,
+  contrato: <FileText />,
+  mensajes: <Chat />,
+  instalacion: <Wrench />,
+  animo: <Megaphone />,
+  cancelacion: <Alert />,
+  registro: <Sparkle />,
+  pagoweb: <Card />,
 };
 
 /** One to-do with its ready-made WhatsApp and the button to open the venue. */

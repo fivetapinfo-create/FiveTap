@@ -1,3 +1,4 @@
+import { Cake } from "@/components/Icons";
 import type { Metadata } from "next";
 import { can } from "@/lib/entitlements";
 import { Upsell } from "@/components/Upsell";
@@ -149,7 +150,7 @@ export default async function ClientsPage({ params, searchParams }: Props) {
                           <span className="cl-tags">
                             {r.club && <span className="sp-pill sp-answered">Club</span>}
                             {r.next && <span className="sp-pill sp-open">Reserva {fmtDate(r.next)}</span>}
-                            {r.bday && r.bdayMonth === month && <span className="sp-pill sp-open">🎂 {r.bday}</span>}
+                            {r.bday && r.bdayMonth === month && <span className="sp-pill sp-open ct-bday"><Cake /> {r.bday}</span>}
                           </span>
                         </span>
                         {wa && <span className="ct-wa" aria-hidden="true"><WaIcon /></span>}

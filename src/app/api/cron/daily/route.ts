@@ -16,13 +16,13 @@ const DAY = 86_400_000;
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 
 const MORNINGS = [
-  "¡Que hoy se llene tu local de buenas mesas! 🍽️",
-  "Hoy es un gran día para sumar estrellas. ⭐",
-  "Recuerda invitar a tus clientes felices a tocar la placa. 📲",
-  "Cada cliente bien atendido vale una reseña de 5 estrellas. 🌟",
-  "¡Éxitos hoy a ti y a tu equipo! 💪",
-  "Un detalle pequeño hoy es una gran reseña mañana. ✨",
-  "¡Vamos por un día lleno de clientes contentos! 😊",
+  "¡Que hoy se llene tu local de buenas mesas!",
+  "Hoy es un gran día para sumar estrellas.",
+  "Recuerda invitar a tus clientes felices a tocar la placa.",
+  "Cada cliente bien atendido vale una reseña de 5 estrellas.",
+  "¡Éxitos hoy a ti y a tu equipo!",
+  "Un detalle pequeño hoy es una gran reseña mañana.",
+  "¡Vamos por un día lleno de clientes contentos!",
 ];
 
 const shift = (iso: string, days: number) => new Date(Date.parse(`${iso}T12:00:00Z`) + days * DAY).toISOString().slice(0, 10);
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
         tests.length ? `${tests.length} FiveTap Test por cerrar` : "",
       ].filter(Boolean);
       sent.founder += await sendPushOnce(`founder-week-${today}`, { role: "founder" }, {
-        title: due.length ? `💰 Cobros de la semana: ${usd(total)}` : "Cobros de la semana",
+        title: due.length ? `Cobros de la semana: ${usd(total)}` : "Cobros de la semana",
         body: parts.join(" · "),
         url: "/admin/cobros",
       });
@@ -117,7 +117,7 @@ export async function GET(req: Request) {
     for (const b of businesses) {
       const period = { key: "prev", label: monthName, scans: scans.get(b.id) ?? 0, nfc: 0, qr: 0, reviews: reviews.get(b.id) ?? 0, feedback: 0, club: 0, top: null } as const;
       sent.months += await sendPushOnce(`month-${b.id}-${today.slice(0, 7)}`, { role: ["owner", "manager"], businessId: b.id }, {
-        title: `📊 Tu reporte de ${monthName} está listo`,
+        title: `Tu reporte de ${monthName} está listo`,
         body: successLine({ ...period }, b.name),
         url: `/mi/${b.owner_token}/reporte`,
       });
@@ -132,7 +132,7 @@ export async function GET(req: Request) {
       const s = scans.get(b.id) ?? 0;
       const r = reviews.get(b.id) ?? 0;
       sent.mornings += await sendPushOnce(`morning-${b.id}-${today}`, { role: ["owner", "manager"], businessId: b.id }, {
-        title: `☀️ Buenos días, ${b.name}`,
+        title: `Buenos días, ${b.name}`,
         body: s
           ? `Ayer ${s} ${s === 1 ? "cliente tocó" : "clientes tocaron"} tus placas y ${r} ${r === 1 ? "fue" : "fueron"} a dejarte reseña en Google. ¡Éxitos hoy!`
           : greeting,

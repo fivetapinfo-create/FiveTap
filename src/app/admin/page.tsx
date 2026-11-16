@@ -65,7 +65,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       <div className="admin-head">
         <div>
           <h1>Hoy</h1>
-          <p>{dateLine[0]!.toUpperCase() + dateLine.slice(1)} · {todo.length ? `${todo.length} pendiente${todo.length === 1 ? "" : "s"}` : "todo al día 🎉"}</p>
+          <p>{dateLine[0]!.toUpperCase() + dateLine.slice(1)} · {todo.length ? `${todo.length} pendiente${todo.length === 1 ? "" : "s"}` : "todo al día"}</p>
         </div>
         <Link className="btn btn-dark btn-sm" href="/admin/new">+ Nuevo negocio</Link>
       </div>

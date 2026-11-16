@@ -1678,3 +1678,12 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .qa-card em { position: absolute; top: 6px; right: 8px; font-style: normal; font-size: 12px; }
 .qa-card.locked { color: var(--muted); }
 .qa-card.locked .qa-ic { opacity: 0.55; }
+
+/* Monochrome line icons inside buttons and pills (no colored emoji in the panels). */
+.btn-ic { width: 17px; height: 17px; vertical-align: -3px; margin-right: 4px; }
+.appset-on { display: inline-flex; align-items: center; gap: 4px; }
+.ct-bday { display: inline-flex; align-items: center; gap: 4px; }
+.ct-bday svg { width: 14px; height: 14px; }
+.qa-card em svg { width: 14px; height: 14px; color: var(--muted); }
+.agenda-icon { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--paper); color: var(--ink); flex: none; font-size: 0; }
+.agenda-icon svg { width: 18px; height: 18px; }

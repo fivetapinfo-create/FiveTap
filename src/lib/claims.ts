@@ -30,7 +30,7 @@ export async function reportPayment(b: { id: string; name: string }, input: { me
   const { data, error } = await db().from("payment_claims").insert({ business_id: b.id, amount: Math.round(input.amount * 100) / 100, method, reference, due_on: input.due_on ?? null }).select("id").single();
   if (error) throw new Error(error.message);
   await audit("payment.reported", { businessId: b.id, entity: "payment_claim", entityId: data.id, details: { amount: input.amount, method, reference } });
-  await sendPush({ role: "founder" }, { title: `💵 Pago por confirmar · ${b.name}`, body: `$${input.amount} por ${CLAIM_METHOD[method]}${reference ? ` · ref. ${reference}` : ""}. Revisa que llegó y confírmalo.`, url: "/admin/cobros#por-confirmar" }).catch(() => 0);
+  await sendPush({ role: "founder" }, { title: `Pago por confirmar · ${b.name}`, body: `$${input.amount} por ${CLAIM_METHOD[method]}${reference ? ` · ref. ${reference}` : ""}. Revisa que llegó y confírmalo.`, url: "/admin/cobros#por-confirmar" }).catch(() => 0);
   return data.id as string;
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "./Icons";
 import { useEffect, useState } from "react";
 
 type BeforeInstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
@@ -116,7 +117,7 @@ export function AppSetup({
   if (state === "on" && compactWhenOn) {
     return (
       <div className="app-on" id="app">
-        <span>🔔 Avisos activos en este celular{roleLabel ? ` · ${roleLabel}` : ""}</span>
+        <span className="appset-on"><Bell className="btn-ic" /> Avisos activos en este celular{roleLabel ? ` · ${roleLabel}` : ""}</span>
         <button type="button" className="btn btn-ghost btn-sm" onClick={disable}>Desactivar</button>
       </div>
     );
@@ -128,7 +129,7 @@ export function AppSetup({
   return (
     <section className={`panel app-setup${guided || lastStep ? " app-setup-guided" : ""}`} id="app">
       <div className="panel-head">
-        <h2>{lastStep ? "Último paso: activa los avisos" : guided && !installed ? "Instala FiveTap en tu celular" : "📲 FiveTap en tu celular"}</h2>
+        <h2>{lastStep ? "Último paso: activa los avisos" : guided && !installed ? "Instala FiveTap en tu celular" : "FiveTap en tu celular"}</h2>
         {state === "on" && <span className="pill active">Notificaciones activas</span>}
       </div>
       <div className="app-setup-body">
@@ -185,7 +186,7 @@ export function AppSetup({
             )}
             {roles && <small className="muted">{roles.find((r) => r.value === role)?.hint}</small>}
             <button type="button" className="btn btn-dark btn-lg" onClick={enable} disabled={state === "working"}>
-              {state === "working" ? "Activando…" : "🔔 Activar avisos"}
+              {state === "working" ? "Activando…" : <><Bell className="btn-ic" /> Activar avisos</>}
             </button>
             {state === "error" && <p className="alert alert-error">No se pudo activar. Revisa tu conexión e inténtalo otra vez.</p>}
           </>

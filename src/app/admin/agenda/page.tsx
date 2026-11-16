@@ -30,7 +30,7 @@ export default async function Agenda() {
       <div className="admin-head">
         <div>
           <h1>Agenda</h1>
-          <p>{now.length ? `${now.length} cosa${now.length === 1 ? "" : "s"} para hoy` : "Nada pendiente para hoy 🎉"}</p>
+          <p>{now.length ? `${now.length} cosa${now.length === 1 ? "" : "s"} para hoy` : "Nada pendiente para hoy"}</p>
         </div>
       </div>
 

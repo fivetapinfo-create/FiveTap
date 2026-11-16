@@ -3,7 +3,7 @@ import { accessOf } from "@/lib/entitlements";
 import { Upsell } from "@/components/Upsell";
 import Link from "next/link";
 import { AccessGate } from "@/components/AccessGate";
-import { Chart, Chat, Gear, Home, Users } from "@/components/Icons";
+import { Chart, Chat, Gear, Home, Lock, Users } from "@/components/Icons";
 import { accessRole } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
@@ -225,7 +225,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <Link key={q.label} href={q.href} className={`qa-card${q.on ? "" : " locked"}`}>
               <span className="qa-ic">{q.icon}</span>
               <span>{q.label}</span>
-              {q.on ? (q.badge ? <i className="num">{q.badge}</i> : null) : <em aria-label="No incluido">🔒</em>}
+              {q.on ? (q.badge ? <i className="num">{q.badge}</i> : null) : <em aria-label="No incluido"><Lock /></em>}
             </Link>
           ))}
         </nav>

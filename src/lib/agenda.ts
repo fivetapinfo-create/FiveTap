@@ -61,14 +61,14 @@ const first = (name: string | null) => (name ? ` ${name.split(" ")[0]}` : "");
 
 /** Short, warm messages for the owners. One per week, the same for everyone that week. */
 export const CHEERS = [
-  "¡Feliz inicio de semana! Que tu local se llene de buenas mesas y mejores reseñas. 🍽️⭐",
-  "¡Mucho éxito esta semana! Cada cliente feliz es una nueva estrella para tu negocio. ✨",
-  "¡Arrancamos semana! Recuerda: tus meseros son tus mejores aliados para las reseñas. 💪",
-  "¡Que tengas una semana llena de clientes felices! Seguimos trabajando para ti. 🙌",
-  "¡Buena semana! Un detalle pequeño hoy es una reseña de 5 estrellas mañana. 🌟",
-  "¡Éxitos esta semana! Si algo no salió bien con un cliente, el mensaje privado te avisa a tiempo. 🔔",
-  "¡Feliz semana! Gracias por confiar en FiveTap. Vamos por más reseñas juntos. 🚀",
-  "¡Que sea una gran semana para tu equipo! Un cliente bien atendido siempre vuelve. 😊",
+  "¡Feliz inicio de semana! Que tu local se llene de buenas mesas y mejores reseñas.",
+  "¡Mucho éxito esta semana! Cada cliente feliz es una nueva estrella para tu negocio.",
+  "¡Arrancamos semana! Recuerda: tus meseros son tus mejores aliados para las reseñas.",
+  "¡Que tengas una semana llena de clientes felices! Seguimos trabajando para ti.",
+  "¡Buena semana! Un detalle pequeño hoy es una reseña de 5 estrellas mañana.",
+  "¡Éxitos esta semana! Si algo no salió bien con un cliente, el mensaje privado te avisa a tiempo.",
+  "¡Feliz semana! Gracias por confiar en FiveTap. Vamos por más reseñas juntos.",
+  "¡Que sea una gran semana para tu equipo! Un cliente bien atendido siempre vuelve.",
 ];
 
 export function cheerOfTheWeek(today = todayPanama()) {
@@ -95,7 +95,7 @@ export async function cheerList(today = todayPanama()) {
   const cheer = cheerOfTheWeek(today);
   return (res.data as BizRow[])
     .filter((b) => b.status !== "canceled" && payer(b).phone)
-    .map((b) => ({ id: b.id, name: b.name, whatsapp: wa(payer(b).phone, `Hola${first(payer(b).name)} 👋 ${cheer} — FiveTap`)! }));
+    .map((b) => ({ id: b.id, name: b.name, whatsapp: wa(payer(b).phone, `Hola${first(payer(b).name)}. ${cheer} — FiveTap`)! }));
 }
 
 export type Charge = { due: string; amount: number; label: string; auto: boolean; kind: "trial" | "monthly" | "annual" };
@@ -267,7 +267,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
         title: `${b.name} pidió cancelar`,
         detail: `${b.cancel_reason ? `Motivo: ${b.cancel_reason}. ` : ""}${charge ? `Servicio activo hasta el ${human(charge.due)}; ese día retira las placas` : "Coordina el retiro de las placas"} y márcalo como Cancelado en Editar datos.`,
         businessId: b.id,
-        whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Recibimos tu solicitud de cancelación. ¿Me cuentas un poco más? Si hay algo que podamos mejorar, con gusto lo hacemos. 🙏`),
+        whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Recibimos tu solicitud de cancelación. ¿Me cuentas un poco más? Si hay algo que podamos mejorar, con gusto lo hacemos.`),
       });
       continue;
     }
@@ -314,9 +314,9 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
           title: `Faltan 30 días para la renovación anual de ${b.name}`,
           detail: `Renueva el ${human(due)} por ${money(amount)}. Hoy es el último día de aviso de no renovación.`,
           businessId: b.id,
-          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Tu plan anual se renueva el ${human(due)} con tu mismo precio congelado de ${money(amount)}. ¡Gracias por seguir creciendo con nosotros! 🙌`),
+          whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Tu plan anual se renueva el ${human(due)} con tu mismo precio congelado de ${money(amount)}. ¡Gracias por seguir creciendo con nosotros!`),
           due,
-          push: { title: "Tu plan anual se renueva en 30 días", body: `El ${human(due)}, con tu mismo precio de ${money(amount)}. ¡Gracias por crecer con FiveTap! 🙌`, url: `/pagar?n=${encodeURIComponent(b.name)}` },
+          push: { title: "Tu plan anual se renueva en 30 días", body: `El ${human(due)}, con tu mismo precio de ${money(amount)}. ¡Gracias por crecer con FiveTap!`, url: `/pagar?n=${encodeURIComponent(b.name)}` },
         });
       }
     } else if (charge.kind === "trial") {
@@ -330,8 +330,8 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
           title: `Termina la prueba de ${b.name}`,
           detail: "Revisa con el dueño los toques, las reseñas y los mensajes de la semana. Mañana empieza el plan.",
           businessId: b.id,
-          whatsapp: wa(to.phone, `${hi}, hoy termina tu semana de prueba de FiveTap. ¿Te parece si revisamos juntos cuántos clientes fueron a dejarte su reseña? 📊`),
-          push: { title: "Hoy termina tu semana de prueba", body: "Mira cuántos clientes fueron a dejarte su reseña gracias a FiveTap. 📊", url: "" },
+          whatsapp: wa(to.phone, `${hi}, hoy termina tu semana de prueba de FiveTap. ¿Te parece si revisamos juntos cuántos clientes fueron a dejarte su reseña?`),
+          push: { title: "Hoy termina tu semana de prueba", body: "Mira cuántos clientes fueron a dejarte su reseña gracias a FiveTap.", url: "" },
         });
       }
     }
@@ -351,7 +351,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
       const ownerPush = !overdue
         ? auto
           ? { title: `Hoy se renueva tu plan · ${b.name}`, body: `${plan}: ${money(amount)} por PayPal, automáticamente. ¡Gracias por seguir con nosotros!`, url: "" }
-          : { title: `Hoy vence ${renewalWhat(plaques, false)} · ${b.name}`, body: `Renueva ${renewalWhat(plaques)}: ${money(amount)}. Efectivo, Yappy o transferencia. Toca para renovar. ¡Gracias! 🙏`, url: pay }
+          : { title: `Hoy vence ${renewalWhat(plaques, false)} · ${b.name}`, body: `Renueva ${renewalWhat(plaques)}: ${money(amount)}. Efectivo, Yappy o transferencia. Toca para renovar. ¡Gracias!`, url: pay }
         : suspended
           ? sinceSuspended % 7 === 0
             ? { title: `Tus placas están pausadas · ${b.name}`, body: `Tienes un pago pendiente de ${money(amount)} (${plan}). Paga y se reactivan el mismo día. Tus datos están seguros.`, url: pay }
@@ -379,10 +379,10 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
         whatsapp: auto && !overdue
           ? undefined
           : wa(to.phone, suspended
-              ? `${hi}, te escribe FiveTap. Las placas de ${b.name} están pausadas porque tenemos pendiente tu ${label} de ${money(amount)}. Puedes pagar por Yappy o transferencia aquí: ${payLink(b.name)} y se reactivan el mismo día. Tus datos están seguros. 🙏`
+              ? `${hi}, te escribe FiveTap. Las placas de ${b.name} están pausadas porque tenemos pendiente tu ${label} de ${money(amount)}. Puedes pagar por Yappy o transferencia aquí: ${payLink(b.name)} y se reactivan el mismo día. Tus datos están seguros.`
               : overdue
-                ? `${hi}, te escribe FiveTap. Tu ${label} de ${money(amount)} (${plan}) venció el ${human(due)}. Para que tus placas sigan funcionando, puedes pagar hasta el ${human(lastDay)} por Yappy o transferencia aquí: ${payLink(b.name)}. ¡Gracias! 🙏`
-                : `${hi}, te escribe FiveTap. Hoy toca renovar ${renewalWhat(plaques)}: ${money(amount)}. Puedes pagar en efectivo, por Yappy o transferencia (datos aquí: ${payLink(b.name)}) o desde tu app, en Renovar. ¡Gracias! 🙏`),
+                ? `${hi}, te escribe FiveTap. Tu ${label} de ${money(amount)} (${plan}) venció el ${human(due)}. Para que tus placas sigan funcionando, puedes pagar hasta el ${human(lastDay)} por Yappy o transferencia aquí: ${payLink(b.name)}. ¡Gracias!`
+                : `${hi}, te escribe FiveTap. Hoy toca renovar ${renewalWhat(plaques)}: ${money(amount)}. Puedes pagar en efectivo, por Yappy o transferencia (datos aquí: ${payLink(b.name)}) o desde tu app, en Renovar. ¡Gracias!`),
         due,
         push: ownerPush,
       });
@@ -397,7 +397,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
         title: `Recordar pago a ${b.name}`,
         detail: `${plan}. Su ${label} de ${money(amount)} vence el ${human(due)}.`,
         businessId: b.id,
-        whatsapp: wa(to.phone, `${hi}, te escribe FiveTap 😊 Te recuerdo que el ${human(due)} toca renovar ${renewalWhat(plaques)}: ${money(amount)}. Puedes pagar en efectivo, por Yappy o transferencia (datos aquí: ${payLink(b.name)}) o desde tu app, en Renovar. ¡Que tengas un excelente día!`),
+        whatsapp: wa(to.phone, `${hi}, te escribe FiveTap. Te recuerdo que el ${human(due)} toca renovar ${renewalWhat(plaques)}: ${money(amount)}. Puedes pagar en efectivo, por Yappy o transferencia (datos aquí: ${payLink(b.name)}) o desde tu app, en Renovar. ¡Que tengas un excelente día!`),
         due,
         push: { title: `Recordatorio · ${b.name}`, body: `${cap(renewalWhat(plaques))} vence el ${human(due)}: ${money(amount)}. Toca para renovar por efectivo, Yappy o transferencia.`, url: pay },
       });
@@ -453,7 +453,7 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
       date: from,
       title: `Nuevo registro: ${r.venue_name}`,
       detail: `${r.owner_name} · +${r.phone}. ${chosen.name} · ${money(chosen.monthly)} al mes. ${r.paypal_subscription_id ? "Se suscribió por PayPal: registra el primer pago al crear el negocio." : "Todavía sin pagar."} Crea el negocio y coordina la instalación.`,
-      whatsapp: wa(r.phone, `Hola ${r.owner_name.split(" ")[0]} 👋 Te escribe FiveTap. Recibimos tu registro de ${r.venue_name}. ¿Qué día y a qué hora te queda bien para instalar tus placas y FiveTap Business?`),
+      whatsapp: wa(r.phone, `Hola ${r.owner_name.split(" ")[0]}. Te escribe FiveTap. Recibimos tu registro de ${r.venue_name}. ¿Qué día y a qué hora te queda bien para instalar tus placas y FiveTap Business?`),
       link: { href: `/admin/new?signup=${r.id}`, label: "Crear negocio" },
     });
   }

@@ -213,7 +213,7 @@ export async function deliverReceipt(r: Receipt, opts: { email: boolean; push: b
     const n = await sendPush(
       { role: "owner", businessId: r.business_id },
       {
-        title: `💳 Pago confirmado · ${r.venue_name}`,
+        title: `Pago confirmado · ${r.venue_name}`,
         body: `Recibimos ${receiptMoney(r.amount)} (${r.plan_label}).${r.next_due ? ` Próximo vencimiento: ${human(r.next_due)}.` : ""}${opts.reactivated ? " Tus placas ya funcionan otra vez." : ""} Toca para ver tu comprobante.`,
         url: opts.ownerToken ? `/mi/${opts.ownerToken}/pagos` : `/recibo/${r.token}`,
         tag: `receipt-${r.id}`,

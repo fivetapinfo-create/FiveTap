@@ -31,7 +31,7 @@ export async function undoCancel(f: FormData) {
   const b = await businessByOwnerToken(token);
   if (!b || (await accessRole(b)) !== "owner") redirect("/");
   await db().from("businesses").update({ cancel_requested_at: null, cancel_reason: null }).eq("id", b.id);
-  await sendPush({ role: "founder" }, { title: `${b.name} sigue con FiveTap 🎉`, body: "Retiró su solicitud de cancelación.", url: `/admin/b/${b.id}` });
+  await sendPush({ role: "founder" }, { title: `${b.name} sigue con FiveTap`, body: "Retiró su solicitud de cancelación.", url: `/admin/b/${b.id}` });
   revalidatePath(`/mi/${token}/ajustes`);
   redirect(`/mi/${token}/ajustes?ok=sigue#suscripcion`);
 }

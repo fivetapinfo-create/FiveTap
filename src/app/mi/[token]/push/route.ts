@@ -17,7 +17,7 @@ async function handle(req: Request, { params }: Ctx) {
   return subscribeHandler(req, () => ({
     role: role === "manager" ? "manager" : "owner",
     businessId: b.id,
-    welcome: { title: `FiveTap · ${b.name}`, body: "¡Listo! Las notificaciones de FiveTap están activas en este celular. 🎉", url: `/mi/${token}` },
+    welcome: { title: `FiveTap · ${b.name}`, body: "¡Listo! Las notificaciones de FiveTap están activas en este celular.", url: `/mi/${token}` },
   }));
 }
 

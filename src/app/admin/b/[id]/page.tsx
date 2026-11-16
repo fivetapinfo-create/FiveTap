@@ -1,3 +1,4 @@
+import { Phone } from "@/components/Icons";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
@@ -451,7 +452,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <div className="msg">
           <p className="muted">Es su FiveTap: reseñas en tiempo real, el antes y después, sus placas, los mensajes privados, el club y su plan. Se instala como app y le llegan los avisos. Envíale el acceso y, el día de la instalación, actívalo con él en su celular.</p>
           <div className="row msg-actions">
-            <Link className="btn btn-dark btn-sm" href={`/admin/b/${b.id}/instalar`}>📲 Instalar en persona (QR)</Link>
+            <Link className="btn btn-dark btn-sm" href={`/admin/b/${b.id}/instalar`}><Phone className="btn-ic" /> Instalar en persona (QR)</Link>
             {accessFor.map((a) => (
               <span key={a.phone} className="row" style={{ gap: 6 }}>
                 <a className="btn btn-ghost btn-sm" href={a.href} target="_blank" rel="noopener noreferrer">1 · Enviar enlace a {a.who}</a>
