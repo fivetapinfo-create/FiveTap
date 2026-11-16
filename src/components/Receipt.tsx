@@ -19,6 +19,8 @@ export type ReceiptData = {
   date?: string;
   /** Rows under the totals (period, status, transaction), for confirmed renewals. */
   extra?: [string, string][];
+  /** Label of the order line: "Pedido" for online purchases, "Recibo" for confirmed payments. */
+  orderLabel?: string;
   /** The closing line; the welcome message by default. */
   thanks?: string;
 };
@@ -108,7 +110,7 @@ export function Receipt({ data, animate = true, actions, homeHref = "/" }: { dat
           <hr />
           <div className="rc-meta">
             <span>Negocio</span><span>{data.venue}</span>
-            <span>Pedido</span><span>{data.order}</span>
+            <span>{data.orderLabel ?? "Pedido"}</span><span>{data.order}</span>
             <span>Pagado con</span><span>{data.paidWith}</span>
             <span>Fecha</span><span>{date}</span>
             {data.extra?.flatMap(([k, v]) => [<span key={`k-${k}`}>{k}</span>, <span key={`v-${k}`}>{v}</span>])}

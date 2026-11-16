@@ -112,6 +112,7 @@ export default async function RenewPage({ params, searchParams }: Props) {
                 per: "",
                 venue: shown.venue_name,
                 order: shown.number,
+                orderLabel: "Recibo",
                 paidWith: (METHOD_LABEL as Record<string, string>)[shown.method] ?? shown.method,
                 date: human(shown.paid_on),
                 extra: [
