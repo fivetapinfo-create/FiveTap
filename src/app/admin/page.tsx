@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BusinessOptions } from "./BusinessOptions";
 import { deleteBusiness } from "./actions";
 import { BusinessLogo } from "@/components/BusinessLogo";
-import { FileText, Globe, Layers, Plus, Tap, Wallet } from "@/components/Icons";
+import { Chat, FileText, Globe, Layers, Plus, ReceiptIcon, Refresh, Reply, Sparkle, Tap, Wallet } from "@/components/Icons";
 import { BILLING_LABEL, agenda, billingAll, todayPanama } from "@/lib/agenda";
 import { listBusinesses, unreadCount } from "@/lib/data";
 import { getPlans, planOf } from "@/lib/plans";
@@ -101,17 +101,17 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
 
       <nav className="cc-grid" aria-label="Centro de control">
         {[
-          { href: "#negocios", icon: <Layers />, label: "Negocios", n: rows.length, hint: `${paying.length} activos` },
+          { href: "#negocios", icon: <Layers />, label: "Negocios", n: rows.length, hint: `${paying.length} ${paying.length === 1 ? "activo" : "activos"}` },
           { href: "/admin/cobros#por-confirmar", icon: <Wallet />, label: "Pagos por confirmar", n: claimsN, hint: claimsN ? "Revisa y confirma" : "Al día", alert: claimsN > 0 },
-          { href: "/admin/cobros", icon: <Wallet />, label: "Renovaciones", n: soon.length + owed.length, hint: `${owed.length} atrasadas · ${soon.length} en 7 días`, alert: owed.length > 0 },
-          { href: "/admin/comprobantes", icon: <FileText />, label: "Recibos del mes", n: (receiptRes.data ?? []).length, hint: usd(collected) },
+          { href: "/admin/cobros", icon: <Refresh />, label: "Renovaciones", n: soon.length + owed.length, hint: `${owed.length} atrasadas · ${soon.length} en 7 días`, alert: owed.length > 0 },
+          { href: "/admin/comprobantes", icon: <ReceiptIcon />, label: "Recibos del mes", n: (receiptRes.data ?? []).length, hint: usd(collected) },
           { href: "/admin/contratos", icon: <FileText />, label: "Contratos", n: contractsN.total, hint: contractsN.pending ? `${contractsN.pending} por firmar` : "Todos firmados" },
           { href: "/admin/placas", icon: <Tap />, label: "Placas instaladas", n: active.length, hint: `${active.filter((t) => t.kind === "waiter").length} tarjetas de equipo` },
-          { href: "/admin/soporte", icon: <Globe />, label: "Soporte", n: supportN, hint: supportN ? "Esperando respuesta" : "Sin pendientes", alert: supportN > 0 },
-          { href: "/admin/mensajes", icon: <Globe />, label: "Mensajes de clientes", n: unread, hint: "Sin leer", alert: unread > 0 },
+          { href: "/admin/soporte", icon: <Reply />, label: "Soporte", n: supportN, hint: supportN ? "Esperando respuesta" : "Sin pendientes", alert: supportN > 0 },
+          { href: "/admin/mensajes", icon: <Chat />, label: "Mensajes de clientes", n: unread, hint: "Sin leer", alert: unread > 0 },
           { href: "/admin/new", icon: <Plus />, label: "Nuevo negocio", n: null, hint: "Registrar en 2 minutos" },
           { href: "/admin/planes", icon: <Layers />, label: "Planes y funciones", n: null, hint: "Niveles y qué incluye cada uno" },
-          { href: "/admin/claude", icon: <Globe />, label: "Actividad de Claude", n: null, hint: "Lo que Claude hizo" },
+          { href: "/admin/claude", icon: <Sparkle />, label: "Actividad de Claude", n: null, hint: "Lo que Claude hizo" },
           { href: SITE_URL, icon: <Globe />, label: "Ver mi web", n: null, hint: "Como la ven tus clientes", ext: true },
         ].map((c) => (
           <Link key={c.label} href={c.href} className={`cc-card${c.alert ? " alert" : ""}`} {...(c.ext ? { target: "_blank", rel: "noreferrer" } : {})}>
