@@ -11,6 +11,13 @@ export type Business = {
   brand_color: string;
   /** Secondary brand color (icons and accents on the NFC page). */
   brand_accent: string | null;
+  /** Reference tier of the contract; null = before tiers existed (everything stays on). */
+  tier: "esencial" | "profesional" | "empresarial" | null;
+  /** Per-business exceptions, trials and limits (see lib/features). */
+  entitlements: unknown;
+  /** Empresas: FiveTap Business asks for username and password instead of the code. */
+  password_required: boolean;
+  password_epoch: number;
   google_review_url: string;
   manager_email: string | null;
   manager_name: string | null;

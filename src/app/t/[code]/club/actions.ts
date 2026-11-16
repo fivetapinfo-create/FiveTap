@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { can } from "@/lib/entitlements";
 import { guestClosed, tagByCode, upsertContact } from "@/lib/data";
 import { normalizePhone } from "@/lib/phone";
 
@@ -23,7 +24,7 @@ export async function joinClub(formData: FormData) {
   if (formData.get("consent") !== "1") redirect(`${base}error=consentimiento`);
 
   const tag = await tagByCode(code);
-  if (!tag || (await guestClosed(tag))) redirect(`/t/${code}`);
+  if (!tag || (await guestClosed(tag)) || !(await can(tag.business, "club"))) redirect(`/t/${code}`);
 
   const month = int(formData.get("month"), 1, 12);
   const day = month ? int(formData.get("day"), 1, 31) : null;

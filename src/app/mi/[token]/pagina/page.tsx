@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { accessOf } from "@/lib/entitlements";
+import { Upsell } from "@/components/Upsell";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AccessGate } from "@/components/AccessGate";
@@ -35,6 +37,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const b = await businessByOwnerToken(token);
   if (!b) notFound();
   if (!(await accessRole(b))) return <AccessGate b={b} token={token} />;
+  const acc = await accessOf(b);
   const [x, tagRes] = await Promise.all([experienceEditor(b.id), db().from("tags").select("code").eq("business_id", b.id).eq("active", true).limit(1)]);
   const tag = (tagRes.data?.[0] as { code: string } | undefined)?.code;
   const hidden = { token };
@@ -59,14 +62,18 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         )}
         {tag && <a className="btn btn-ghost btn-sm" href={`${nfcUrl(tag)}?preview=1`} target="_blank" rel="noreferrer" style={{ width: "fit-content" }}>Ver mi página como cliente</a>}
 
-        <section className="panel" id="promos">
-          <div className="panel-head"><h2>Promociones</h2></div>
-          <PromoManager promos={x.promos} hidden={hidden} today={todayPanama()} actions={{ save: savePromoOwner, remove: deletePromoOwner, toggle: togglePromoOwner }} />
-        </section>
-        <section className="panel" id="catalogo">
-          <div className="panel-head"><h2>{x.draft.catalog_title || "Productos y servicios"}</h2></div>
-          <CatalogManager items={x.items} hidden={hidden} actions={{ save: saveItemOwner, remove: deleteItemOwner, toggle: toggleItemOwner }} />
-        </section>
+        {acc.has.promos ? (
+          <section className="panel" id="promos">
+            <div className="panel-head"><h2>Promociones</h2>{acc.tier && <span className="muted">Hasta {acc.limits.promos} activas</span>}</div>
+            <PromoManager promos={x.promos} hidden={hidden} today={todayPanama()} actions={{ save: savePromoOwner, remove: deletePromoOwner, toggle: togglePromoOwner }} />
+          </section>
+        ) : <Upsell feature="promos" token={token} />}
+        {acc.has.catalog ? (
+          <section className="panel" id="catalogo">
+            <div className="panel-head"><h2>{x.draft.catalog_title || "Productos y servicios"}</h2>{acc.tier && <span className="muted">Hasta {acc.limits.items}</span>}</div>
+            <CatalogManager items={x.items} hidden={hidden} actions={{ save: saveItemOwner, remove: deleteItemOwner, toggle: toggleItemOwner }} />
+          </section>
+        ) : <Upsell feature="catalog" token={token} />}
         <p className="muted owner-note">¿Quieres cambiar la portada, el horario, la ubicación o tus redes? Escríbele a FiveTap y lo actualizamos.</p>
       </main>
     </div>

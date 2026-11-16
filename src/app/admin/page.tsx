@@ -9,6 +9,9 @@ import { getPlans, planOf } from "@/lib/plans";
 import { SITE_URL } from "@/lib/site";
 import { db } from "@/lib/supabase";
 import { verticalByKey } from "@/lib/verticals";
+import { pendingClaimsCount } from "@/lib/claims";
+import { openTicketsCount } from "@/lib/support";
+import { contractCounts } from "@/lib/signatures";
 import { Flash } from "./Flash";
 import { TaskRow } from "./TaskRow";
 import { STATUS_LABEL, ago, usd } from "./format";
@@ -32,6 +35,11 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
     db().from("receipts").select("amount").eq("status", "paid").gte("paid_on", `${month}-01`),
     unreadCount(),
     agenda(today, today),
+  ]);
+  const [claimsN, supportN, contractsN] = await Promise.all([
+    pendingClaimsCount().catch(() => 0),
+    openTicketsCount().catch(() => 0),
+    contractCounts().catch(() => ({ total: 0, pending: 0 })),
   ]);
   const pieces = (tagRes.data ?? []) as { business_id: string; status: string }[];
   const money = await Promise.all([db().from("payments").select("business_id").not("business_id", "is", null), db().from("receipts").select("business_id").not("business_id", "is", null)]);
@@ -91,13 +99,27 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
         {todo.length > 6 && <div className="msg"><Link className="btn btn-ghost btn-sm" href="/admin/agenda">Ver los {todo.length - 6} restantes</Link></div>}
       </section>
 
-      <nav className="home-actions" aria-label="Acciones rápidas">
-        <Link href="/admin/new"><Plus />Nuevo negocio</Link>
-        <Link href="/admin/cobros"><Wallet />Cobros</Link>
-        <Link href="/admin/contratos"><FileText />Contratos</Link>
-        <Link href="/admin/placas"><Tap />Placas</Link>
-        <Link href="/admin/planes"><Layers />Planes</Link>
-        <a href={SITE_URL} target="_blank" rel="noreferrer"><Globe />Ver mi web</a>
+      <nav className="cc-grid" aria-label="Centro de control">
+        {[
+          { href: "#negocios", icon: <Layers />, label: "Negocios", n: rows.length, hint: `${paying.length} activos` },
+          { href: "/admin/cobros#por-confirmar", icon: <Wallet />, label: "Pagos por confirmar", n: claimsN, hint: claimsN ? "Revisa y confirma" : "Al día", alert: claimsN > 0 },
+          { href: "/admin/cobros", icon: <Wallet />, label: "Renovaciones", n: soon.length + owed.length, hint: `${owed.length} atrasadas · ${soon.length} en 7 días`, alert: owed.length > 0 },
+          { href: "/admin/comprobantes", icon: <FileText />, label: "Recibos del mes", n: (receiptRes.data ?? []).length, hint: usd(collected) },
+          { href: "/admin/contratos", icon: <FileText />, label: "Contratos", n: contractsN.total, hint: contractsN.pending ? `${contractsN.pending} por firmar` : "Todos firmados" },
+          { href: "/admin/placas", icon: <Tap />, label: "Placas instaladas", n: active.length, hint: `${active.filter((t) => t.kind === "waiter").length} tarjetas de equipo` },
+          { href: "/admin/soporte", icon: <Globe />, label: "Soporte", n: supportN, hint: supportN ? "Esperando respuesta" : "Sin pendientes", alert: supportN > 0 },
+          { href: "/admin/mensajes", icon: <Globe />, label: "Mensajes de clientes", n: unread, hint: "Sin leer", alert: unread > 0 },
+          { href: "/admin/new", icon: <Plus />, label: "Nuevo negocio", n: null, hint: "Registrar en 2 minutos" },
+          { href: "/admin/planes", icon: <Layers />, label: "Planes y funciones", n: null, hint: "Niveles y qué incluye cada uno" },
+          { href: "/admin/claude", icon: <Globe />, label: "Actividad de Claude", n: null, hint: "Lo que Claude hizo" },
+          { href: SITE_URL, icon: <Globe />, label: "Ver mi web", n: null, hint: "Como la ven tus clientes", ext: true },
+        ].map((c) => (
+          <Link key={c.label} href={c.href} className={`cc-card${c.alert ? " alert" : ""}`} {...(c.ext ? { target: "_blank", rel: "noreferrer" } : {})}>
+            <span className="cc-ic">{c.icon}</span>
+            <span className="cc-txt"><b>{c.label}</b><small>{c.hint}</small></span>
+            {c.n !== null && <span className="cc-n num">{c.n}</span>}
+          </Link>
+        ))}
       </nav>
 
       <section className="panel" id="negocios">

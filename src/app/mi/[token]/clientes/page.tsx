@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { can } from "@/lib/entitlements";
+import { Upsell } from "@/components/Upsell";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AccessGate } from "@/components/AccessGate";
@@ -49,6 +51,14 @@ export default async function ClientsPage({ params, searchParams }: Props) {
   if (!b) notFound();
   if (!(await accessRole(b))) return <AccessGate b={b} token={token} />;
   const home = `/mi/${token}`;
+  if (!(await can(b, "clients"))) {
+    return (
+      <div className="admin">
+        <header className="admin-top"><div className="container"><Link href={home} className="owner-back" aria-label="Volver a mi resumen">← Volver</Link><Logo size={20} /></div></header>
+        <main className="container admin-main settings"><h1 className="owner-title">Mis clientes</h1><Upsell feature="clients" token={token} /></main>
+      </div>
+    );
+  }
   const [d, contacts, resv] = await Promise.all([
     businessDetail(b.id),
     contactsFor(b.id),

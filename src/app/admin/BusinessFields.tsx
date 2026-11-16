@@ -2,6 +2,7 @@ import { type Plan, planOf } from "@/lib/plans";
 import { PlanPicker, type PickPlan } from "./PlanPicker";
 import { KindSelect } from "./KindSelect";
 import { BrandColors } from "./BrandColors";
+import { TIERS } from "@/lib/features";
 
 const pick = (plans: Plan[], keep?: string): PickPlan[] =>
   plans.filter((p) => p.active || p.key === keep).map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards, lanyards: p.lanyards, flex_pieces: p.flex_pieces, line: p.line }));
@@ -131,6 +132,14 @@ export function PlanFields({ plans, planKey, kind }: { plans: Plan[]; planKey?: 
       <div className="grid-2">
         <KindSelect kinds={PANEL_KINDS.map((v) => ({ key: v.key, label: v.label }))} defaultKind={kind} label="6. Tipo de negocio" />
         <PlanPicker plans={pick(plans)} defaultKey={planKey} pieces label="7. ¿Qué contrató?" />
+        <label className="field">
+          <span>8. Nivel de funciones</span>
+          <select className="select" name="tier" defaultValue="">
+            <option value="">Automático según lo contratado</option>
+            {TIERS.map((t) => <option key={t.key} value={t.key}>{t.name} — {t.hint}</option>)}
+          </select>
+          <small>Define qué herramientas recibe. Luego lo ajustas por función en su ficha (Contratación y permisos).</small>
+        </label>
       </div>
       <small className="muted">De 1 a 4 piezas es pago único; desde 5 piezas, plan mensual (de referencia o a la medida). Una sola placa con FiveTap Business también puede ir en plan mensual a la medida. Vacío: las piezas del plan de referencia.</small>
     </div>

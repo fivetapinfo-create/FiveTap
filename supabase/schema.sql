@@ -726,3 +726,55 @@ create index if not exists payment_claims_business_idx on payment_claims(busines
 create index if not exists payment_claims_status_idx on payment_claims(status, created_at desc);
 create index if not exists payment_claims_payment_idx on payment_claims(payment_id);
 alter table payment_claims enable row level security;
+
+-- ---------- Tiers, per-business permissions, empresa login, contract e-signatures ----------
+alter table businesses add column if not exists tier text check (tier is null or tier in ('esencial','profesional','empresarial'));
+alter table businesses add column if not exists entitlements jsonb not null default '{}'::jsonb;
+alter table businesses add column if not exists password_required boolean not null default false;
+alter table businesses add column if not exists password_epoch int not null default 0;
+create table if not exists entitlement_log (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  changes jsonb not null,
+  reason text check (reason is null or char_length(reason) <= 300),
+  created_at timestamptz not null default now()
+);
+create index if not exists entitlement_log_business_idx on entitlement_log(business_id, created_at desc);
+create table if not exists feature_rollout (
+  key text primary key check (char_length(key) <= 40),
+  tiers text[] not null default '{}',
+  paid boolean not null default false,
+  note text check (note is null or char_length(note) <= 200),
+  updated_at timestamptz not null default now()
+);
+create table if not exists business_users (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  role text not null check (role in ('owner','manager')),
+  username text not null check (username ~ '^[a-z0-9._-]{3,40}$'),
+  password_hash text not null,
+  failed int not null default 0,
+  locked_until timestamptz,
+  last_login_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists business_users_username_key on business_users(username);
+create index if not exists business_users_business_idx on business_users(business_id);
+create table if not exists agreement_signatures (
+  id uuid primary key default gen_random_uuid(),
+  agreement_id uuid not null references agreements(id) on delete cascade,
+  party text not null check (party in ('client','fivetap')),
+  signer_name text not null check (char_length(signer_name) between 3 and 120),
+  signer_role text check (signer_role is null or char_length(signer_role) <= 80),
+  signature_png text check (signature_png is null or char_length(signature_png) <= 200000),
+  doc_hash text not null check (doc_hash ~ '^[0-9a-f]{64}$'),
+  ip text,
+  user_agent text check (user_agent is null or char_length(user_agent) <= 400),
+  signed_at timestamptz not null default now()
+);
+create index if not exists agreement_signatures_agreement_idx on agreement_signatures(agreement_id, signed_at desc);
+alter table agreements add column if not exists sent_at timestamptz;
+alter table entitlement_log enable row level security;
+alter table feature_rollout enable row level security;
+alter table business_users enable row level security;
+alter table agreement_signatures enable row level security;

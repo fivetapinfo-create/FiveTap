@@ -26,6 +26,7 @@ import { setTagStatus } from "../../actions";
 import { addSnapshot, addTags, countFromGoogle, renewAccessCode, emitReceipt, extendGrace, resetOwnerLink, deleteBusiness, recordPayment, resendReceipt, sendReceiptWhatsApp, setStaff, voidPayment, removeContact, removeSnapshot, renameTag, setTagActive, testOwnerPush, updateBusiness } from "../../actions";
 import { EssentialFields, OptionFields } from "../../BusinessFields";
 import { Report } from "./Report";
+import { Permisos } from "./Permisos";
 import { BusinessOptions } from "../../BusinessOptions";
 import { TeamRanking } from "@/components/TeamRanking";
 import { teamPeriod, teamRanking } from "@/lib/team";
@@ -128,6 +129,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <a href="#mensajes">Mensajes{feedback.some((f) => !f.read_at) ? " •" : ""}</a>
         <a href="#pagos">Pagos</a>
         <a href="#resenas">Reseñas</a>
+        <a href="#permisos">Permisos</a>
         <a href="#app">Accesos</a>
         {waiters.length > 0 && <a href="#equipo">Equipo</a>}
         <a href="#placas">Placas</a>
@@ -438,6 +440,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
       </section>
 
       <Report business={b.name} periods={periods} snapshots={snapshots} />
+
+      <Permisos b={b} />
 
       <section className="panel" id="app">
         <div className="panel-head">

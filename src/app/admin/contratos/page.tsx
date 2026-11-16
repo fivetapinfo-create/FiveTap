@@ -2,12 +2,16 @@ import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { AGREEMENT_METHODS, SIGNER_ROLES, longDay, money2 } from "@/lib/agreement";
 import { listAgreements } from "@/lib/agreements-db";
+import { SIGN_LABEL, docHash, signStatus, type Signature } from "@/lib/signatures";
+import { provider } from "@/lib/company";
+import { CopyButton } from "@/components/CopyButton";
 import { todayPanama } from "@/lib/agenda";
 import { SITE_URL } from "@/lib/site";
 import { db } from "@/lib/supabase";
 import { PLAN_TEST_PRODUCTS, type PlanTestProduct } from "@/lib/test-kit";
 import { customMethods, receiptMoney } from "@/lib/receipts";
-import { createAgreement, createOrder, deleteAgreement, payOrder, sendReceiptWhatsApp } from "../actions";
+import { contractSigning, createAgreement, createOrder, deleteAgreement, payOrder, sendReceiptWhatsApp } from "../actions";
+import { dateTime } from "../format";
 import { OrderForm } from "./OrderForm";
 import { ContractBizPicker, type ContractBiz } from "./ContractBizPicker";
 import { getPlans, planOf } from "@/lib/plans";
@@ -29,6 +33,8 @@ export default async function Contracts({ searchParams }: Props) {
     db().from("orders").select("*").order("created_at", { ascending: false }).limit(200),
     customMethods(),
   ]);
+  const [sigRes, prov] = await Promise.all([db().from("agreement_signatures").select("*").order("signed_at"), provider()]);
+  const sigsOf = (id: string) => ((sigRes.data ?? []) as Signature[]).filter((x) => x.agreement_id === id);
   const orders = (orderRes.data ?? []) as Order[];
   const paidIds = orders.map((o) => o.payment_id).filter((x): x is string => Boolean(x));
   const receipts = new Map(
@@ -196,19 +202,26 @@ export default async function Contracts({ searchParams }: Props) {
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr><th>N.º</th><th>Negocio</th><th>Plan</th><th>Vigencia</th><th /></tr>
+                <tr><th>N.º</th><th>Negocio</th><th>Plan</th><th>Vigencia</th><th>Firma</th><th /></tr>
               </thead>
               <tbody>
                 {list.map((a) => {
                   const link = `${SITE_URL}/contrato/${a.token}/pdf`;
                   const phone = phoneOf(a.business_id);
                   const status = a.end_date < today ? "Terminado" : a.start_date > today ? "Por empezar" : "Vigente";
+                  const sigs = sigsOf(a.id);
+                  const st = signStatus(a, sigs);
+                  const signLink = `${SITE_URL}/contrato/${a.token}`;
                   return (
                     <tr key={a.id} className={sp.c === a.id ? "row-new" : undefined}>
                       <td><b>{a.number}</b></td>
                       <td>{a.business_id ? <Link href={`/admin/b/${a.business_id}`}>{a.venue_name}</Link> : a.venue_name}<br /><small className="muted">Firma: {a.signer_name}</small></td>
                       <td>{a.plan_name}<br /><small className="muted">{money2(a.monthly_fee)}/mes · {a.plaques} placas · {a.cards} tarjetas</small></td>
                       <td>{longDay(a.start_date)} al {longDay(a.end_date)}<br /><small className="muted">{status}</small></td>
+                      <td>
+                        <span className={`pill ${st === "both" ? "bill-ok" : st === "client" ? "bill-soon" : st === "changed" ? "bill-late" : ""}`}>{SIGN_LABEL[st]}</span>
+                        {sigs.filter((x) => x.doc_hash === docHash(a)).map((x) => <small key={x.id} className="muted" style={{ display: "block" }}>{x.party === "client" ? "Cliente" : "FiveTap"}: {x.signer_name} · {dateTime(x.signed_at)}</small>)}
+                      </td>
                       <td>
                         <div className="row" style={{ justifyContent: "flex-end" }}>
                           <a className="btn btn-ghost btn-sm" href={`/admin/contratos/${a.id}/pdf`} target="_blank" rel="noreferrer">Ver</a>
@@ -222,7 +235,21 @@ export default async function Contracts({ searchParams }: Props) {
                             </form>
                           </details>
                           {phone && (
-                            <a className="btn btn-ghost btn-sm" href={`https://wa.me/${phone}?text=${encodeURIComponent(`Hola, te escribe FiveTap. Este es el contrato de 3 meses de ${a.venue_name} para revisarlo antes de firmar: ${link}`)}`}>Enviar por WhatsApp</a>
+                            <a className="btn btn-ghost btn-sm" href={`https://wa.me/${phone}?text=${encodeURIComponent(`Hola, te escribe FiveTap. Este es el contrato de 3 meses de ${a.venue_name}. Puedes leerlo y firmarlo desde tu celular aquí: ${signLink}`)}`}>Enviar para firmar</a>
+                          )}
+                          <form action={contractSigning}><input type="hidden" name="id" value={a.id} /><input type="hidden" name="op" value="sent" /><SubmitButton className="btn btn-ghost btn-sm" pending="…">{a.sent_at ? "Enviado ✓" : "Marcar enviado"}</SubmitButton></form>
+                          <CopyButton value={signLink} label="Copiar enlace de firma" />
+                          {st === "client" && (
+                            <details className="void-box">
+                              <summary className="btn btn-dark btn-sm">Firmar como FiveTap</summary>
+                              <form action={contractSigning} className="void-form">
+                                <input type="hidden" name="id" value={a.id} /><input type="hidden" name="op" value="sign" />
+                                <input className="input" name="name" required minLength={3} defaultValue={prov.representative?.name ?? ""} placeholder="Nombre de quien firma por FiveTap" />
+                                <input className="input" name="role" defaultValue={prov.representative?.role ?? "Representante legal"} />
+                                <label className="check"><input type="checkbox" name="confirm" value="1" required /><span>Revisé la firma del cliente</span></label>
+                                <SubmitButton className="btn btn-dark btn-sm" pending="Firmando…">Firmar</SubmitButton>
+                              </form>
+                            </details>
                           )}
                         </div>
                       </td>

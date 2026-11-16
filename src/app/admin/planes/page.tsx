@@ -1,7 +1,9 @@
 import { SubmitButton } from "@/components/SubmitButton";
 import { getPlans } from "@/lib/plans";
 import { db } from "@/lib/supabase";
-import { updatePlan } from "../actions";
+import { saveRollout, updatePlan } from "../actions";
+import { FEATURES, TIERS } from "@/lib/features";
+import { rollout } from "@/lib/entitlements";
 import { Flash } from "../Flash";
 import { usd } from "../format";
 import { ONE_TIME } from "@/lib/test-kit";
@@ -10,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 /** The monthly reference plans (5 pieces or more): price, pieces and what each includes. */
 export default async function Plans({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
-  const [plans, sp, biz] = await Promise.all([getPlans(), searchParams, db().from("businesses").select("plan_key, status")]);
+  const [plans, sp, biz, ro, tierRows] = await Promise.all([getPlans(), searchParams, db().from("businesses").select("plan_key, status"), rollout(), db().from("businesses").select("tier").neq("status", "canceled")]);
+  const tierCount = (t: string | null) => ((tierRows.data ?? []) as { tier: string | null }[]).filter((x) => x.tier === t).length;
   const using = (key: string) => ((biz.data ?? []) as { plan_key: string | null; status: string }[]).filter((b) => b.plan_key === key && b.status !== "canceled").length;
 
   return (
@@ -30,6 +33,36 @@ export default async function Plans({ searchParams }: { searchParams: Promise<{ 
           <li><b>Cada cliente se cotiza contigo.</b> Evalúas sus piezas NFC y lo que le sirve, y le armas la mensualidad que le salga beneficiosa. Se escribe en su ficha y se cobra en Cobros. No hay cobro automático: un día antes del vencimiento, al dueño le llega el aviso y renueva desde su app por efectivo, Yappy o transferencia, y te envía el comprobante.</li>
         </ol>
       </section>
+      <section className="panel" id="funciones">
+        <div className="panel-head">
+          <h2>Funciones por nivel</h2>
+          <span className="muted">{TIERS.map((t) => `${t.name}: ${tierCount(t.key)}`).join(" · ")} · Sin nivel: {tierCount(null)} negocios</span>
+        </div>
+        <form action={saveRollout} className="form-section">
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Función</th>{TIERS.map((t) => <th key={t.key}>{t.name}</th>)}<th>De pago</th><th>Nota</th></tr></thead>
+              <tbody>
+                {FEATURES.map((f) => {
+                  const r = ro.find((x) => x.key === f.key);
+                  const tiers = r?.tiers ?? f.tiers;
+                  return (
+                    <tr key={f.key}>
+                      <td><b>{f.name}</b><br /><small className="muted">{f.what}</small></td>
+                      {TIERS.map((t) => <td key={t.key}><input type="checkbox" name={`r_${f.key}_${t.key}`} value="1" defaultChecked={tiers.includes(t.key)} aria-label={`${f.name} en ${t.name}`} /></td>)}
+                      <td><input type="checkbox" name={`p_${f.key}`} value="1" defaultChecked={r?.paid ?? false} aria-label={`${f.name} es de pago`} /></td>
+                      <td><input className="input" name={`n_${f.key}`} maxLength={200} defaultValue={r?.note ?? ""} placeholder="Opcional" /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <SubmitButton className="btn btn-dark" pending="Guardando…">Guardar funciones por nivel</SubmitButton>
+          <small className="muted">Una función nueva se agrega sin niveles marcados: no le llega a nadie hasta que la marques aquí o la actives a un negocio en su ficha. Los negocios sin nivel (los que existían antes) conservan todo.</small>
+        </form>
+      </section>
+
       <div className="plan-admin">
         {plans.map((p) => (
           <form key={p.key} id={p.key} action={updatePlan} className="panel plan-edit">

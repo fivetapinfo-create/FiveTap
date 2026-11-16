@@ -1,4 +1,5 @@
 import "server-only";
+import { tierAllows } from "./features";
 import { sendPush } from "./push";
 import { db } from "./supabase";
 
@@ -20,7 +21,9 @@ export type ModuleKey = keyof typeof MODULES;
 const PLANS_WITH_MODULES = ["pro", "enterprise"];
 
 /** Whether a business has a module: the founder's switch, or else what its plan includes. */
-export function moduleOn(b: { modules?: Record<string, unknown> | null; plan_key?: string | null }, key: ModuleKey) {
+export function moduleOn(b: { modules?: Record<string, unknown> | null; plan_key?: string | null; tier?: string | null; entitlements?: unknown }, key: ModuleKey) {
+  // The module must be on for the business AND included in what it contracted.
+  if (!tierAllows(b, key)) return false;
   const v = b.modules?.[key];
   return typeof v === "boolean" ? v : PLANS_WITH_MODULES.includes(b.plan_key ?? "");
 }

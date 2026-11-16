@@ -22,6 +22,8 @@ export type Agreement = {
   end_date: string;
   payment_method: string;
   created_at: string;
+  /** When it was sent to the venue to sign electronically. */
+  sent_at?: string | null;
 };
 
 export const AGREEMENT_MONTHS = 3;

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { accessRole, founderView, renewCode, unlock } from "@/lib/access";
+import { accessRole, founderView, loginWithPassword, renewCode, unlock } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { db } from "@/lib/supabase";
 import { saveStaff } from "@/lib/team";
@@ -13,6 +13,8 @@ import { phoneDigits } from "@/lib/reservation-rules";
 import { openTicket, replyTicket, setTicketStatus } from "@/lib/support";
 import { billingState } from "@/lib/agenda";
 import { reportPayment } from "@/lib/claims";
+import { featureByKey } from "@/lib/features";
+import { guardById } from "@/lib/entitlements";
 
 /** The owner or manager closes a private message once it is handled (or opens it again). */
 export async function setMessageResolved(f: FormData) {
@@ -84,10 +86,10 @@ async function pageRun(f: FormData, ok: string, anchor: string, run: (businessId
 }
 const fid = (f: FormData) => String(f.get("id") ?? "");
 
-export async function savePromoOwner(f: FormData) { await pageRun(f, "promo", "promos", (id) => savePromotion(id, f)); }
+export async function savePromoOwner(f: FormData) { await pageRun(f, "promo", "promos", async (id) => { await guardById(id, "promos", f.get("id") ? undefined : { table: "promotions", limit: "promos" }); return savePromotion(id, f); }); }
 export async function deletePromoOwner(f: FormData) { await pageRun(f, "promo-borrada", "promos", (id) => deletePromotion(id, fid(f))); }
 export async function togglePromoOwner(f: FormData) { await pageRun(f, "guardado", "promos", (id) => setActive(id, "promotions", fid(f), f.get("active") === "1")); }
-export async function saveItemOwner(f: FormData) { await pageRun(f, "item", "catalogo", (id) => saveItem(id, f)); }
+export async function saveItemOwner(f: FormData) { await pageRun(f, "item", "catalogo", async (id) => { await guardById(id, "catalog", f.get("id") ? undefined : { table: "catalog_items", limit: "items" }); return saveItem(id, f); }); }
 export async function deleteItemOwner(f: FormData) { await pageRun(f, "item-borrado", "catalogo", (id) => deleteItem(id, fid(f))); }
 export async function toggleItemOwner(f: FormData) { await pageRun(f, "guardado", "catalogo", (id) => setActive(id, "catalog_items", fid(f), f.get("active") === "1")); }
 
@@ -254,4 +256,26 @@ export async function reportRenewal(f: FormData) {
   }
   revalidatePath(back);
   redirect(error ? `${back}?error=${encodeURIComponent(error)}` : `${back}?ok=enviado#estado`);
+}
+
+/** The owner or manager asks for a tool they do not have: it reaches the founder as a support request. */
+export async function requestUpgrade(f: FormData) {
+  const { b, role, token, founder } = await ownerCtx(f);
+  const feat = featureByKey(String(f.get("feature") ?? ""));
+  if (!feat) redirect(`/mi/${token}`);
+  if (founder) redirect(`/mi/${token}/soporte?error=${encodeURIComponent("Estás viendo la app como el dueño desde Founder.")}`);
+  const t = await openTicket({ id: b.id, name: b.name }, role, `Ampliación: ${feat.name}`, "billing", `Quiero cotizar “${feat.name}” para ${b.name}. Enviado desde FiveTap Business.`).catch(() => null);
+  redirect(t ? `/mi/${token}/soporte?t=${t.id}&ok=enviada#hilo` : `/mi/${token}/soporte?error=${encodeURIComponent("No se pudo enviar. Inténtalo otra vez.")}`);
+}
+
+
+/** Empresas: username and password for this business only. */
+export async function passwordLogin(f: FormData) {
+  const token = String(f.get("token") ?? "");
+  const b = await businessByOwnerToken(token);
+  if (!b) redirect("/");
+  const r = await loginWithPassword(b, String(f.get("username") ?? "").slice(0, 60), String(f.get("password") ?? "").slice(0, 200));
+  if (r.ok) redirect(`/mi/${token}?rol=${r.role === "manager" ? "gerente" : "dueno"}`);
+  await new Promise((res) => setTimeout(res, 1000));
+  redirect(`/mi/${token}?acceso=${r.locked ? "bloqueado" : "clave"}`);
 }

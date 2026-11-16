@@ -529,7 +529,9 @@ export async function receiptPdf(r: ReceiptPdfInput, p: { tradeName: string; leg
 // ---------- 3-month contract ----------
 
 /** The 3-month contract: one or two pages, plain clauses and the signatures. */
-export async function agreementPdf(a: Agreement, p: Provider) {
+export type PdfSignature = { party: "client" | "fivetap"; signer_name: string; signer_role: string | null; signature_png: string | null; doc_hash: string; ip: string | null; user_agent: string | null; signed_at: string };
+
+export async function agreementPdf(a: Agreement, p: Provider, sigs: PdfSignature[] = [], hash?: string) {
   const doc = (
     <Document title={`Contrato ${a.number} — FiveTap`} author={p.trade_name}>
       <Page size="A4" style={s.page}>
@@ -609,6 +611,27 @@ export async function agreementPdf(a: Agreement, p: Provider) {
 
         <Footer left={`FiveTap · Contrato ${a.number} · ${a.venue_name}`} />
       </Page>
+      {sigs.length > 0 && (
+        <Page size="A4" style={s.page}>
+          <Header doc={`Contrato ${a.number}`} tag="FIRMA ELECTRÓNICA" />
+          <Text style={s.eyebrow}>Constancia de firma electrónica</Text>
+          <Text style={s.title}>Firmas de este contrato</Text>
+          <Text style={[s.para, { marginTop: 8 }]}>Firmado electrónicamente conforme a la Ley 51 de 2008 de la República de Panamá. Cada firma guarda la huella del documento (SHA-256) en el momento de firmar: si el contrato cambiara después, la huella ya no coincidiría.</Text>
+          {sigs.map((g, i) => (
+            <View key={i} wrap={false} style={{ marginTop: 14, borderWidth: 0.75, borderColor: LINE, borderRadius: 10, padding: 12, gap: 3 }}>
+              <Text style={s.eyebrow}>{g.party === "client" ? `Por el cliente · ${a.venue_name}` : `Por ${p.trade_name}`}</Text>
+              {g.signature_png ? <Image src={g.signature_png} style={{ width: 180, height: 60, objectFit: "contain", marginTop: 4 }} /> : null}
+              <Text style={s.partyName}>{g.signer_name}{g.signer_role ? ` · ${g.signer_role}` : ""}</Text>
+              <Text style={s.small}>Fecha y hora: {new Intl.DateTimeFormat("es-PA", { dateStyle: "long", timeStyle: "medium", timeZone: "America/Panama" }).format(new Date(g.signed_at))} (hora de Panamá)</Text>
+              {g.ip ? <Text style={s.small}>Dirección IP: {g.ip}</Text> : null}
+              {g.user_agent ? <Text style={s.small}>Dispositivo: {g.user_agent.slice(0, 140)}</Text> : null}
+              <Text style={s.small}>Huella firmada: {g.doc_hash}{hash && g.doc_hash !== hash ? " (no coincide con la versión actual)" : ""}</Text>
+            </View>
+          ))}
+          {hash ? <Text style={[s.small, { marginTop: 12 }]}>Huella de esta versión del contrato: {hash}</Text> : null}
+          <Footer left={`FiveTap · Contrato ${a.number} · Constancia de firma`} />
+        </Page>
+      )}
     </Document>
   );
   return renderToBuffer(doc);

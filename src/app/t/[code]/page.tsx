@@ -7,6 +7,7 @@ import { GuestExperience } from "@/components/GuestExperience";
 import { publishedExperience } from "@/lib/experience";
 import { hasContent } from "@/lib/experience-shape";
 import { moduleOn } from "@/lib/orders";
+import { accessOf } from "@/lib/entitlements";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-session";
 import { guestClosed, logEvent, tagByCode } from "@/lib/data";
 import { PIECE_LABEL, pieceState } from "@/lib/pieces";
@@ -56,6 +57,10 @@ export default async function TapPage({ params, searchParams }: Props) {
   const reserveHref = moduleOn(tag.business, "reservations") ? `/t/${code}/reservar` : undefined;
   // A published experience (cover, promotions, catalog…) wraps the same review card.
   const x = await publishedExperience(tag.business_id);
+  // Only what the business contracted reaches its page (no tier yet = everything, as before).
+  const acc = await accessOf(tag.business);
+  const clubHref = acc.has.club ? `/t/${code}/club${q}` : undefined;
+  if (x) { if (!acc.has.promos) x.promos = []; if (!acc.has.catalog) x.items = []; }
   if (x && hasContent(x.experience, x.promos.length, x.items.length)) {
     return (
       <>
@@ -69,7 +74,7 @@ export default async function TapPage({ params, searchParams }: Props) {
           lang={req.lang}
           reviewHref={`/t/${code}/go${q}`}
           managerHref={`/t/${code}/mensaje${q}`}
-          clubHref={`/t/${code}/club${q}`}
+          clubHref={clubHref}
           orderHref={orderHref}
           reserveHref={reserveHref}
         />
@@ -84,7 +89,7 @@ export default async function TapPage({ params, searchParams }: Props) {
       copy={req.copy}
       reviewHref={`/t/${code}/go${q}`}
       managerHref={`/t/${code}/mensaje${q}`}
-      clubHref={`/t/${code}/club${q}`}
+      clubHref={clubHref}
       orderHref={orderHref}
           reserveHref={reserveHref}
     />

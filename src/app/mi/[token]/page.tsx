@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { accessOf } from "@/lib/entitlements";
+import { Upsell } from "@/components/Upsell";
 import Link from "next/link";
 import { AccessGate } from "@/components/AccessGate";
 import { Chart, Chat, Gear, Home, Users } from "@/components/Icons";
@@ -86,6 +88,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const resvOn = moduleOn(b, "reservations");
   const resv = resvOn ? await reservationGlance(b.id) : { today: 0, pending: 0 };
   const answered = await answeredTicketsCount(b.id);
+  const acc = await accessOf(b);
   const claimPending = role === "owner" ? (await claimsFor(b.id, 1))[0]?.status === "pending" : false;
   // Tools that suit this kind of business and it does not have yet (only for venues with the app).
   const rec = b.mode === "google" ? null : presetFor(b.kind).modules.reservations && !resvOn ? "reservas" : presetFor(b.kind).modules.orders && !ordersOn ? "pedidos" : null;
@@ -206,6 +209,27 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           </div>
         </section>
 
+        {/* Everything the business uses, one tap away; tools not contracted show a lock and lead to the upgrade. */}
+        <nav className="qa-grid" aria-label="Accesos rápidos">
+          {[
+            { href: "#mensajes", label: "Mensajes", icon: <Chat />, badge: pending.length || null, on: true },
+            { href: `/mi/${token}/clientes`, label: "Mis clientes", icon: <Users />, on: acc.has.clients },
+            { href: `/mi/${token}/pagina`, label: "Mi página", icon: <Home />, on: acc.has.promos || acc.has.catalog },
+            ...(ordersOn ? [{ href: `/mi/${token}/pedidos`, label: "Pedidos", icon: <Chart />, badge: newOrders || null, on: true }] : []),
+            ...(resvOn ? [{ href: `/mi/${token}/reservas`, label: "Reservas", icon: <Chart />, badge: resv.pending || null, on: true }] : []),
+            { href: `/mi/${token}/reporte`, label: "Reporte", icon: <Chart />, on: true },
+            { href: `/mi/${token}/ayuda`, label: "Ayuda", icon: <Gear />, on: true },
+            { href: `/mi/${token}/soporte`, label: "Soporte", icon: <Chat />, badge: answered || null, on: true },
+            ...(role === "owner" && charge && !charge.auto ? [{ href: `/mi/${token}/renovar`, label: "Renovar", icon: <Gear />, on: true }] : []),
+          ].map((q) => (
+            <Link key={q.label} href={q.href} className={`qa-card${q.on ? "" : " locked"}`}>
+              <span className="qa-ic">{q.icon}</span>
+              <span>{q.label}</span>
+              {q.on ? (q.badge ? <i className="num">{q.badge}</i> : null) : <em aria-label="No incluido">🔒</em>}
+            </Link>
+          ))}
+        </nav>
+
         {/* 3. Messages from guests: open ones first. */}
         <section className="panel" id="mensajes">
           <div className="panel-head">
@@ -240,10 +264,10 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         </section>
 
         {/* 4. The team: who brings more guests to Google, live. */}
-        {team.length > 0 && <TeamRanking rows={team} period={period} base={`/mi/${token}`} edit={{ action: setStaffName, hidden: { token } }} />}
+        {acc.has.team && team.length > 0 && <TeamRanking rows={team} period={period} base={`/mi/${token}`} edit={{ action: setStaffName, hidden: { token } }} />}
 
         {/* 5. The club, with the promotion sender. */}
-        <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} business={b.name} />
+        {acc.has.club ? <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} business={b.name} /> : <Upsell feature="club" token={token} compact />}
 
         {/* 6. Plaques: only when the owner wants the detail. */}
         {tables.length > 0 && (

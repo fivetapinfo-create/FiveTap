@@ -1,5 +1,5 @@
 import "server-only";
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomInt, scrypt, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminSession } from "./admin-session";
 import { db } from "./supabase";
@@ -13,7 +13,7 @@ import type { Business } from "./types";
 // 15 minutes. Codes are stored encrypted so the founder (and the owner) can read them back.
 
 export type AccessRole = "owner" | "manager";
-type Keys = Pick<Business, "id" | "owner_token" | "owner_code_enc" | "manager_code_enc">;
+type Keys = Pick<Business, "id" | "owner_token" | "owner_code_enc" | "manager_code_enc"> & { password_required?: boolean; password_epoch?: number };
 
 export const CODE_RE = /^\d{6}$/;
 const MAX_FAILS = 5;
@@ -72,8 +72,12 @@ export async function renewCode(b: Keys, role: AccessRole) {
 }
 
 const cookieName = (b: Pick<Business, "id">) => `ft_acc_${b.id.slice(0, 8)}`;
+// With username and password required (empresas), the phone's pass is tied to the password
+// session instead of the code: a code alone no longer opens the app.
 const sign = (b: Keys, role: AccessRole) =>
-  createHmac("sha256", b.owner_token).update(`${role}:${role === "owner" ? b.owner_code_enc : b.manager_code_enc}`).digest("hex");
+  b.password_required
+    ? createHmac("sha256", b.owner_token).update(`pw:${role}:${b.password_epoch ?? 0}`).digest("hex")
+    : createHmac("sha256", b.owner_token).update(`${role}:${role === "owner" ? b.owner_code_enc : b.manager_code_enc}`).digest("hex");
 
 /** Who is using this phone: the owner, the manager, or nobody yet (asks for the code). */
 /** True when the founder, signed in to the panel, is looking at a business's app as its owner. */
@@ -107,6 +111,8 @@ export type UnlockResult = { ok: true; role: AccessRole } | { ok: false; locked:
 
 /** Checks a typed code. Wrong ones count; 5 in a row lock the app for 15 minutes. */
 export async function unlock(b: Keys & Pick<Business, "access_fails" | "access_locked_until">, code: string): Promise<UnlockResult> {
+  // Businesses that require username and password never open with a code.
+  if (b.password_required) return { ok: false, locked: false };
   if (b.access_locked_until && Date.parse(b.access_locked_until) > Date.now()) {
     return { ok: false, locked: true, minutes: Math.ceil((Date.parse(b.access_locked_until) - Date.now()) / 60_000) };
   }
@@ -125,4 +131,62 @@ export async function unlock(b: Keys & Pick<Business, "access_fails" | "access_l
     .update({ access_fails: lock ? 0 : fails, access_locked_until: lock ? new Date(Date.now() + LOCK_MINUTES * 60_000).toISOString() : null })
     .eq("id", b.id);
   return { ok: false, locked: lock, minutes: lock ? LOCK_MINUTES : undefined };
+}
+
+
+// ---------- Username and password (empresas) ----------
+
+const scryptAsync = (pw: string, salt: Buffer) => new Promise<Buffer>((ok, ko) => scrypt(pw, salt, 32, { N: 16384, r: 8, p: 1 }, (e, k) => (e ? ko(e) : ok(k))));
+
+/** One-way hash: nobody, not even the founder, can read a password back. */
+export async function hashPassword(pw: string) {
+  const salt = randomBytes(16);
+  return `scrypt$${salt.toString("base64url")}$${(await scryptAsync(pw, salt)).toString("base64url")}`;
+}
+async function checkPassword(pw: string, stored: string) {
+  const [alg, salt, hash] = stored.split("$");
+  if (alg !== "scrypt" || !salt || !hash) return false;
+  const got = await scryptAsync(pw, Buffer.from(salt, "base64url"));
+  const want = Buffer.from(hash, "base64url");
+  return got.length === want.length && timingSafeEqual(got, want);
+}
+export const USERNAME_RE = /^[a-z0-9._-]{3,40}$/;
+export function passwordProblem(pw: string) {
+  if (pw.length < 10) return "La contraseña debe tener al menos 10 caracteres.";
+  if (!/[a-zA-Z]/.test(pw) || !/\d/.test(pw)) return "Usa letras y números en la contraseña.";
+  return null;
+}
+
+/** Founder: creates (or resets) a person's username and password for a business. */
+export async function setBusinessUser(businessId: string, role: AccessRole, username: string, password: string) {
+  const u = username.trim().toLowerCase();
+  if (!USERNAME_RE.test(u)) throw new Error("Usuario: de 3 a 40 letras minúsculas, números, punto, guion o guion bajo.");
+  const bad = passwordProblem(password);
+  if (bad) throw new Error(bad);
+  const password_hash = await hashPassword(password);
+  const { data: taken } = await db().from("business_users").select("id, business_id").eq("username", u).maybeSingle();
+  if (taken && taken.business_id !== businessId) throw new Error("Ese usuario ya existe en otro negocio. Elige otro.");
+  const { error } = taken
+    ? await db().from("business_users").update({ role, password_hash, failed: 0, locked_until: null }).eq("id", taken.id)
+    : await db().from("business_users").insert({ business_id: businessId, role, username: u, password_hash });
+  if (error) throw new Error(error.message);
+}
+
+export type PasswordLogin = { ok: true; role: AccessRole } | { ok: false; locked: boolean };
+
+/** Checks username and password for this business only. 5 wrong in a row lock that user 15 minutes. */
+export async function loginWithPassword(b: Keys, username: string, password: string): Promise<PasswordLogin> {
+  const u = username.trim().toLowerCase();
+  const { data: user } = await db().from("business_users").select("*").eq("business_id", b.id).eq("username", u).maybeSingle();
+  if (!user) { await checkPassword(password, "scrypt$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"); return { ok: false, locked: false }; }
+  if (user.locked_until && Date.parse(user.locked_until) > Date.now()) return { ok: false, locked: true };
+  if (await checkPassword(password, user.password_hash)) {
+    await db().from("business_users").update({ failed: 0, locked_until: null, last_login_at: new Date().toISOString() }).eq("id", user.id);
+    await remember(b, user.role as AccessRole);
+    return { ok: true, role: user.role as AccessRole };
+  }
+  const failed = (user.failed ?? 0) + 1;
+  const lock = failed >= MAX_FAILS;
+  await db().from("business_users").update({ failed: lock ? 0 : failed, locked_until: lock ? new Date(Date.now() + LOCK_MINUTES * 60_000).toISOString() : null }).eq("id", user.id);
+  return { ok: false, locked: lock };
 }

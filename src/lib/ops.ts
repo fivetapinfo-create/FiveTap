@@ -14,6 +14,7 @@ import { SITE_URL, nfcUrl, reviewUrlFrom } from "./site";
 import { db } from "./supabase";
 import { PANEL_KINDS, verticalByKey } from "./verticals";
 import { ONE_TIME } from "./test-kit";
+import { suggestTier } from "./features";
 
 // FiveTap operations for Claude (the MCP endpoint at /api/ops/mcp). Every tool works on ONE
 // business named by its id; the important ones also need its exact name, so Claude cannot
@@ -184,6 +185,7 @@ export const TOOLS = {
         manager_name: opt(a.manager_name, 80), manager_phone: phone(a.manager_phone), billing_name: opt(a.billing_name, 80), billing_phone: phone(a.billing_phone),
         monthly_fee: once || test ? 0 : plan!.monthly, plan_key: plan?.key ?? null, mode: once ? "google" : "full",
         status: test ? "trial" : "active", trial_ends_at: null, modules: preset.modules,
+        tier: once ? "esencial" : suggestTier(plan?.key ?? null, Number(plan?.monthly ?? 0)),
         experience_draft: { ...EMPTY_EXPERIENCE, sections: preset.sections, catalog_title: preset.catalog_title },
       }).select("id").single();
       if (error) fail(error.message);

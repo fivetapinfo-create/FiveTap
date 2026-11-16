@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
+import { headers } from "next/headers";
+import { agreementById } from "@/lib/agreements-db";
+import { docHash, sign, signaturesFor } from "@/lib/signatures";
 import { redirect } from "next/navigation";
 import { newCode, slugify } from "@/lib/codes";
 import { safeColor } from "@/lib/brand";
@@ -12,7 +15,9 @@ import { ONE_TIME, PLAN_TEST_PRODUCTS, TEST_ACTIVE_DAYS, type PlanTestProduct } 
 import { PLANS_TAG, getPlans, planByKey, planOf } from "@/lib/plans";
 import { addReviewSnapshot, billingOf, deleteReviewSnapshot, snapshotFromGoogle } from "@/lib/data";
 import { placesReady } from "@/lib/places";
-import { renewCode } from "@/lib/access";
+import { renewCode, setBusinessUser } from "@/lib/access";
+import { FEATURES, LIMIT_LABEL, TIERS, suggestTier, type Entitlements, type Limits, type Tier } from "@/lib/features";
+import { ROLLOUT_TAG, accessOf, saveEntitlements } from "@/lib/entitlements";
 import { sendPush } from "@/lib/push";
 import { audit, deliverReceipt, issueReceipt, logSend, receiptMoney, receiptUrl } from "@/lib/receipts";
 import { whatsappApiReady, sendWhatsAppTemplate } from "@/lib/whatsapp";
@@ -148,6 +153,8 @@ export async function createBusiness(f: FormData) {
         trial_ends_at: isTest ? addDays(todayPanama(), TEST_ACTIVE_DAYS - 1) : null,
         // Set up for its kind of business: modules and the sections of its NFC page (draft).
         modules: presetFor(kind).modules,
+        // Tier from what was sold (pago único = Esencial); the founder can change it in Contratación y permisos.
+        tier: once ? "esencial" : (TIERS.map((t) => t.key) as string[]).includes(str(f, "tier", 20)) ? str(f, "tier", 20) : suggestTier(plan?.key ?? null, fee),
         experience_draft: { ...EMPTY_EXPERIENCE, sections: presetFor(kind).sections, catalog_title: presetFor(kind).catalog_title },
       })
       .select("id")
@@ -240,6 +247,13 @@ export async function addTags(f: FormData) {
     const kind = str(f, "kind", 10) === "waiter" ? "waiter" : "table";
     const label = str(f, "label", 30) || (kind === "waiter" ? "Mesero" : "Mesa");
     const count = Math.min(Math.max(Math.round(num(f, "count", 1)), 1), 80);
+    // The contract's piece limit (businesses without a tier keep no limit, as before).
+    const { data: biz } = await db().from("businesses").select("id, tier, entitlements").eq("id", id).maybeSingle();
+    if (biz?.tier) {
+      const max = (await accessOf(biz)).limits.plaques;
+      const { count: active } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", id).eq("active", true);
+      if ((active ?? 0) + count > max) throw new Error(`Su contratación incluye hasta ${max} placas y tarjetas activas (tiene ${active ?? 0}). Sube el límite en Contratación y permisos si la cotización lo cubre.`);
+    }
     const { count: existing, error } = await db()
       .from("tags")
       .select("id", { count: "exact", head: true })
@@ -999,4 +1013,110 @@ export async function decideClaim(f: FormData) {
   revalidatePath(back);
   revalidatePath("/admin/comprobantes");
   redirect(receipt ? `${back}?ok=pago-confirmado&r=${encodeURIComponent(receipt)}#por-confirmar` : `${back}?ok=pago-rechazado#por-confirmar`);
+}
+
+/** Founder: the business's tier, per-feature exceptions, timed trials and limits (with history). */
+export async function saveBusinessAccess(f: FormData) {
+  const id = str(f, "business_id", 60);
+  const back = `/admin/b/${id}`;
+  try {
+    const tierRaw = str(f, "tier", 20);
+    const tier = (TIERS.map((t) => t.key) as string[]).includes(tierRaw) ? (tierRaw as Tier) : null;
+    const on: Entitlements["on"] = {};
+    const trials: Entitlements["trials"] = {};
+    for (const feat of FEATURES) {
+      const v = str(f, `f_${feat.key}`, 5);
+      if (v === "on") on[feat.key] = true;
+      else if (v === "off") on[feat.key] = false;
+      const t = str(f, `t_${feat.key}`, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(t)) trials[feat.key] = t;
+    }
+    const limits: Entitlements["limits"] = {};
+    for (const k of Object.keys(LIMIT_LABEL) as (keyof Limits)[]) {
+      const raw = str(f, `l_${k}`, 6);
+      if (raw !== "") { const n = Math.round(Number(raw)); if (!(n >= 0 && n <= 100000)) throw new Error(`Revisa el límite: ${LIMIT_LABEL[k]}.`); limits[k] = n; }
+    }
+    const note = opt(f, "note", 300);
+    await saveEntitlements(id, { tier, entitlements: { on, trials, limits, ...(note ? { note } : {}) } }, opt(f, "reason", 300));
+    await audit("entitlements.updated", { businessId: id, entity: "business", entityId: id, details: { tier, on, trials, limits } });
+  } catch (e) {
+    fail(`${back}#permisos`, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=permisos#permisos`);
+}
+
+/** Founder: username and password access for empresas (turn on/off, people, close all sessions). */
+export async function manageBusinessLogin(f: FormData) {
+  const id = str(f, "business_id", 60);
+  const back = `/admin/b/${id}`;
+  const op = str(f, "op", 20);
+  try {
+    const { data: b } = await db().from("businesses").select("id, password_required, password_epoch").eq("id", id).maybeSingle();
+    if (!b) throw new Error("Negocio no encontrado.");
+    if (op === "require" || op === "release") {
+      if (op === "require") {
+        const { count } = await db().from("business_users").select("id", { count: "exact", head: true }).eq("business_id", id).eq("role", "owner");
+        if (!count) throw new Error("Primero crea el usuario del dueño; si no, nadie podría entrar.");
+      }
+      await db().from("businesses").update({ password_required: op === "require", password_epoch: (b.password_epoch ?? 0) + 1 }).eq("id", id);
+    } else if (op === "logout") {
+      await db().from("businesses").update({ password_epoch: (b.password_epoch ?? 0) + 1 }).eq("id", id);
+    } else if (op === "user") {
+      await setBusinessUser(id, str(f, "role", 10) === "manager" ? "manager" : "owner", str(f, "username", 40), str(f, "password", 200));
+    } else if (op === "remove") {
+      await db().from("business_users").delete().eq("id", str(f, "user_id", 60)).eq("business_id", id);
+    } else throw new Error("Acción no válida.");
+    await audit(`login.${op}`, { businessId: id, entity: "business", entityId: id, details: op === "user" ? { username: str(f, "username", 40), role: str(f, "role", 10) } : {} });
+  } catch (e) {
+    fail(`${back}#acceso-empresa`, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=acceso-empresa#acceso-empresa`);
+}
+
+
+/** Founder: which tiers receive each feature (new features start with none). */
+export async function saveRollout(f: FormData) {
+  try {
+    const rows = FEATURES.map((feat) => ({
+      key: feat.key,
+      tiers: TIERS.map((t) => t.key).filter((t) => f.get(`r_${feat.key}_${t}`) === "1"),
+      paid: f.get(`p_${feat.key}`) === "1",
+      note: opt(f, `n_${feat.key}`, 200),
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await db().from("feature_rollout").upsert(rows, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+    await audit("features.rollout", { entity: "feature_rollout", details: { rows: rows.map((r) => ({ key: r.key, tiers: r.tiers, paid: r.paid })) } });
+  } catch (e) {
+    fail("/admin/planes#funciones", e);
+  }
+  revalidateTag(ROLLOUT_TAG);
+  revalidatePath("/admin/planes");
+  redirect("/admin/planes?ok=funciones#funciones");
+}
+
+/** Founder: marks a contract as sent for electronic signature, or countersigns it as FiveTap. */
+export async function contractSigning(f: FormData) {
+  const id = str(f, "id", 60);
+  const back = "/admin/contratos";
+  try {
+    const a = await agreementById(id);
+    if (!a) throw new Error("Contrato no encontrado.");
+    if (str(f, "op", 10) === "sent") {
+      await db().from("agreements").update({ sent_at: new Date().toISOString() }).eq("id", id);
+    } else {
+      const sigs = await signaturesFor(id);
+      if (!sigs.some((s) => s.party === "client" && s.doc_hash === docHash(a))) throw new Error("Primero debe firmar el cliente.");
+      if (str(f, "confirm", 3) !== "1") throw new Error("Confirma que revisaste la firma del cliente.");
+      const h = await headers();
+      await sign(a, "fivetap", { name: str(f, "name", 120), role: opt(f, "role", 80), ip: (h.get("x-forwarded-for") ?? "").split(",")[0]!.trim() || null, ua: h.get("user-agent") });
+      await audit("agreement.signed", { businessId: a.business_id, entity: "agreement", entityId: id, details: { party: "fivetap", name: str(f, "name", 120) } });
+    }
+  } catch (e) {
+    fail(back, e);
+  }
+  revalidatePath(back);
+  redirect(`${back}?ok=contrato-firma&c=${id}`);
 }

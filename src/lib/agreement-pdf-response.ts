@@ -2,12 +2,14 @@ import "server-only";
 import type { Agreement } from "./agreement";
 import { provider } from "./company";
 import { agreementPdf } from "./pdf/documents";
+import { docHash, signaturesFor } from "./signatures";
 
 /** The contract as a PDF response (inline to preview, or ?dl=1 to download). */
 export async function agreementPdfResponse(a: Agreement, req: Request) {
   let pdf: Buffer;
   try {
-    pdf = await agreementPdf(a, await provider());
+    const [prov, sigs] = await Promise.all([provider(), signaturesFor(a.id)]);
+    pdf = await agreementPdf(a, prov, sigs, docHash(a));
   } catch (e) {
     console.error("[pdf contrato]", e);
     return new Response("No se pudo generar el PDF. Inténtalo otra vez.", { status: 500 });

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { can } from "@/lib/entitlements";
+import { redirect } from "next/navigation";
 import { BusinessLogo } from "@/components/BusinessLogo";
 import { Check, StarSolid } from "@/components/Icons";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -21,6 +23,7 @@ export default async function ClubPage({ params, searchParams }: Props) {
   const [{ code }, sp, { copy }] = await Promise.all([params, searchParams, guestRequest()]);
   const tag = await tagByCode(code);
   if (!tag || (await guestClosed(tag))) return <Inactive copy={copy} />;
+  if (!(await can(tag.business, "club"))) redirect(`/t/${code}`);
 
   const b = tag.business;
   const q = sp.s === "q" ? "?s=q" : "";
