@@ -1546,9 +1546,10 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 .gx-netdot { width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(10, 10, 10, 0.06); transition: transform 0.18s var(--ease-out); }
 .gx-netdot:active { transform: scale(0.94); }
 .gx-netdot svg { width: 24px; height: 24px; }
-.gx-netdot.gx-net-instagram { color: #e1306c; }
-.gx-netdot.gx-net-facebook { color: #1877f2; }
-.gx-netdot.gx-net-tiktok { color: var(--ink); }
+.gx-netdot { color: #fff; border: 0; }
+.gx-dot-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.gx-dot-facebook { background: #1877f2; }
+.gx-dot-tiktok { background: #0a0a0a; }
 .gx-nav a, .gx-h svg, .gx-group-name { --x: 0; }
 .gx-nav { margin-top: 24px; }
 @media (prefers-color-scheme: dark) {

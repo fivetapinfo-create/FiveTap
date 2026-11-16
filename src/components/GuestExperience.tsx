@@ -169,7 +169,7 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
             {showPromos && (
               <a className="gx-tile rise" style={i(8)} href="#promos">
                 <span className="gx-tile-ic"><Tag /></span>
-                <span className="gx-tile-txt"><b>{copy.xPromos}</b><small>{fill(copy.xPromosHint, "n", String(promos.length))}</small></span>
+                <span className="gx-tile-txt"><b>{copy.xPromos}</b><small>{promos.length === 1 ? copy.xPromosHint1 : fill(copy.xPromosHint, "n", String(promos.length))}</small></span>
                 <Chevron />
               </a>
             )}
@@ -210,7 +210,7 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
           </nav>
           {networks.length > 0 && (
             <div className="gx-netrow rise" style={i(10)}>
-              {networks.map((x) => <Ext key={x.k} className={`gx-netdot gx-net-${x.k}`} href={x.url!}>{x.icon}<span className="sr-only">{x.label}</span></Ext>)}
+              {networks.map((x) => <Ext key={x.k} className={`gx-netdot gx-dot-${x.k}`} href={x.url!}>{x.icon}<span className="sr-only">{x.label}</span></Ext>)}
             </div>
           )}
         </section>
