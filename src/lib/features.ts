@@ -10,7 +10,7 @@ export const TIERS: { key: Tier; name: string; hint: string }[] = [
 ];
 
 export type FeatureKey =
-  | "promos" | "catalog" | "club" | "clients" | "team" | "reports_full"
+  | "promos" | "catalog" | "club" | "loyalty" | "clients" | "team" | "reports_full"
   | "orders" | "reservations" | "branches" | "password_login" | "priority_support";
 
 export type Feature = { key: FeatureKey; name: string; what: string; tiers: Tier[] };
@@ -20,6 +20,7 @@ export const FEATURES: Feature[] = [
   { key: "promos", name: "Promociones en la placa", what: "Publica ofertas con foto y fechas que tus clientes ven al tocar la placa.", tiers: ["profesional", "empresarial"] },
   { key: "catalog", name: "Menú o catálogo", what: "Tus productos o servicios con fotos y precios en la placa.", tiers: ["profesional", "empresarial"] },
   { key: "club", name: "Club de clientes", what: "Tus clientes se unen desde la placa y les envías promociones por WhatsApp.", tiers: ["profesional", "empresarial"] },
+  { key: "loyalty", name: "Tarjeta de fidelidad", what: "Tus clientes guardan en su teléfono una tarjeta de sellos con tu marca; al completarla reciben su premio.", tiers: ["profesional", "empresarial"] },
   { key: "clients", name: "Mis clientes", what: "Fichas de cada cliente con sus visitas, cumpleaños y WhatsApp.", tiers: ["profesional", "empresarial"] },
   { key: "team", name: "Equipo y ranking", what: "Tarjetas con el nombre de cada persona y quién lleva más clientes a Google.", tiers: ["profesional", "empresarial"] },
   { key: "reports_full", name: "Reportes completos", what: "Historial completo, comparación por placa y reporte mensual detallado.", tiers: ["profesional", "empresarial"] },

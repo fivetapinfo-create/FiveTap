@@ -1,3 +1,4 @@
+import { safeEqual } from "@/lib/admin-session";
 import { addDays, agenda, billingAll, cheerOfTheWeek, renewalWhat, todayPanama } from "@/lib/agenda";
 import { sendPushOnce } from "@/lib/push";
 import { successLine } from "@/lib/report-copy";
@@ -30,7 +31,8 @@ const startOf = (iso: string) => `${iso}T05:00:00Z`; // Midnight in Panamá (UTC
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) return new Response("No autorizado", { status: 401 });
+  // Closed unless the caller knows CRON_SECRET (only the scheduler does). Open only in local development.
+  if ((secret || process.env.NODE_ENV === "production") && (!secret || !safeEqual(req.headers.get("authorization") ?? "", `Bearer ${secret}`))) return new Response("No autorizado", { status: 401 });
 
   const today = todayPanama();
   const yesterday = shift(today, -1);

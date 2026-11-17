@@ -1730,3 +1730,77 @@ html[data-ft-intro-founder="play"] .fs-card { animation-delay: 3.85s; }
 .fs .alert { margin: 0; }
 .pk-login, .pk-add { display: grid; gap: 10px; }
 .pk-add .pk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; justify-self: start; }
+
+/* ---------- FiveTap membership card (owner app) ---------- */
+.mc { position: relative; overflow: hidden; margin: 0 0 16px; padding: 18px; border-radius: 20px; background: var(--mc-bg); color: var(--mc-ink); box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.55); display: grid; gap: 14px; }
+.mc::after { content: ""; position: absolute; inset: -40% -20% auto auto; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)); pointer-events: none; }
+.mc-top { display: flex; align-items: center; gap: 12px; }
+.mc-logo { width: 44px; height: 44px; border-radius: 12px; flex: none; display: grid; place-items: center; font-weight: 700; overflow: hidden; background: rgba(255, 255, 255, 0.92); }
+.mc-logo img { width: 100%; height: 100%; object-fit: contain; }
+.mc-id { display: grid; min-width: 0; }
+.mc-id b { font-size: 17px; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-id small { opacity: 0.75; font-size: 12.5px; }
+.mc-tag { margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px; border: 1px solid currentColor; opacity: 0.85; }
+.mc-reward { display: grid; gap: 3px; }
+.mc-reward b { font-size: 15px; }
+.mc-reward span { font-size: 13px; opacity: 0.82; line-height: 1.45; }
+.mc-dots { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; margin: 0; padding: 0; list-style: none; }
+.mc-dots li { height: 6px; border-radius: 3px; background: currentColor; opacity: 0.22; }
+.mc-dots li.on { opacity: 1; background: var(--mc-accent); }
+.rn-loyal { display: block; margin-top: 4px; font-size: 12px; color: var(--ok, #157a3c); }
+
+/* ---------- Loyalty card (the venue's customers) ---------- */
+.lc-page { min-height: 100dvh; background: #0d0d0d; padding: max(20px, env(safe-area-inset-top)) 16px 32px; display: grid; justify-items: center; align-content: start; gap: 16px; }
+.lc { width: 100%; max-width: 380px; border-radius: 24px; padding: 20px; background: var(--lc-bg); color: var(--lc-ink); display: grid; gap: 16px; position: relative; overflow: hidden; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+.lc::before { content: ""; position: absolute; inset: auto -30% 55% auto; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)); pointer-events: none; }
+.lc-top { display: flex; align-items: center; gap: 12px; }
+.lc-logo { width: 48px; height: 48px; border-radius: 14px; flex: none; overflow: hidden; display: grid; place-items: center; font-weight: 700; background: rgba(255, 255, 255, 0.95); }
+.lc-logo img { width: 100%; height: 100%; object-fit: contain; }
+.lc-id { display: grid; min-width: 0; }
+.lc-id b { font-size: 18px; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc-id small { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.72; }
+.lc-holder { font-size: 13px; opacity: 0.8; }
+.lc-stamps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.lc-stamps.many { grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.lc-stamps li { aspect-ratio: 1; border-radius: 50%; border: 2px dashed currentColor; opacity: 0.45; display: grid; place-items: center; }
+.lc-stamps li svg { width: 55%; height: 55%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lc-stamps li.on { opacity: 1; border: 0; background: var(--lc-accent); color: #0a0a0a; animation: lc-pop 420ms var(--ease-out) both; }
+@keyframes lc-pop { from { transform: scale(0.6); } 70% { transform: scale(1.08); } to { transform: none; } }
+.lc-status { display: grid; gap: 2px; }
+.lc-status b { font-size: 17px; }
+.lc-status span { font-size: 13px; opacity: 0.8; }
+.lc-prize { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.1); }
+.lc-prize small { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; }
+.lc-prize b { font-size: 15px; }
+.lc-qr { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; background: #fff; color: #0a0a0a; }
+.lc-qr-img { width: 112px; height: 112px; flex: none; }
+.lc-qr-img svg { width: 100%; height: 100%; display: block; }
+.lc-qr small { display: block; font-size: 12px; color: #555; line-height: 1.35; }
+.lc-code { display: block; margin-top: 4px; font-size: 24px; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+.lc-rewards { font-size: 12px; opacity: 0.75; }
+.lc-save { width: 100%; max-width: 380px; display: grid; gap: 8px; }
+.lc-save .btn { background: #f6f5f1; color: #0a0a0a; }
+.lc-save-how { margin: 0; color: rgba(246, 245, 241, 0.75); font-size: 13.5px; line-height: 1.5; text-align: center; }
+.lc-foot { margin: 8px 0 0; color: rgba(246, 245, 241, 0.35); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; }
+.lc-preview { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; padding: 0; list-style: none; }
+.lc-preview li { width: 26px; height: 26px; border-radius: 50%; border: 2px dashed var(--line-strong, #c9c9c9); }
+.lc-preview li.on { border: 0; background: var(--ink, #0a0a0a); }
+.lc-stampbox { display: grid; gap: 10px; padding: 16px; }
+.lc-count { display: flex; align-items: baseline; gap: 6px; }
+.lc-count b { font-size: 34px; }
+.lc-count span { color: var(--muted, #666); }
+.lc-stamp-actions { display: grid; gap: 8px; }
+.lc-stats { margin-bottom: 16px; }
+.lc-stats > div { display: grid; justify-items: center; gap: 2px; }
+.lc-codeform { display: flex; gap: 8px; }
+.lc-codeinput { text-transform: uppercase; letter-spacing: 0.18em; font-size: 18px; text-align: center; }
+.lc-found { margin-top: 14px; padding: 14px; border-radius: 14px; border: 1px solid var(--line, #e6e6e6); display: grid; gap: 10px; }
+.lc-found > div:first-child { display: grid; }
+.lc-list { list-style: none; margin: 0; padding: 0; }
+.lc-list li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line, #eee); }
+.lc-list li > span:first-child { display: grid; flex: 1; min-width: 0; }
+.lc-mini { font-variant-numeric: tabular-nums; font-weight: 700; }
+.lc-delete { width: 100%; max-width: 380px; color: rgba(246, 245, 241, 0.55); font-size: 13px; }
+.lc-delete summary { cursor: pointer; text-align: center; }
+.lc-delete form { display: grid; gap: 10px; margin-top: 10px; justify-items: center; }
+.lc-delete .btn { color: #f6f5f1; border-color: rgba(246, 245, 241, 0.3); }

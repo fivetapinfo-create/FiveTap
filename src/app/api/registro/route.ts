@@ -24,6 +24,9 @@ export async function POST(req: Request) {
   const since = new Date(Date.now() - 10 * 60_000).toISOString();
   const { count } = await db().from("signups").select("id", { count: "exact", head: true }).eq("phone", phone).gte("created_at", since);
   if ((count ?? 0) > 0 && !subscription) return Response.json({ ok: true });
+  // And a ceiling for everyone together: a bot rotating phone numbers cannot flood the founder.
+  const recent = await db().from("signups").select("id", { count: "exact", head: true }).gte("created_at", since);
+  if ((recent.count ?? 0) >= 15 && !subscription) return Response.json({ error: "Hay muchas solicitudes en este momento. Inténtalo en unos minutos." }, { status: 429 });
 
   const { error } = await db().from("signups").upsert(
     { venue_name: venue, owner_name: owner, phone, plan: plan.key, paypal_subscription_id: subscription },

@@ -3,7 +3,7 @@ import { accessOf } from "@/lib/entitlements";
 import { Upsell } from "@/components/Upsell";
 import Link from "next/link";
 import { AccessGate } from "@/components/AccessGate";
-import { Chart, Chat, Gear, Home, Lock, Users } from "@/components/Icons";
+import { Card, Chart, Chat, Gear, Home, Lock, Users } from "@/components/Icons";
 import { accessRole } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { AppSetup } from "@/components/AppSetup";
@@ -12,6 +12,8 @@ import { ClubPanel } from "@/components/ClubPanel";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Logo } from "@/components/Logo";
 import { MessageActions } from "@/components/MessageActions";
+import { MemberCard } from "@/components/MemberCard";
+import { loyaltyStatus } from "@/lib/loyalty";
 import { PausedScreen } from "@/components/PausedScreen";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { addDays, billingState, human, nextCharge, planLabel, renewalWhat, todayPanama } from "@/lib/agenda";
@@ -102,6 +104,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const today = todayPanama();
   const payHref = `/mi/${token}/renovar`;
   const pieces = tags.filter((t) => t.active).length;
+  // The membership card: only for clients with a monthly plan (one-time buyers have nothing to renew).
+  const monthlyPays = payments.filter((p) => p.kind === "monthly" && Number(p.amount) > 0);
+  const member = role === "owner" && b.mode === "full" && Number(b.monthly_fee) > 0 && charge?.kind !== "annual"
+    ? { since: monthlyPays.map((p) => p.paid_at).sort()[0] ?? b.created_at, status: loyaltyStatus(monthlyPays.length, Number(b.monthly_fee)) }
+    : null;
 
   return (
     <div className="admin">
@@ -215,6 +222,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             { href: "#mensajes", label: "Mensajes", icon: <Chat />, badge: pending.length || null, on: true },
             { href: `/mi/${token}/clientes`, label: "Mis clientes", icon: <Users />, on: acc.has.clients },
             { href: `/mi/${token}/pagina`, label: "Mi página", icon: <Home />, on: acc.has.promos || acc.has.catalog },
+            ...(b.mode === "full" ? [{ href: `/mi/${token}/fidelidad`, label: "Fidelidad", icon: <Card />, on: acc.has.loyalty }] : []),
             ...(ordersOn ? [{ href: `/mi/${token}/pedidos`, label: "Pedidos", icon: <Chart />, badge: newOrders || null, on: true }] : []),
             ...(resvOn ? [{ href: `/mi/${token}/reservas`, label: "Reservas", icon: <Chart />, badge: resv.pending || null, on: true }] : []),
             { href: `/mi/${token}/reporte`, label: "Reporte", icon: <Chart />, on: true },
@@ -229,6 +237,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             </Link>
           ))}
         </nav>
+
+        {member && <MemberCard b={b} since={member.since} status={member.status} fee={Number(b.monthly_fee)} />}
 
         {/* 3. Messages from guests: open ones first. */}
         <section className="panel" id="mensajes">

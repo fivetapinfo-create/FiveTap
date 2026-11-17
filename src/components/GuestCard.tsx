@@ -1,7 +1,7 @@
 import { onColor, safeColor } from "@/lib/brand";
 import type { Copy } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
-import { Bag, Calendar, Chat, Gift, StarSolid } from "./Icons";
+import { Bag, Calendar, Card, Chat, Gift, StarSolid } from "./Icons";
 import { LogoMark } from "./Logo";
 
 export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string; brand_accent?: string | null };
@@ -13,6 +13,7 @@ export function GuestCard({
   reviewHref,
   managerHref,
   clubHref,
+  cardHref,
   orderHref,
   reserveHref,
   embedded = false,
@@ -23,6 +24,8 @@ export function GuestCard({
   managerHref: string;
   /** Optional third, quieter action: join the venue's WhatsApp club. */
   clubHref?: string;
+  /** The venue's loyalty card (stamps). */
+  cardHref?: string;
   /** Ordering from the plaque (Orders module). */
   orderHref?: string;
   /** Booking from the plaque (Reservations module). */
@@ -72,6 +75,11 @@ export function GuestCard({
           </div>
         )}
 
+        {cardHref && (
+          <a className="guest-club rise" href={cardHref} tabIndex={tab} style={{ "--i": 5 } as React.CSSProperties}>
+            <Card /> {copy.card}
+          </a>
+        )}
         {clubHref && (
           <a className="guest-club rise" href={clubHref} tabIndex={tab} style={{ "--i": 5 } as React.CSSProperties}>
             <Gift /> {copy.club}

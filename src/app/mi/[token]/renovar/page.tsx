@@ -161,7 +161,7 @@ export default async function RenewPage({ params, searchParams }: Props) {
             {status && <p className={`alert ${status.tone}`} role="status">{status.text}</p>}
             <section className="panel rn-sum">
               <div><small className="muted">Lo que renuevas</small><b>{plaques ? `${plaques} ${plaques === 1 ? "placa NFC" : "placas NFC"} + app FiveTap Business` : "App FiveTap Business"}</b></div>
-              <div><small className="muted">Monto</small><b className="num">{amount}</b></div>
+              <div><small className="muted">Monto</small><b className="num">{amount}</b>{charge.loyalty && <small className="rn-loyal">Premio de lealtad: {charge.loyalty.pct}% menos ({charge.loyalty.n} de {charge.loyalty.of}) · antes {money(charge.loyalty.regular)}</small>}</div>
               <div><small className="muted">Vence</small><b>{human(charge.due)}</b></div>
             </section>
 

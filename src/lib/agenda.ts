@@ -1,3 +1,4 @@
+import { loyaltyFor, type LoyaltyCharge } from "./loyalty";
 import "server-only";
 import { createHash } from "node:crypto";
 import { db } from "./supabase";
@@ -98,7 +99,7 @@ export async function cheerList(today = todayPanama()) {
     .map((b) => ({ id: b.id, name: b.name, whatsapp: wa(payer(b).phone, `Hola${first(payer(b).name)}. ${cheer} — FiveTap`)! }));
 }
 
-export type Charge = { due: string; amount: number; label: string; auto: boolean; kind: "trial" | "monthly" | "annual" };
+export type Charge = { due: string; amount: number; label: string; auto: boolean; kind: "trial" | "monthly" | "annual"; loyalty?: LoyaltyCharge | null };
 
 /**
  * Next charge: a month or a year after the last payment. Before any payment, the first one
@@ -121,7 +122,11 @@ export function nextCharge(
     const amount = cycle.reduce((sum, p) => sum + Number(p.amount), 0);
     return { due: addMonths(localDate(cycle[0]!.paid_at), 12), amount, label: "renovación anual", auto: false, kind: "annual" };
   }
-  if (monthly) return { due: addMonths(localDate(monthly.paid_at), 1), amount: fee, label: "mensualidad", auto, kind: "monthly" };
+  if (monthly) {
+    // A year of monthly payments earns the loyalty reward: the next charges carry the discount.
+    const loyalty = loyaltyFor(sorted.filter((p) => p.kind === "monthly" && Number(p.amount) > 0).length, fee);
+    return { due: addMonths(localDate(monthly.paid_at), 1), amount: loyalty ? fee - loyalty.saved : fee, label: loyalty ? `mensualidad con ${loyalty.pct}% de lealtad (${loyalty.n} de ${loyalty.of})` : "mensualidad", auto, kind: "monthly", loyalty };
+  }
   if (b.trial_ends_at) return { due: localDate(b.trial_ends_at), amount: fee, label: "mensualidad", auto, kind: "trial" };
   if (b.created_at) return { due: localDate(b.created_at), amount: fee, label: "primer pago", auto: false, kind: "monthly" };
   return null;

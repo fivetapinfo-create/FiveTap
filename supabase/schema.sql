@@ -793,3 +793,40 @@ create table if not exists admin_passkeys (
 );
 alter table admin_passkeys enable row level security;
 alter table company add column if not exists passkey_only boolean not null default false;
+
+-- ---------- Loyalty cards (each venue's customers) ----------
+create table if not exists loyalty_programs (
+  business_id uuid primary key references businesses(id) on delete cascade,
+  enabled boolean not null default false,
+  stamps_needed int not null default 8 check (stamps_needed between 3 and 20),
+  reward text not null default '',
+  cooldown_hours int not null default 3 check (cooldown_hours between 0 and 48),
+  updated_at timestamptz not null default now()
+);
+create table if not exists loyalty_cards (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  token text not null unique,
+  code text not null,
+  name text not null,
+  phone text not null,
+  stamps int not null default 0 check (stamps >= 0),
+  rewards int not null default 0 check (rewards >= 0),
+  last_stamp_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (business_id, phone),
+  unique (business_id, code)
+);
+create table if not exists loyalty_events (
+  id uuid primary key default gen_random_uuid(),
+  card_id uuid not null references loyalty_cards(id) on delete cascade,
+  business_id uuid not null references businesses(id) on delete cascade,
+  kind text not null check (kind in ('join','stamp','redeem')),
+  by_role text,
+  created_at timestamptz not null default now()
+);
+create index if not exists loyalty_events_biz_time on loyalty_events (business_id, created_at desc);
+create index if not exists loyalty_cards_biz on loyalty_cards (business_id, created_at desc);
+alter table loyalty_programs enable row level security;
+alter table loyalty_cards enable row level security;
+alter table loyalty_events enable row level security;

@@ -1,0 +1,143 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { AccessGate } from "@/components/AccessGate";
+import { Logo } from "@/components/Logo";
+import { SubmitButton } from "@/components/SubmitButton";
+import { Upsell } from "@/components/Upsell";
+import { accessRole } from "@/lib/access";
+import { billingState } from "@/lib/agenda";
+import { businessDetail, businessByOwnerToken } from "@/lib/data";
+import { can } from "@/lib/entitlements";
+import { cardByCode, loyaltyStats, programFor } from "@/lib/loyalty-cards";
+import { formatPhone } from "@/lib/phone";
+import { saveLoyaltyProgram, stampByCode } from "./actions";
+
+export const dynamic = "force-dynamic";
+
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ ok?: string; error?: string; c?: string }> };
+
+const OK: Record<string, string> = {
+  guardado: "Listo: tu tarjeta de fidelidad quedó guardada.",
+  sello: "Sello agregado.",
+  completa: "Sello agregado. ¡La tarjeta está completa! Entrega el premio.",
+  canjeado: "Premio entregado. La tarjeta empieza otra vez.",
+};
+const ago = (iso: string | null) => {
+  if (!iso) return "Sin sellos aún";
+  const m = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  return m < 60 ? `hace ${Math.max(1, m)} min` : m < 1440 ? `hace ${Math.round(m / 60)} h` : `hace ${Math.round(m / 1440)} días`;
+};
+
+/** Loyalty card: the owner sets the reward; the team stamps cards by code (or scanning the customer's QR). */
+export default async function LoyaltyPage({ params, searchParams }: Props) {
+  const [{ token }, sp] = await Promise.all([params, searchParams]);
+  const b = await businessByOwnerToken(token);
+  if (!b) notFound();
+  const role = await accessRole(b);
+  if (!role) return <AccessGate b={b} token={token} />;
+  const home = `/mi/${token}`;
+  const top = <header className="admin-top"><div className="container"><Link href={home} className="owner-back" aria-label="Volver a mi resumen">← Volver</Link><Logo size={20} /></div></header>;
+  if (!(await can(b, "loyalty"))) {
+    return <div className="admin">{top}<main className="container admin-main settings"><h1 className="owner-title">Tarjeta de fidelidad</h1><Upsell feature="loyalty" token={token} /></main></div>;
+  }
+  const d = await businessDetail(b.id);
+  const billing = billingState(b, d?.payments ?? []);
+  if (billing.kind === "suspended" || billing.kind === "paused" || billing.kind === "ended") redirect(home);
+  const [program, stats, found] = await Promise.all([programFor(b.id), loyaltyStats(b.id), sp.c ? cardByCode(b.id, sp.c) : Promise.resolve(null)]);
+  const plaque = d?.tags.find((t) => t.active);
+  const full = found ? found.stamps >= program.stamps_needed : false;
+
+  return (
+    <div className="admin">
+      {top}
+      <main className="container admin-main settings">
+        <h1 className="owner-title">Tarjeta de fidelidad</h1>
+        <p className="muted">Tus clientes crean su tarjeta desde la placa y la guardan en su teléfono, con tu logo y tus colores. En cada visita le pones un sello; al completarla reciben su premio.</p>
+        {sp.ok && OK[sp.ok] && <p className="alert alert-ok" role="status">{OK[sp.ok]}</p>}
+        {sp.error && <p className="alert alert-error" role="alert">{sp.error}</p>}
+
+        <section className="glance-row lc-stats" aria-label="Últimos 30 días">
+          <div><b className="num">{stats.cards}</b><span>Tarjetas</span></div>
+          <div><b className="num">{stats.stamps30}</b><span>Sellos (30 días)</span></div>
+          <div><b className="num">{stats.rewards30}</b><span>Premios (30 días)</span></div>
+        </section>
+
+        {program.enabled && (
+          <section className="panel" id="sellar">
+            <div className="panel-head"><h2>Sellar una tarjeta</h2></div>
+            <div className="msg">
+              <p className="muted">Escanea el QR de la tarjeta del cliente con la cámara de tu teléfono, o escribe aquí el código que aparece debajo del QR.</p>
+              <form action={stampByCode} className="lc-codeform">
+                <input type="hidden" name="token" value={token} />
+                <input type="hidden" name="op" value="find" />
+                <input className="input lc-codeinput" name="code" required maxLength={7} placeholder="ABC 234" autoCapitalize="characters" autoComplete="off" defaultValue={found?.code ?? ""} aria-label="Código de la tarjeta" />
+                <SubmitButton className="btn btn-dark" pending="Buscando…">Buscar</SubmitButton>
+              </form>
+              {found && (
+                <div className="lc-found">
+                  <div><b>{found.name}</b><small className="muted">{formatPhone(found.phone)} · {ago(found.last_stamp_at)}</small></div>
+                  <div className="lc-count"><b className="num">{found.stamps}</b><span>de {program.stamps_needed}</span></div>
+                  <form action={stampByCode}>
+                    <input type="hidden" name="token" value={token} />
+                    <input type="hidden" name="code" value={found.code} />
+                    <input type="hidden" name="op" value={full ? "redeem" : "stamp"} />
+                    <SubmitButton className="btn btn-dark btn-block" pending="Guardando…">{full ? "Entregar premio y reiniciar" : "Agregar sello"}</SubmitButton>
+                  </form>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        <section className="panel" id="premio">
+          <div className="panel-head"><h2>Tu tarjeta</h2><span className={`pill ${program.enabled ? "bill-ok" : ""}`}>{program.enabled ? "Activa en tu placa" : "Apagada"}</span></div>
+          {role !== "owner" ? (
+            <div className="msg"><p>Premio: <b>{program.reward || "Sin definir"}</b> al juntar {program.stamps_needed} sellos. Solo el dueño puede cambiarlo.</p></div>
+          ) : (
+            <form action={saveLoyaltyProgram} className="form-section">
+              <input type="hidden" name="token" value={token} />
+              <label className="check"><input type="checkbox" name="enabled" value="1" defaultChecked={program.enabled} /><span>Mostrar la tarjeta de fidelidad en mi placa</span></label>
+              <div className="grid-2">
+                <label className="field"><span>Sellos para el premio</span>
+                  <select className="select" name="stamps_needed" defaultValue={program.stamps_needed}>{[4, 5, 6, 7, 8, 9, 10, 12, 15].map((n) => <option key={n} value={n}>{n} sellos</option>)}</select>
+                </label>
+                <label className="field"><span>Tiempo mínimo entre sellos</span>
+                  <select className="select" name="cooldown_hours" defaultValue={program.cooldown_hours}>{[[0, "Sin límite"], [1, "1 hora"], [3, "3 horas"], [6, "6 horas"], [12, "12 horas"], [24, "1 día"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+                </label>
+              </div>
+              <label className="field"><span>Premio</span><input className="input" name="reward" maxLength={120} placeholder="Ej.: Un corte gratis · Un postre de la casa · 10% en tu próxima compra" defaultValue={program.reward} /></label>
+              <small className="muted">El tiempo mínimo evita que una misma tarjeta se selle dos veces en la misma visita.</small>
+              <SubmitButton className="btn btn-dark" pending="Guardando…">Guardar</SubmitButton>
+              {program.enabled && plaque && <Link className="btn btn-ghost btn-sm" href={`/t/${plaque.code}/tarjeta`} target="_blank">Ver cómo la crea tu cliente</Link>}
+            </form>
+          )}
+        </section>
+
+        {stats.recent.length > 0 && (
+          <section className="panel">
+            <div className="panel-head"><h2>Tarjetas recientes</h2></div>
+            <ul className="lc-list">
+              {stats.recent.map((c) => (
+                <li key={c.id}>
+                  <span><b>{c.name}</b><small className="muted">{ago(c.last_stamp_at)}{c.rewards ? ` · ${c.rewards} ${c.rewards === 1 ? "premio" : "premios"}` : ""}</small></span>
+                  <span className="lc-mini">{c.stamps}/{program.stamps_needed}</span>
+                  <Link className="btn btn-ghost btn-sm" href={`?c=${c.code}#sellar`}>Sellar</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="panel">
+          <div className="panel-head"><h2>Cómo funciona</h2></div>
+          <ol className="form-section">
+            <li>El cliente toca tu placa y elige “Tarjeta de fidelidad”. Escribe su nombre y WhatsApp, y la guarda en su teléfono.</li>
+            <li>En cada visita, escaneas el QR de su tarjeta con la cámara (la primera vez ese teléfono pide tu código de acceso) o escribes el código aquí.</li>
+            <li>Cuando completa los sellos, le entregas el premio y la tarjeta empieza otra vez.</li>
+          </ol>
+          <small className="muted">La tarjeta se guarda en la pantalla de inicio del teléfono como una app. Guardarla en Apple Wallet o Google Wallet llegará más adelante.</small>
+        </section>
+      </main>
+    </div>
+  );
+}

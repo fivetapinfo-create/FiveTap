@@ -14,6 +14,7 @@ export default function Privacy() {
         <li><b>Cuando tocas una placa:</b> registramos la fecha, la placa y el tipo de celular (iPhone, Android u otro) para contar las visitas. No pedimos tu nombre ni usamos cookies de publicidad.</li>
         <li><b>Si escribes al gerente:</b> guardamos tu mensaje y el nombre que quieras dejar, y se los mostramos solo al local.</li>
         <li><b>Si te unes al club:</b> guardamos tu nombre, tu WhatsApp y tu cumpleaños (opcional), con tu permiso, para que el local te envíe sus promociones.</li>
+        <li><b>Si creas una tarjeta de fidelidad:</b> guardamos tu nombre, tu WhatsApp y tus sellos (cuándo se sellaron y cuándo recibiste un premio) para llevar tu tarjeta. No te enviamos promociones por eso, salvo que marques aparte que sí quieres recibirlas. Puedes borrar tu tarjeta y esos datos tú mismo desde la propia tarjeta.</li>
         <li><b>Si dejas una reseña:</b> la escribes directamente en Google. FiveTap no ve ni guarda tu reseña.</li>
       </ul>
 

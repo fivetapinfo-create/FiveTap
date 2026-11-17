@@ -1,3 +1,4 @@
+import { programFor } from "@/lib/loyalty-cards";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { after } from "next/server";
@@ -60,6 +61,7 @@ export default async function TapPage({ params, searchParams }: Props) {
   // Only what the business contracted reaches its page (no tier yet = everything, as before).
   const acc = await accessOf(tag.business);
   const clubHref = acc.has.club ? `/t/${code}/club${q}` : undefined;
+  const cardHref = acc.has.loyalty && (await programFor(tag.business_id)).enabled ? `/t/${code}/tarjeta` : undefined;
   if (x) { if (!acc.has.promos) x.promos = []; if (!acc.has.catalog) x.items = []; }
   if (x && hasContent(x.experience, x.promos.length, x.items.length)) {
     return (
@@ -75,6 +77,7 @@ export default async function TapPage({ params, searchParams }: Props) {
           reviewHref={`/t/${code}/go${q}`}
           managerHref={`/t/${code}/mensaje${q}`}
           clubHref={clubHref}
+          cardHref={cardHref}
           orderHref={orderHref}
           reserveHref={reserveHref}
         />
@@ -90,8 +93,9 @@ export default async function TapPage({ params, searchParams }: Props) {
       reviewHref={`/t/${code}/go${q}`}
       managerHref={`/t/${code}/mensaje${q}`}
       clubHref={clubHref}
+      cardHref={cardHref}
       orderHref={orderHref}
-          reserveHref={reserveHref}
+      reserveHref={reserveHref}
     />
     </>
   );
