@@ -4,7 +4,7 @@ import { guestClosed, tagByCode } from "@/lib/data";
 import { deviceFrom } from "@/lib/device";
 import { can } from "@/lib/entitlements";
 import { staffMember, submitRating } from "@/lib/staff";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 export type RateState = { ok: boolean; stars?: number; duplicate?: boolean; error?: string };
 
@@ -20,6 +20,10 @@ export async function rateStaff(_prev: RateState, f: FormData): Promise<RateStat
   if (!person || !person.active) return { ok: false, error: "staff" };
   const stars = Number(f.get("rating"));
   if (!(stars >= 1 && stars <= 5)) return { ok: false, error: "stars" };
+  // One rating per phone and person every 6 hours: remembered on the phone (mobile IPs change often).
+  const jar = await cookies();
+  const mark = `ft_r_${person.ref}`;
+  if (jar.get(mark)) return { ok: true, stars, duplicate: true };
   try {
     const r = await submitRating({
       businessId: tag.business_id, branchId: tag.branch_id ?? person.branch_id, staffId: person.id, tagId: tag.id,
@@ -27,6 +31,7 @@ export async function rateStaff(_prev: RateState, f: FormData): Promise<RateStat
       device: deviceFrom((await headers()).get("user-agent") ?? ""), businessName: tag.business.name, staffName: person.name,
       tableLabel: tag.kind === "waiter" ? "" : tag.label, ownerToken: tag.business.owner_token,
     });
+    jar.set(mark, "1", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/t", maxAge: 6 * 3600 });
     return { ok: true, stars, duplicate: r.duplicate };
   } catch (e) {
     console.error("[atencion]", e);
