@@ -16,6 +16,7 @@ import { MemberCard } from "@/components/MemberCard";
 import { loyaltyStatus } from "@/lib/loyalty";
 import { PausedScreen } from "@/components/PausedScreen";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { RefreshButton } from "@/components/RefreshButton";
 import { addDays, billingState, human, nextCharge, planLabel, renewalWhat, todayPanama } from "@/lib/agenda";
 import { after } from "next/server";
 import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
@@ -123,6 +124,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <Link className="btn btn-sm owner-help" href={`/mi/${token}/ayuda`}>
               Ayuda
             </Link>
+            <RefreshButton />
             <ThemeToggle />
             <Link className="owner-gear" href={`/mi/${token}/ajustes`} aria-label="Configuración">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AccessGate } from "@/components/AccessGate";
 import { Logo } from "@/components/Logo";
+import { RefreshButton } from "@/components/RefreshButton";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Upsell } from "@/components/Upsell";
 import { accessRole } from "@/lib/access";
@@ -25,7 +26,7 @@ export default async function TeamPage({ params, searchParams }: Props) {
   const role = await accessRole(b);
   if (!role) return <AccessGate b={b} token={token} />;
   const home = `/mi/${token}`;
-  const top = <header className="admin-top"><div className="container"><Link href={home} className="owner-back" aria-label="Volver a mi resumen">← Volver</Link><Logo size={20} /></div></header>;
+  const top = <header className="admin-top"><div className="container"><Link href={home} className="owner-back" aria-label="Volver a mi resumen">← Volver</Link><span className="row" style={{ gap: 10, alignItems: "center" }}><RefreshButton /><Logo size={20} /></span></div></header>;
   if (!(await can(b, "team"))) return <div className="admin">{top}<main className="container admin-main settings"><h1 className="owner-title">Desempeño del equipo</h1><Upsell feature="team" token={token} /></main></div>;
   const d = await businessDetail(b.id);
   const billing = billingState(b, d?.payments ?? []);

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AccessGate } from "@/components/AccessGate";
 import { Logo } from "@/components/Logo";
+import { RefreshButton } from "@/components/RefreshButton";
 import { accessRole } from "@/lib/access";
 import { billingState } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail } from "@/lib/data";
@@ -56,7 +57,7 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
 
   return (
     <div className="admin">
-      <header className="admin-top"><div className="container"><Link href={home} className="owner-back">← Volver</Link><Logo size={20} /></div></header>
+      <header className="admin-top"><div className="container"><Link href={home} className="owner-back">← Volver</Link><span className="row" style={{ gap: 10, alignItems: "center" }}><RefreshButton /><Logo size={20} /></span></div></header>
       <main className="container admin-main settings tp">
         <h1 className="owner-title">Experiencia del cliente</h1>
         <nav className="cl-tabs" aria-label="Periodo">
