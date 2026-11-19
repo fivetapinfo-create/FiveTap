@@ -79,8 +79,8 @@ export function GuestCard({
         )}
 
         {serviceHref && (
-          <a className="guest-club rise" href={serviceHref} tabIndex={tab} style={{ "--i": 5 } as React.CSSProperties}>
-            <Users /> {copy.wTile}
+          <a className="guest-service rise" href={serviceHref} tabIndex={tab} style={{ "--i": 5 } as React.CSSProperties}>
+            <Users /><span><b>{copy.wTile}</b><small>{copy.wTileHint}</small></span><i aria-hidden="true">→</i>
           </a>
         )}
         {cardHref && (

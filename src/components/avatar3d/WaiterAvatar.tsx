@@ -180,8 +180,8 @@ export async function avatarPicture(config: AvatarConfig, logoUrl: string | null
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       const st = buildStage();
-      st.camera.position.set(0, 4.6, 15.5);
-      st.camera.lookAt(0, 4.4, 0);
+      st.camera.position.set(0, 4.85, 16.5);
+      st.camera.lookAt(0, 4.6, 0);
       shared = { renderer, ...st };
     }
     const { renderer, scene, camera } = shared;
