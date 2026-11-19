@@ -232,11 +232,6 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
               </Ext>
             )}
           </nav>
-          {networks.length > 0 && (
-            <div className="gx-netrow rise" style={i(10)}>
-              {networks.map((x) => <Ext key={x.k} className={`gx-netdot gx-dot-${x.k}`} href={x.url!}>{x.icon}<span className="sr-only">{x.label}</span></Ext>)}
-            </div>
-          )}
         </section>
 
         {nav.length > 1 && (
