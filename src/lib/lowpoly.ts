@@ -20,7 +20,7 @@ export async function lowPoly(file: File, opts: { width?: number; points?: numbe
     const e = Math.min(255, Math.hypot(gx, gy));
     edges.push(x, y, e); sum += e;
   }
-  const want = opts.points ?? Math.round((W * H) / 520);
+  const want = opts.points ?? Math.round((W * H) / 140);
   const pts: number[] = [0, 0, W - 1, 0, 0, H - 1, W - 1, H - 1];
   for (let i = 0; i <= 12; i++) pts.push((W - 1) * (i / 12), 0, (W - 1) * (i / 12), H - 1, 0, (H - 1) * (i / 12), W - 1, (H - 1) * (i / 12));
   let seed = 7;
