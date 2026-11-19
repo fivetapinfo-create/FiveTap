@@ -52,7 +52,7 @@ export function RateWaiter({ action, hidden, person, logoUrl, business, googleHr
               <input type="hidden" name="issue" value={issue} />
             </fieldset>
           )}
-          {stars > 0 && <textarea className="input rw-comment" name="comment" rows={3} maxLength={600} placeholder={copy.comment} />}
+          <textarea className="input rw-comment" name="comment" rows={3} maxLength={600} placeholder={copy.comment} />
           {state.error && <p className="alert alert-error" role="alert">{state.error === "stars" ? copy.pick : copy.error}</p>}
           <button type="submit" className="btn btn-brand btn-block rw-send" disabled={!stars || pending}>{pending ? "…" : copy.send}</button>
           <small className="rw-private">{copy.private}</small>

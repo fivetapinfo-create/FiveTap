@@ -2034,3 +2034,14 @@ main.guest.has-bg, div.guest.has-bg, .guest.gx.has-bg {
 .biz-setup-note { padding: 12px 16px 16px; margin: 0; font-size: 13px; }
 /* The table page and the waiter screen always look light and clean (as the reference), even in dark mode */
 .guest.gx, .guest.rw { color-scheme: light; --paper: #f6f5f1; --surface: #ffffff; --ink: #0a0a0a; --muted: #5c5b57; --faint: #8a8984; --line: rgba(10, 10, 10, 0.08); --line-strong: rgba(10, 10, 10, 0.16); background: var(--gx-tint, #f6f5f1); color: #0a0a0a; }
+/* Social bar: same size as "Califícanos", in the logo's second color, with the network icons */
+.gx-tile-social { background: var(--gx-accent); color: #fff; border: 0; padding: 16px 14px 16px 18px; }
+.gx-tile-social .gx-tile-txt b { font-size: 17px; color: #fff; }
+.gx-tile-social .gx-tile-txt small { color: rgba(255, 255, 255, 0.85); }
+.gx-social { display: flex; gap: 8px; flex: none; }
+.gx-social-ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #fff; color: #111; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); transition: transform 0.15s var(--ease-out); }
+.gx-social-ic:active { transform: scale(0.92); }
+.gx-social-ic svg { width: 22px; height: 22px; }
+.gx-social-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%); color: #fff; }
+.gx-social-tiktok { background: #111; color: #fff; }
+.gx-social-facebook { background: #1877f2; color: #fff; }
