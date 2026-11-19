@@ -11,6 +11,8 @@ export const siteUrlIsLocal = /localhost|127\.0\.0\.1/.test(SITE_URL);
 
 /** URL written to the NFC chip. Plain, so it never needs to change. */
 export const nfcUrl = (code: string) => `${SITE_URL}/t/${code}`;
+/** The link for each piece: tables open the venue (/t/…), a waiter's card opens that person's service (/m/…). */
+export const pieceUrl = (code: string, kind?: string | null) => (kind === "waiter" ? `${SITE_URL}/m/${code}` : nfcUrl(code));
 
 
 export function salesWhatsAppUrl(text: string): string {

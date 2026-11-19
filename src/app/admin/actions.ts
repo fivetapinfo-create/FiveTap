@@ -1163,3 +1163,27 @@ export async function saveStage(f: FormData) {
     if (error) throw new Error(error.message);
   });
 }
+
+/** Background photo of the venue behind the table plaque page (applies at once). */
+export async function saveBackground(f: FormData) {
+  await xRun(f, "fondo", "fondo", async (id) => {
+    const patch: Record<string, string | null> = {};
+    if (f.get("remove") === "1") patch.page_bg_url = null;
+    else {
+      const url = await uploadMedia(id, f.get("page_bg"), "background");
+      if (!url) throw new Error("Elige una foto del local.");
+      patch.page_bg_url = url;
+    }
+    const { error } = await db().from("businesses").update(patch).eq("id", id);
+    if (error) throw new Error(error.message);
+  });
+}
+
+/** Saves the plaque page and publishes it in one step: the chips show it right away. */
+export async function saveAndPublishExperience(f: FormData) {
+  await xRun(f, "x-publicada", "estado", async (id) => {
+    await saveDraft(id, f);
+    await publishExperience(id);
+    await audit("experience.published", { businessId: id, entity: "business", entityId: id });
+  });
+}

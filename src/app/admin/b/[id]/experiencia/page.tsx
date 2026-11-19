@@ -14,7 +14,7 @@ import { socialUrl, waDigits } from "@/lib/experience-shape";
 import { verticalByKey } from "@/lib/verticals";
 import {
   deleteItemAdmin, deletePromoAdmin, publishExperienceAction, saveExperienceDraft, saveItemAdmin, savePromoAdmin,
-  saveStage, setModuleAdmin, toggleItemAdmin, togglePromoAdmin, unpublishExperienceAction,
+  saveAndPublishExperience, saveBackground, saveStage, setModuleAdmin, toggleItemAdmin, togglePromoAdmin, unpublishExperienceAction,
 } from "../../../actions";
 import { Flash } from "../../../Flash";
 import { dateTime } from "../../../format";
@@ -42,7 +42,7 @@ const SECTIONS = [
  */
 export default async function ExperiencePage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color, modules, plan_key, kind, stage_url, stage_floor").eq("id", id).maybeSingle();
+  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color, modules, plan_key, kind, stage_url, stage_floor, page_bg_url").eq("id", id).maybeSingle();
   if (!b) notFound();
   const [x, tagRes] = await Promise.all([experienceEditor(id), db().from("tags").select("code").eq("business_id", id).eq("active", true).limit(1)]);
   const d = x.draft;
@@ -121,6 +121,18 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
             </div>
           </section>
 
+          <form action={saveBackground} className="panel" id="fondo">
+            <input type="hidden" name="business_id" value={id} />
+            <div className="panel-head"><h2>Fondo de la página de la mesa</h2><span className="muted">Se aplica al instante</span></div>
+            <div className="form-section">
+              <p className="muted">Una foto del local detrás de la página que abre la placa de mesa (en vez del fondo liso o negro).</p>
+              <div className="xp-cover">{b.page_bg_url ? <img src={b.page_bg_url} alt="Fondo actual" /> : <div className="xp-cover-empty">Sin fondo: color liso</div>}</div>
+              <ImageInput name="page_bg" label="Foto del local (vertical u horizontal)" />
+              {b.page_bg_url && <label className="check"><input type="checkbox" name="remove" value="1" /><span>Quitar el fondo</span></label>}
+              <SubmitButton className="btn btn-dark" pending="Guardando…">Guardar fondo</SubmitButton>
+            </div>
+          </form>
+
           <form action={saveStage} className="panel" id="escenario">
             <input type="hidden" name="business_id" value={id} />
             <div className="panel-head"><h2>Escenario del mesero</h2></div>
@@ -172,7 +184,7 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
             </div>
 
             <div className="form-section">
-              <h3>Contacto y ubicación</h3>
+              <h3 id="redes">Redes sociales, contacto y ubicación</h3>
               <div className="grid-2">
                 <label className="field"><span>WhatsApp</span><input className="input" name="whatsapp" type="tel" maxLength={30} defaultValue={d.whatsapp ?? ""} placeholder="6000-0000" /></label>
                 <label className="field"><span>Teléfono</span><input className="input" name="phone" type="tel" maxLength={30} defaultValue={d.phone ?? ""} placeholder="200-0000" /></label>
@@ -224,7 +236,11 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
                   <label key={k} className="xp-toggle"><input type="checkbox" name={`sec_${k}`} value="1" defaultChecked={d.sections[k]} /> <span>{label}</span></label>
                 ))}
               </div>
-              <SubmitButton className="btn btn-dark" pending="Guardando…">Guardar borrador</SubmitButton>
+              <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                <button className="btn btn-dark" type="submit" formAction={saveAndPublishExperience}>Guardar y publicar</button>
+                <SubmitButton className="btn btn-ghost" pending="Guardando…">Solo guardar borrador</SubmitButton>
+              </div>
+              <small className="muted">“Guardar y publicar” deja los cambios visibles al instante en todas las placas de mesa.</small>
             </div>
           </form>
 

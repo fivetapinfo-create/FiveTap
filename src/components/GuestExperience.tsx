@@ -110,7 +110,7 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
   );
 
   return (
-    <main className="guest gx" style={style}>
+    <main className={`guest gx${business.page_bg_url ? " has-bg" : ""}`} style={{ ...style, ...(business.page_bg_url ? { "--page-bg": `url("${business.page_bg_url.replace(/"/g, "")}")` } : {}) } as React.CSSProperties}>
       <header className={`gx-hero${e.cover_url ? " has-cover" : ""}`}>
         {e.cover_url ? <img className="gx-cover" src={e.cover_url} alt="" /> : <div className="gx-cover gx-cover-brand" aria-hidden="true" />}
         <div className="gx-id">

@@ -16,6 +16,8 @@ export type Business = {
   /** The waiter rating screen's backdrop (the venue drawn low-poly) and its floor ("checker" or none). */
   stage_url?: string | null;
   stage_floor?: string | null;
+  /** A photo of the venue behind the table plaque page. */
+  page_bg_url?: string | null;
   /** Reference tier of the contract; null = before tiers existed (everything stays on). */
   tier: "esencial" | "profesional" | "empresarial" | null;
   /** Per-business exceptions, trials and limits (see lib/features). */

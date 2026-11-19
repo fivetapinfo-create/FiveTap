@@ -4,7 +4,7 @@ import { BusinessLogo } from "./BusinessLogo";
 import { Bag, Calendar, Card, Chat, Gift, StarSolid, Users } from "./Icons";
 import { LogoMark } from "./Logo";
 
-export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string; brand_accent?: string | null };
+export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string; brand_accent?: string | null; page_bg_url?: string | null };
 
 /** The page a guest sees after tapping. One question, two choices. */
 export function GuestCard({
@@ -44,7 +44,7 @@ export function GuestCard({
   const tab = embedded ? -1 : undefined;
 
   return (
-    <Root className="guest">
+    <Root className={`guest${business.page_bg_url ? " has-bg" : ""}`} style={business.page_bg_url ? ({ "--page-bg": `url("${business.page_bg_url.replace(/"/g, "")}")` } as React.CSSProperties) : undefined}>
       <div className="guest-wrap">
         <header className="guest-head">
           <div className="rise" style={{ "--i": 0 } as React.CSSProperties}>

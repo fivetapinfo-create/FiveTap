@@ -17,7 +17,7 @@ import { getPlans, planOf } from "@/lib/plans";
 import { agreementsFor } from "@/lib/agreements-db";
 import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
-import { SITE_URL, nfcUrl } from "@/lib/site";
+import { SITE_URL, pieceUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
 import { moduleOn } from "@/lib/orders";
 import { db } from "@/lib/supabase";
@@ -123,6 +123,19 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           </div>
         </div>
       </div>
+
+      {/* What the plaques open, in one place: easy to find. */}
+      <section className="panel biz-setup">
+        <div className="panel-head"><h2>Configurar lo que abren las placas</h2></div>
+        <div className="biz-setup-grid">
+          <Link href={`/admin/b/${b.id}/experiencia#perfil`}><b>Página de la mesa</b><small>Portada, frase, menú, Wi-Fi</small></Link>
+          <Link href={`/admin/b/${b.id}/experiencia#redes`}><b>Redes sociales</b><small>Instagram, TikTok, Facebook, WhatsApp, web</small></Link>
+          <Link href={`/admin/b/${b.id}/experiencia#fondo`}><b>Fondo con foto del local</b><small>Detrás de la página de la mesa</small></Link>
+          <Link href={`/admin/b/${b.id}/experiencia#escenario`}><b>Escenario del mesero</b><small>El local en low-poly detrás del avatar</small></Link>
+          <a href={`/mi/${b.owner_token}/equipo`}><b>Meseros y tarjetas</b><small>Agregar meseros, avatares, asignar tarjetas</small></a>
+        </div>
+        <p className="muted biz-setup-note">Enlaces para grabar en el chip: las <b>placas de mesa</b> usan <span className="code">/t/código</span> (el local) y las <b>tarjetas de mesero</b> usan <span className="code">/m/código</span> (el servicio de esa persona). Los encuentras en Placas.</p>
+      </section>
 
       {/* Every section of the venue, one tap away; stays at the top while scrolling. */}
       <nav className="biz-tabs" aria-label="Secciones del negocio">
@@ -561,8 +574,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                     <td><span className={`piece-state ${pieceState(t)}`}>{PIECE_LABEL[pieceState(t)]}</span></td>
                     <td>
                       <div className="row">
-                        <span className="code muted">{nfcUrl(t.code)}</span>
-                        <CopyButton value={nfcUrl(t.code)} />
+                        <span className="code muted">{pieceUrl(t.code, t.kind)}</span>
+                        <CopyButton value={pieceUrl(t.code, t.kind)} />
                       </div>
                     </td>
                     <td className="right num">{ts?.scans_30d ?? 0}</td>

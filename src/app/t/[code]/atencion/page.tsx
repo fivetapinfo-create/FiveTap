@@ -29,7 +29,8 @@ export default async function ServicePage({ params, searchParams }: { params: Pr
   const ribbon = demo ? <p className="demo-ribbon">{copy.demo}</p> : null;
   // A waiter's own card only ever opens its own person, and only while that person is published.
   if (tag.kind === "waiter") {
-    const own = tag.staff_id ? await staffMember(b.id, tag.staff_id) : null;
+    if (!tag.staff_id) return <Unavailable copy={copy} business={b.name} reason="unassigned" />;
+    const own = await staffMember(b.id, tag.staff_id);
     if (!isPublic(own)) return <Unavailable copy={copy} business={b.name} />;
   }
   const team = await publicStaff(b.id, tag.branch_id ?? null, demo);

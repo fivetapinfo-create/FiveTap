@@ -912,3 +912,4 @@ alter table service_ratings add column if not exists is_demo boolean not null de
 alter table businesses add column if not exists is_demo boolean not null default false;
 alter table businesses add column if not exists stage_url text;
 alter table businesses add column if not exists stage_floor text;
+alter table businesses add column if not exists page_bg_url text;

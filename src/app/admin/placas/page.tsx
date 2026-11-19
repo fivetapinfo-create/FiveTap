@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
 import { SubmitButton } from "@/components/SubmitButton";
 import { KIND_NAME, PIECE_LABEL, nextStep, pieceState, type PieceState } from "@/lib/pieces";
-import { nfcUrl } from "@/lib/site";
+import { pieceUrl } from "@/lib/site";
 import { db } from "@/lib/supabase";
 import type { Tag } from "@/lib/types";
 import { saveTagInfo, setTagStatus } from "../actions";
@@ -129,7 +129,7 @@ export default async function Pieces({ searchParams }: Props) {
                       <small>toques 30 d · {last.has(t.id) ? ago(last.get(t.id)) : "sin toques"}</small>
                     </div>
                     <div className="piece-actions">
-                      <CopyButton value={nfcUrl(t.code)} label="Copiar enlace" />
+                      <CopyButton value={pieceUrl(t.code, t.kind)} label="Copiar enlace" />
                       {step && (
                         <form action={setTagStatus}>
                           <input type="hidden" name="tag_id" value={t.id} />
@@ -150,7 +150,7 @@ export default async function Pieces({ searchParams }: Props) {
                         <label className="field"><span>Nota</span><input className="input" name="note" defaultValue={t.note ?? ""} maxLength={500} placeholder="Ej. pegada en la caja, color negro" /></label>
                         <SubmitButton className="btn btn-ghost btn-sm" pending="Guardando…">Guardar</SubmitButton>
                       </form>
-                      <p className="muted piece-url">Grabado en el chip: <span className="code">{nfcUrl(t.code)}</span> · no cambia nunca.</p>
+                      <p className="muted piece-url">Grabado en el chip: <span className="code">{pieceUrl(t.code, t.kind)}</span> · no cambia nunca.</p>
                       <ol className="piece-history">
                         {history.slice(0, 6).map((l, i) => <li key={i}><span>{day(l.at)}</span>{said(l)}</li>)}
                         {t.retired_at && !history.length && <li><span>{day(t.retired_at)}</span>Retirada</li>}

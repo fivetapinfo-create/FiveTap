@@ -41,7 +41,8 @@ export default async function TapPage({ params, searchParams }: Props) {
 
   const source = sourceFrom(sp.s);
   // Logged after the response is sent: the guest never waits on the insert.
-  if (!req.bot && sp.preview !== "1" && !founder) {
+  // A waiter card is counted on its own address (/m/…), never twice.
+  if (!req.bot && sp.preview !== "1" && !founder && tag.kind !== "waiter") {
     after(() =>
       logEvent({ business_id: tag.business_id, tag_id: tag.id, type: "scan", source, device: req.device, user_agent: req.ua }),
     );
@@ -60,8 +61,8 @@ export default async function TapPage({ params, searchParams }: Props) {
   // A waiter's own card opens that person's rating right away (no need to pick them).
   const acc0 = await accessOf(tag.business);
   if (tag.kind === "waiter" && acc0.has.team && sp.preview !== "1") {
-    if (!tag.staff_id) return <>{banner}<Unavailable copy={req.copy} business={tag.business.name} /></>; // unassigned card
-    redirect(`/t/${code}/atencion`);
+    if (!tag.staff_id) return <>{banner}<Unavailable copy={req.copy} business={tag.business.name} reason="unassigned" /></>;
+    redirect(`/m/${code}`); // a waiter card always opens its own address
   }
 
   const q = source === "qr" ? "?s=q" : "";

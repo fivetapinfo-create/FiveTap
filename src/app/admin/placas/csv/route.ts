@@ -1,5 +1,5 @@
 import { KIND_NAME, PIECE_LABEL, pieceState } from "@/lib/pieces";
-import { nfcUrl } from "@/lib/site";
+import { pieceUrl } from "@/lib/site";
 import { db } from "@/lib/supabase";
 import type { Tag } from "@/lib/types";
 
@@ -23,7 +23,7 @@ export async function GET() {
   const rows = [
     ["Nombre", "Cliente", "Tipo", "Estado", "Código", "Enlace grabado en el chip", "Creada", "Grabada", "Entregada", "Retirada", "Toques 30 días", "Último toque", "Notas"],
     ...((tagRes.data ?? []) as (Tag & { business: { name: string } | null })[]).map((t) => [
-      t.label, t.business?.name ?? "", KIND_NAME[t.kind], PIECE_LABEL[pieceState(t)], t.code, nfcUrl(t.code),
+      t.label, t.business?.name ?? "", KIND_NAME[t.kind], PIECE_LABEL[pieceState(t)], t.code, pieceUrl(t.code, t.kind),
       day(t.created_at), day(t.written_at), day(t.delivered_at), day(t.retired_at), scans.get(t.id) ?? 0, day(last.get(t.id) ?? null), t.note ?? "",
     ]),
   ];
