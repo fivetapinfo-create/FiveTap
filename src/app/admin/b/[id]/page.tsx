@@ -151,7 +151,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             </span>
           </div>
           <ol className="mz-steps">
-            <li><b>Graba cada chip</b> con el enlace de su tarjeta (columna “Enlace para el chip”). El enlace nunca cambia.</li>
+            <li><b>Graba cada chip</b> con el enlace de su tarjeta (abajo, botón “Copiar enlace”). El enlace nunca cambia.</li>
             <li><b>Agrega los meseros</b> por nombre: FiveTap crea su avatar (hombre o mujer según el nombre).</li>
             <li><b>Asigna cada tarjeta</b> a su mesero y aprueba. Desde ese momento el chip abre su avatar y su valoración.</li>
           </ol>
