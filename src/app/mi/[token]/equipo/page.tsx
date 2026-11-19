@@ -202,12 +202,19 @@ export default async function TeamPage({ params, searchParams }: Props) {
                         </select>
                       )}
                       {(t.kind === "waiter" || branches.length > 0) && <SubmitButton className="btn btn-ghost btn-sm" pending="…">Guardar</SubmitButton>}
-                      <button className="btn btn-ghost btn-sm" type="submit" formAction={plaqueActive} name="active" value={t.active ? "0" : "1"}>{t.active ? "Desactivar" : "Activar"}</button>
+
                     </>
                   ) : (
                     <small className="muted">{t.kind === "waiter" ? staff.find((s) => s.id === t.staff_id)?.name ?? "Sin asignar" : ""}</small>
                   )}
                 </form>
+                {owner && (
+                  <form action={plaqueActive} className="tp-plaque-toggle">
+                    <input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={back} /><input type="hidden" name="tag" value={t.id} />
+                    <input type="hidden" name="active" value={t.active ? "0" : "1"} />
+                    <button className="btn btn-ghost btn-sm" type="submit">{t.active ? "Desactivar placa" : "Activar placa"}</button>
+                  </form>
+                )}
               </li>
             ))}
           </ul>

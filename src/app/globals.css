@@ -2021,3 +2021,4 @@ html[data-ft-intro-founder="play"] .fs-card { animation-delay: 3.85s; }
 .stage-ed { display: grid; gap: 10px; }
 .stage-prev { aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #eee; display: grid; place-items: center; color: var(--muted); }
 .stage-prev img { width: 100%; height: 100%; object-fit: cover; }
+.tp-plaque-toggle { padding: 0 16px 10px; display: flex; justify-content: flex-end; }
