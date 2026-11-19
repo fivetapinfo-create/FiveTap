@@ -69,7 +69,7 @@ export default async function ServicePage({ params, searchParams }: { params: Pr
           googleHref={`/t/${code}/go`}
           backdrop={b.stage_url ?? null}
           floor={b.stage_floor === "checker" ? [b.brand_accent || (pal.custom ? pal.brand : "#c62828"), "#f4f1ea"] : null}
-          homeHref={`/t/${code}?preview=1`}
+          homeHref={own ? null : `/t/${code}?preview=1`}
           copy={{
             rate: copy.wRate.replace("{name}", person.name.split(" ")[0]!), comment: copy.wComment, issueQ: copy.wIssueQ, send: copy.wSend, pick: copy.wPickStars,
             say5: copy.wSay5, say4: copy.wSay4, say3: copy.wSay3, sayLow: copy.wSayLow, dup: copy.wDup.replace("{name}", person.name.split(" ")[0]!),

@@ -14,7 +14,7 @@ export function RateWaiter({ action, hidden, person, logoUrl, business, googleHr
   action: (prev: RateState, f: FormData) => Promise<RateState>;
   hidden: Record<string, string>;
   person: { name: string; title: string; message: string | null; avatar: AvatarConfig };
-  logoUrl: string | null; business: string; googleHref: string; homeHref: string; copy: Copy; backdrop?: string | null; floor?: [string, string] | null;
+  logoUrl: string | null; business: string; googleHref?: string; homeHref: string | null; copy: Copy; backdrop?: string | null; floor?: [string, string] | null;
 }) {
   const [state, send, pending] = useActionState(action, { ok: false } as RateState);
   const [stars, setStars] = useState(0);
@@ -59,10 +59,8 @@ export function RateWaiter({ action, hidden, person, logoUrl, business, googleHr
         </form>
       ) : (
         <div className="rw-after">
-          {/* The same invitation to Google for every rating, high or low. */}
-          <p>{copy.googleQ}</p>
-          <a className="btn btn-brand btn-block" href={googleHref}>{copy.google}</a>
-          <a className="btn btn-ghost btn-block" href={homeHref}>{copy.back}</a>
+          {/* The Google review lives on the table plaque; this screen only thanks the guest. */}
+          {homeHref && <a className="btn btn-ghost btn-block" href={homeHref}>{copy.back}</a>}
         </div>
       )}
     </section>
