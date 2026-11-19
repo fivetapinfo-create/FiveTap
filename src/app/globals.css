@@ -2051,3 +2051,9 @@ main.guest.has-bg, div.guest.has-bg, .guest.gx.has-bg {
 .mz-team { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .mz-team li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 16px; border-top: 1px solid var(--line); }
 .mz-team li small { flex: 1 1 140px; }
+.mz-cards { list-style: none; margin: 0; padding: 0 16px 12px; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.mz-cards li { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); min-width: 0; }
+.mz-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mz-who { font-size: 13.5px; }
+.mz-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mz-link .mz-url { flex: 1 1 100%; font-size: 12.5px; word-break: break-all; padding: 6px 8px; border-radius: 8px; background: var(--chip, #f1f0ec); }

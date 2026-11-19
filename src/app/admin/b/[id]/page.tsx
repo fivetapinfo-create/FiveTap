@@ -155,25 +155,25 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             <li><b>Agrega los meseros</b> por nombre: FiveTap crea su avatar (hombre o mujer según el nombre).</li>
             <li><b>Asigna cada tarjeta</b> a su mesero y aprueba. Desde ese momento el chip abre su avatar y su valoración.</li>
           </ol>
-          <div className="table-wrap">
-            <table className="table mz-table">
-              <thead><tr><th>Tarjeta</th><th>Enlace para el chip</th><th>Mesero</th><th>Estado</th></tr></thead>
-              <tbody>
-                {waiters.map((t) => {
-                  const st = plaqueState({ active: t.active, kind: "waiter", staff_id: t.staff_id });
-                  const who = t.staff_id ? staffName.get(t.staff_id) : null;
-                  return (
-                    <tr key={t.id}>
-                      <td><b>{t.label}</b></td>
-                      <td><span className="code mz-url">{pieceUrl(t.code, "waiter")}</span> <CopyButton value={pieceUrl(t.code, "waiter")} label="Copiar" /></td>
-                      <td>{who ? <>{who.name}{!who.approved ? <small className="muted"> · avatar por aprobar</small> : null}{!who.active ? <small className="muted"> · desactivado</small> : null}</> : <span className="muted">Sin asignar</span>}</td>
-                      <td><em className={`chip ${st === "active" ? "ok" : st === "unassigned" ? "warn" : "off"}`}>{PLAQUE_LABEL[st]}</em></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ul className="mz-cards">
+            {waiters.map((t) => {
+              const st = plaqueState({ active: t.active, kind: "waiter", staff_id: t.staff_id });
+              const who = t.staff_id ? staffName.get(t.staff_id) : null;
+              return (
+                <li key={t.id}>
+                  <div className="mz-top">
+                    <b>{t.label}</b>
+                    <em className={`chip ${st === "active" ? "ok" : st === "unassigned" ? "warn" : "off"}`}>{PLAQUE_LABEL[st]}</em>
+                  </div>
+                  <div className="mz-who">{who ? <>Mesero: <b>{who.name}</b>{!who.approved ? " · avatar por aprobar" : ""}{!who.active ? " · desactivado" : ""}</> : <span className="muted">Sin mesero asignado</span>}</div>
+                  <div className="mz-link">
+                    <span className="code mz-url">{pieceUrl(t.code, "waiter")}</span>
+                    <CopyButton value={pieceUrl(t.code, "waiter")} label="Copiar enlace" />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
           {crew.length > 0 && (
             <ul className="mz-team">
               {crew.map((s) => {
