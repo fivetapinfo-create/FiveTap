@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CatalogManager, PromoManager } from "@/components/ExperienceManagers";
 import { ImageInput } from "@/components/ImageInput";
+import { StageEditor } from "@/components/StageEditor";
 import { SubmitButton } from "@/components/SubmitButton";
 import { todayPanama } from "@/lib/agenda";
 import { experienceEditor } from "@/lib/experience";
@@ -13,7 +14,7 @@ import { socialUrl, waDigits } from "@/lib/experience-shape";
 import { verticalByKey } from "@/lib/verticals";
 import {
   deleteItemAdmin, deletePromoAdmin, publishExperienceAction, saveExperienceDraft, saveItemAdmin, savePromoAdmin,
-  setModuleAdmin, toggleItemAdmin, togglePromoAdmin, unpublishExperienceAction,
+  saveStage, setModuleAdmin, toggleItemAdmin, togglePromoAdmin, unpublishExperienceAction,
 } from "../../../actions";
 import { Flash } from "../../../Flash";
 import { dateTime } from "../../../format";
@@ -41,7 +42,7 @@ const SECTIONS = [
  */
 export default async function ExperiencePage({ params, searchParams }: Props) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
-  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color, modules, plan_key, kind").eq("id", id).maybeSingle();
+  const { data: b } = await db().from("businesses").select("id, name, logo_url, brand_color, modules, plan_key, kind, stage_url, stage_floor").eq("id", id).maybeSingle();
   if (!b) notFound();
   const [x, tagRes] = await Promise.all([experienceEditor(id), db().from("tags").select("code").eq("business_id", id).eq("active", true).limit(1)]);
   const d = x.draft;
@@ -119,6 +120,18 @@ export default async function ExperiencePage({ params, searchParams }: Props) {
               })}
             </div>
           </section>
+
+          <form action={saveStage} className="panel" id="escenario">
+            <input type="hidden" name="business_id" value={id} />
+            <div className="panel-head"><h2>Escenario del mesero</h2></div>
+            <div className="form-section">
+              <p className="muted">Detrás del avatar, cuando el cliente califica: la foto del local convertida al estilo low-poly de los avatares. Usa una foto de frente.</p>
+              <StageEditor current={b.stage_url ?? null} />
+              <label className="field"><span>Piso</span><select className="select" name="floor" defaultValue={b.stage_floor ?? ""}><option value="">Sin piso (sombra suave)</option><option value="checker">A cuadros con el color de la marca</option></select></label>
+              {b.stage_url && <label className="check"><input type="checkbox" name="remove" value="1" /><span>Quitar el escenario</span></label>}
+              <SubmitButton className="btn btn-dark" pending="Guardando…">Guardar escenario</SubmitButton>
+            </div>
+          </form>
 
           <form action={saveExperienceDraft} className="panel" id="perfil">
             <input type="hidden" name="business_id" value={id} />

@@ -11,6 +11,11 @@ export type Business = {
   brand_color: string;
   /** Secondary brand color (icons and accents on the NFC page). */
   brand_accent: string | null;
+  /** A sales demo: sample waiters and sample ratings, clearly marked; turned off when the venue is activated. */
+  is_demo?: boolean;
+  /** The waiter rating screen's backdrop (the venue drawn low-poly) and its floor ("checker" or none). */
+  stage_url?: string | null;
+  stage_floor?: string | null;
   /** Reference tier of the contract; null = before tiers existed (everything stays on). */
   tier: "esencial" | "profesional" | "empresarial" | null;
   /** Per-business exceptions, trials and limits (see lib/features). */

@@ -82,7 +82,7 @@ export function buildAvatar(cfg: AvatarConfig, logo: THREE.Texture | null): Rig 
   const band = mesh(g(new THREE.CylinderGeometry(hipR + 0.1, hipR + 0.1, 0.14, 10)), M.band, [0, 3.55, 0]);
   band.scale.z = 0.8;
   body.add(band);
-  body.add(mesh(g(new THREE.BoxGeometry(0.46, 0.34, 0.04)), M.band, [0.2, 3.02, (hipR + 0.13) * 0.78]));
+  body.add(mesh(g(new THREE.BoxGeometry(0.46, 0.3, 0.04)), M.band, [0.22, 2.28, (hipR + 0.17) * 0.78]));
   for (const s of [-1, 1]) {
     const tie = mesh(g(new THREE.BoxGeometry(0.09, 0.5, 0.05)), M.band, [s * 0.12, 3.25, -(hipR + 0.08) * 0.8]);
     tie.rotation.z = s * 0.28;
@@ -106,6 +106,9 @@ export function buildAvatar(cfg: AvatarConfig, logo: THREE.Texture | null): Rig 
     logoMesh = mesh(g(new THREE.PlaneGeometry(0.4, 0.4)), lm, [-shoulder * 0.42, 5.0, shoulder * 0.58 + 0.02], false);
     logoMesh.rotation.y = -0.3;
     body.add(logoMesh);
+    // The logo again, bigger, on the front of the apron.
+    const al = mesh(g(new THREE.PlaneGeometry(0.62, 0.62)), lm, [0, 2.86, (hipR + 0.14) * 0.78 + 0.03], false);
+    body.add(al);
   }
   body.add(mesh(g(new THREE.CylinderGeometry(0.2, 0.24, 0.42, 6)), M.skinDark, [0, 5.58, 0]));
 
@@ -205,8 +208,26 @@ export function buildAvatar(cfg: AvatarConfig, logo: THREE.Texture | null): Rig 
   };
 }
 
+/** A low-poly checkered floor in the venue's colors (a diner's red and white, for example). */
+function checkerFloor(a: string, b: string) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const x = c.getContext("2d")!;
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { x.fillStyle = (i + j) % 2 ? a : b; x.fillRect(i * 32, j * 32, 32, 32); }
+  const tx = new THREE.CanvasTexture(c);
+  tx.colorSpace = THREE.SRGBColorSpace;
+  tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+  tx.repeat.set(3, 2);
+  tx.magFilter = THREE.NearestFilter;
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 9), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.75, flatShading: true }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, -0.005, 1.5);
+  floor.receiveShadow = true;
+  return floor;
+}
+
 /** The stage every avatar stands on: soft daylight, a warm bounce from the floor and a soft contact shadow. */
-export function buildStage() {
+export function buildStage(opts: { floor?: [string, string] | null } = {}) {
   const scene = new THREE.Scene();
   scene.add(new THREE.HemisphereLight("#ffffff", "#e9dfd3", 1.05));
   const front = new THREE.DirectionalLight("#fffaf3", 0.85);
@@ -226,6 +247,7 @@ export function buildStage() {
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
+  if (opts.floor) scene.add(checkerFloor(opts.floor[0], opts.floor[1]));
   const camera = new THREE.PerspectiveCamera(24, 1, 0.1, 100);
   camera.position.set(0, 4.75, 24);
   camera.lookAt(0, 4.35, 0);

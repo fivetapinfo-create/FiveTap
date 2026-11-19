@@ -10,11 +10,11 @@ const WaiterAvatar = dynamic(() => import("./avatar3d/WaiterAvatar").then((m) =>
 type Copy = { rate: string; comment: string; issueQ: string; send: string; pick: string; say5: string; say4: string; say3: string; sayLow: string; dup: string; private: string; googleQ: string; google: string; back: string; error: string; issues: Record<string, string> };
 
 /** One screen: the person's avatar, five stars, an optional comment, send. The avatar answers the rating. */
-export function RateWaiter({ action, hidden, person, logoUrl, business, googleHref, homeHref, copy }: {
+export function RateWaiter({ action, hidden, person, logoUrl, business, googleHref, homeHref, copy, backdrop, floor }: {
   action: (prev: RateState, f: FormData) => Promise<RateState>;
   hidden: Record<string, string>;
   person: { name: string; title: string; message: string | null; avatar: AvatarConfig };
-  logoUrl: string | null; business: string; googleHref: string; homeHref: string; copy: Copy;
+  logoUrl: string | null; business: string; googleHref: string; homeHref: string; copy: Copy; backdrop?: string | null; floor?: [string, string] | null;
 }) {
   const [state, send, pending] = useActionState(action, { ok: false } as RateState);
   const [stars, setStars] = useState(0);
@@ -25,9 +25,9 @@ export function RateWaiter({ action, hidden, person, logoUrl, business, googleHr
   const say = done ? (state.duplicate ? copy.dup : given >= 5 ? copy.say5 : given === 4 ? copy.say4 : given === 3 ? copy.say3 : copy.sayLow) : person.message;
 
   return (
-    <section className={`rw-card${done ? " is-done" : ""}`}>
+    <section className={`rw-card${done ? " is-done" : ""}${backdrop ? " has-scene" : ""}`}>
       <div className="rw-stage">
-        <WaiterAvatar config={person.avatar} logoUrl={logoUrl} mood={done ? mood : stars ? mood : "idle"} say={done || !stars ? say : null} label={person.name} />
+        <WaiterAvatar config={person.avatar} logoUrl={logoUrl} mood={done ? mood : stars ? mood : "idle"} say={done || !stars ? say : null} label={person.name} backdrop={backdrop} floor={floor} />
       </div>
       <div className="rw-id"><b>{person.name}</b><small>{person.title} · {business}</small></div>
       {!done ? (

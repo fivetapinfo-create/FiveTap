@@ -3,7 +3,7 @@
 import { guestClosed, tagByCode } from "@/lib/data";
 import { deviceFrom } from "@/lib/device";
 import { can } from "@/lib/entitlements";
-import { staffMember, submitRating } from "@/lib/staff";
+import { isPublic, publicStaff, staffMember, submitRating } from "@/lib/staff";
 import { cookies, headers } from "next/headers";
 
 export type RateState = { ok: boolean; stars?: number; duplicate?: boolean; error?: string };
@@ -16,8 +16,12 @@ export async function rateStaff(_prev: RateState, f: FormData): Promise<RateStat
   if (!tag || (await guestClosed(tag)) || !(await can(tag.business, "team"))) return { ok: false, error: "closed" };
   const ref = String(f.get("p") ?? "");
   // A waiter's own card always rates its own person; a table card rates the person picked.
-  const person = tag.kind === "waiter" && tag.staff_id ? await staffMember(tag.business_id, tag.staff_id) : await staffMember(tag.business_id, ref);
-  if (!person || !person.active) return { ok: false, error: "staff" };
+  if (!tag.active) return { ok: false, error: "closed" };
+  // Only published people can be rated: a waiter card rates its own person, a table card someone on the public team.
+  let person = null;
+  if (tag.kind === "waiter") person = tag.staff_id ? await staffMember(tag.business_id, tag.staff_id) : null;
+  else person = (await publicStaff(tag.business_id, tag.branch_id ?? null, Boolean(tag.business.is_demo))).find((s) => s.ref === ref) ?? null;
+  if (!person || !isPublic(person)) return { ok: false, error: "staff" };
   const stars = Number(f.get("rating"));
   if (!(stars >= 1 && stars <= 5)) return { ok: false, error: "stars" };
   // One rating per phone and person every 6 hours: remembered on the phone (mobile IPs change often).
@@ -29,7 +33,7 @@ export async function rateStaff(_prev: RateState, f: FormData): Promise<RateStat
       businessId: tag.business_id, branchId: tag.branch_id ?? person.branch_id, staffId: person.id, tagId: tag.id,
       source: tag.kind === "waiter" ? "waiter" : "table", rating: stars, comment: String(f.get("comment") ?? ""), issue: String(f.get("issue") ?? ""),
       device: deviceFrom((await headers()).get("user-agent") ?? ""), businessName: tag.business.name, staffName: person.name,
-      tableLabel: tag.kind === "waiter" ? "" : tag.label, ownerToken: tag.business.owner_token,
+      tableLabel: tag.kind === "waiter" ? "" : tag.label, ownerToken: tag.business.owner_token, isDemo: Boolean(tag.business.is_demo),
     });
     jar.set(mark, "1", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/t", maxAge: 6 * 3600 });
     return { ok: true, stars, duplicate: r.duplicate };

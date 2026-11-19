@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { accessRole } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { can } from "@/lib/entitlements";
-import { linkPlaque, saveBranch, saveStaffMember, setPlaqueBranch, setRatingStatus } from "@/lib/staff";
+import { activateVenue, addStaffBatch, approveStaff, linkPlaque, regenerateAvatar, removeStaff, restoreStaff, saveBranch, saveStaffMember, setPlaqueActive, setPlaqueBranch, setRatingStatus, setStaffActive } from "@/lib/staff";
+import { db } from "@/lib/supabase";
 
 async function ctx(f: FormData, ownerOnly: boolean) {
   const token = String(f.get("token") ?? "");
@@ -66,4 +67,74 @@ export async function markRating(f: FormData) {
   const s = String(f.get("status") ?? "");
   try { await setRatingStatus(b.id, String(f.get("id") ?? ""), s === "resolved" ? "resolved" : s === "new" ? "new" : "seen"); } catch { /* shown as unchanged */ }
   go(back, "ok=estado");
+}
+
+/** Activate, deactivate, delete (keeps history) or restore an employee. Owner only. */
+export async function staffStatus(f: FormData) {
+  const { b, back, token } = await ctx(f, true);
+  const id = String(f.get("id") ?? "");
+  const op = String(f.get("op") ?? "");
+  let error = "", ok = "estado";
+  try {
+    if (op === "activate" || op === "deactivate") await setStaffActive(b.id, id, op === "activate");
+    else if (op === "delete") {
+      if (f.get("confirm") !== "1") throw new Error("Marca la casilla para confirmar.");
+      await removeStaff(b.id, id); ok = "eliminado";
+    } else if (op === "restore") await restoreStaff(b.id, id);
+    else throw new Error("Acción no válida.");
+  } catch (e) { error = msg(e); }
+  revalidatePath(`/mi/${token}/equipo`);
+  go(back, error ? `error=${error}` : `ok=${ok}`, "#meseros");
+}
+
+/** Switch a card on or off (owner only). */
+export async function plaqueActive(f: FormData) {
+  const { b, back, token } = await ctx(f, true);
+  let error = "";
+  try { await setPlaqueActive(b.id, String(f.get("tag") ?? ""), f.get("active") === "1"); } catch (e) { error = msg(e); }
+  revalidatePath(`/mi/${token}/equipo`);
+  go(back, error ? `error=${error}` : "ok=placa", "#placas");
+}
+
+/** Several new people at once (one name per line); each gets an automatic avatar to review. */
+export async function addStaff(f: FormData) {
+  const { b, back, token } = await ctx(f, true);
+  let error = "";
+  try {
+    await addStaffBatch(b.id, String(f.get("names") ?? "").split(/\r?\n|,/), { branchId: String(f.get("branch_id") ?? "") || null, title: String(f.get("title") ?? "") });
+  } catch (e) { error = msg(e); }
+  revalidatePath(`/mi/${token}/equipo`);
+  if (error) go(back, `error=${error}`, "#meseros");
+  redirect(`/mi/${token}/equipo/revisar`);
+}
+
+/** Review of the automatic avatars: try another look, switch figure, assign a card, approve. */
+export async function reviewStaff(f: FormData) {
+  const { b, token } = await ctx(f, true);
+  const back = `/mi/${token}/equipo/revisar`;
+  const op = String(f.get("op") ?? "");
+  const id = String(f.get("id") ?? "");
+  let error = "";
+  try {
+    if (op === "regenerate") await regenerateAvatar(b.id, id);
+    else if (op === "body") await regenerateAvatar(b.id, id, f.get("body") === "f" ? "f" : "m");
+    else if (op === "card") await linkPlaque(b.id, String(f.get("tag") ?? ""), id || null);
+    else if (op === "approve") await approveStaff(b.id, [id]);
+    else if (op === "approve-all") {
+      const { data } = await db().from("staff").select("id").eq("business_id", b.id).eq("approved", false).is("deleted_at", null);
+      await approveStaff(b.id, ((data ?? []) as { id: string }[]).map((x) => x.id));
+    } else throw new Error("Acción no válida.");
+  } catch (e) { error = msg(e); }
+  revalidatePath(back);
+  redirect(`${back}?${error ? `error=${error}` : `ok=${op}`}#p-${id}`);
+}
+
+/** From sales demo to the venue's own system: sample team and sample ratings leave. Owner (or founder) only. */
+export async function activateRestaurant(f: FormData) {
+  const { b, token } = await ctx(f, true);
+  if (f.get("confirm") !== "1") redirect(`/mi/${token}/activar?error=${encodeURIComponent("Marca la casilla para confirmar.")}`);
+  let error = "";
+  try { await activateVenue(b.id, f.getAll("keep").map(String)); } catch (e) { error = msg(e); }
+  revalidatePath(`/mi/${token}`);
+  redirect(error ? `/mi/${token}/activar?error=${error}` : `/mi/${token}/equipo?ok=activado`);
 }

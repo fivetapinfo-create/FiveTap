@@ -6,7 +6,8 @@ import { StaffPicker } from "@/components/StaffPicker";
 import { palette } from "@/lib/brand";
 import { guestClosed, tagByCode } from "@/lib/data";
 import { can } from "@/lib/entitlements";
-import { staffFor, staffMember } from "@/lib/staff";
+import { isPublic, publicStaff, staffMember } from "@/lib/staff";
+import { Unavailable } from "../Unavailable";
 import { Inactive } from "../Inactive";
 import { guestRequest } from "../request";
 import { rateStaff } from "./actions";
@@ -18,19 +19,28 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 export default async function ServicePage({ params, searchParams }: { params: Promise<{ code: string }>; searchParams: Promise<{ p?: string }> }) {
   const [{ code }, sp, { copy }] = await Promise.all([params, searchParams, guestRequest()]);
   const tag = await tagByCode(code);
+  if (tag && tag.kind === "waiter" && !tag.active) return <Unavailable copy={copy} business={tag.business.name} />;
   if (!tag || (await guestClosed(tag))) return <Inactive copy={copy} />;
   if (!(await can(tag.business, "team"))) redirect(`/t/${code}`);
   const b = tag.business;
   const pal = palette(b.brand_color, b.brand_accent);
   const style = { "--brand": pal.custom ? pal.brand : undefined, "--on-brand": pal.custom ? pal.onBrand : undefined, "--gx-accent": pal.accent, "--gx-accent-soft": pal.accentSoft, "--gx-tint": pal.tint ?? undefined } as React.CSSProperties;
-  const own = tag.kind === "waiter" && tag.staff_id ? await staffMember(b.id, tag.staff_id) : null;
-  const person = own?.active ? own : sp.p ? await staffMember(b.id, sp.p) : null;
+  const demo = Boolean(b.is_demo);
+  const ribbon = demo ? <p className="demo-ribbon">{copy.demo}</p> : null;
+  // A waiter's own card only ever opens its own person, and only while that person is published.
+  if (tag.kind === "waiter") {
+    const own = tag.staff_id ? await staffMember(b.id, tag.staff_id) : null;
+    if (!isPublic(own)) return <Unavailable copy={copy} business={b.name} />;
+  }
+  const team = await publicStaff(b.id, tag.branch_id ?? null, demo);
+  const person = tag.kind === "waiter" ? team.find((s) => s.id === tag.staff_id) ?? (await staffMember(b.id, tag.staff_id!)) : sp.p ? team.find((s) => s.ref === sp.p) ?? null : null;
+  const own = tag.kind === "waiter" ? person : null;
 
-  if (!person || !person.active) {
-    const team = await staffFor(b.id, { activeOnly: true, branchId: tag.branch_id ?? null });
+  if (!person) {
     if (!team.length) redirect(`/t/${code}`);
     return (
       <main className="guest gx rw" style={style}>
+        {ribbon}
         <div className="guest-wrap">
           <a className="guest-back" href={`/t/${code}?preview=1`}>← {copy.back}</a>
           <div className="rw-head">
@@ -47,6 +57,7 @@ export default async function ServicePage({ params, searchParams }: { params: Pr
 
   return (
     <main className="guest gx rw" style={style}>
+      {ribbon}
       <div className="guest-wrap">
         {!own && <a className="guest-back" href={`/t/${code}/atencion`}>← {copy.wOther}</a>}
         <RateWaiter
@@ -56,6 +67,8 @@ export default async function ServicePage({ params, searchParams }: { params: Pr
           logoUrl={b.logo_url}
           business={b.name}
           googleHref={`/t/${code}/go`}
+          backdrop={b.stage_url ?? null}
+          floor={b.stage_floor === "checker" ? [pal.custom ? pal.brand : "#c62828", "#f4f1ea"] : null}
           homeHref={`/t/${code}?preview=1`}
           copy={{
             rate: copy.wRate.replace("{name}", person.name.split(" ")[0]!), comment: copy.wComment, issueQ: copy.wIssueQ, send: copy.wSend, pick: copy.wPickStars,

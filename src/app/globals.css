@@ -1982,3 +1982,42 @@ html[data-ft-intro-founder="play"] .fs-card { animation-delay: 3.85s; }
 .tp-glance b { color: var(--ink); font-size: 26px; }
 .tp-glance span { color: var(--muted) !important; font-size: 12.5px; line-height: 1.3; }
 .tp-glance .cx-pos { color: #1f8a52; } .tp-glance .cx-neg { color: #c4261e; }
+.demo-ribbon { margin: 0; padding: 6px 12px; text-align: center; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; background: #111; color: #f5d77a; }
+/* Staff management */
+.tp-tabs { padding: 0 16px 8px; }
+.tp-staff { list-style: none; margin: 0; padding: 0; }
+.tp-staff li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.tp-initial { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--chip, #f1f0ec); }
+.tp-staff .tp-who { flex: 1 1 140px; }
+.tp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-style: normal; font-size: 11.5px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: #eceae4; color: #555; white-space: nowrap; }
+.chip.ok { background: #dff3e6; color: #17663a; } .chip.warn { background: #fff1cf; color: #7a5300; } .chip.off { background: #f1e3e3; color: #8a2a2a; }
+.tp-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tp-del summary { list-style: none; cursor: pointer; }
+.tp-del summary::-webkit-details-marker { display: none; }
+.tp-del-box { display: grid; gap: 8px; margin-top: 8px; padding: 12px; border-radius: 12px; background: #fbefef; max-width: 420px; }
+.tp-add { border-top: 1px solid var(--line); }
+.tp-add h3 { margin: 0; font-size: 16px; }
+.rv-grid { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.rv-card { display: grid; gap: 8px; padding: 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); text-align: center; }
+.rv-card form { display: flex; gap: 6px; justify-content: center; }
+.rv-card form .select { flex: 1; min-width: 0; }
+.rv-row { display: flex; gap: 6px; justify-content: center; }
+.rv-pic { display: block; aspect-ratio: 11 / 14; border-radius: 14px; background: linear-gradient(180deg, #f6f3ee, #ebe4da); overflow: hidden; }
+.ap-img { width: 100%; height: 100%; object-fit: contain; animation: sp-in 360ms var(--ease-out) both; }
+.ap-wait { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, #eee 25%, #f6f6f6 50%, #eee 75%); background-size: 200% 100%; animation: ap-shimmer 1.2s linear infinite; }
+@keyframes ap-shimmer { to { background-position: -200% 0; } }
+.act-steps { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 8px; }
+.act-steps li { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+.act-steps li.ok b { color: #17663a; }
+.act-steps small { color: var(--muted); }
+.act-keep { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.act-keep legend { font-size: 14px; margin-bottom: 6px; }
+/* The waiter's stage: the venue drawn low-poly behind the avatar, seen from the front */
+.wa-scene { background: var(--wa-bg) center 38% / cover no-repeat; }
+.wa-scene::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.18) 100%); pointer-events: none; }
+.rw-card.has-scene .rw-stage { height: min(62vh, 520px); background: #2a2230; }
+.wa canvas { position: relative; z-index: 1; }
+.stage-ed { display: grid; gap: 10px; }
+.stage-prev { aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #eee; display: grid; place-items: center; color: var(--muted); }
+.stage-prev img { width: 100%; height: 100%; object-fit: cover; }

@@ -69,7 +69,7 @@ function loadLogo(url: string | null | undefined): Promise<THREE.Texture | null>
  * A waiter's 3D avatar, alive: blinks, breathes, moves the head, and reacts to the guest's rating
  * (celebrates, waves, thanks, looks concerned). The speech bubble is plain text, no voice.
  */
-export function WaiterAvatar({ config, logoUrl, mood = "idle", say, className, label }: { config: AvatarConfig; logoUrl?: string | null; mood?: AvatarMood; say?: string | null; className?: string; label?: string }) {
+export function WaiterAvatar({ config, logoUrl, mood = "idle", say, className, label, backdrop, floor }: { config: AvatarConfig; logoUrl?: string | null; mood?: AvatarMood; say?: string | null; className?: string; label?: string; backdrop?: string | null; floor?: [string, string] | null }) {
   const box = useRef<HTMLDivElement>(null);
   const moodRef = useRef({ mood, since: 0, talkUntil: 0 });
   const clock = useRef(0);
@@ -94,7 +94,7 @@ export function WaiterAvatar({ config, logoUrl, mood = "idle", say, className, l
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     el.prepend(renderer.domElement);
-    const { scene, camera } = buildStage();
+    const { scene, camera } = buildStage({ floor: floor ?? null });
     let rig: Rig | null = null;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -156,10 +156,10 @@ export function WaiterAvatar({ config, logoUrl, mood = "idle", say, className, l
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [config.body, config.skin, config.hair, config.hairColor, config.brows, logoUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config.body, config.skin, config.hair, config.hairColor, config.brows, logoUrl, floor?.[0], floor?.[1]]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div ref={box} className={`wa ${className ?? ""}`} role="img" aria-label={label ?? "Avatar"}>
+    <div ref={box} className={`wa ${backdrop ? "wa-scene " : ""}${className ?? ""}`} role="img" aria-label={label ?? "Avatar"} style={backdrop ? ({ "--wa-bg": `url("${backdrop.replace(/"/g, "")}")` } as React.CSSProperties) : undefined}>
       {say && <p key={say} className="wa-say" aria-live="polite">{say}</p>}
     </div>
   );

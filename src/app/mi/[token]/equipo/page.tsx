@@ -9,13 +9,13 @@ import { billingState } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail } from "@/lib/data";
 import { can } from "@/lib/entitlements";
 import { QUICK, rangeFrom } from "@/lib/periods";
-import { MIN_RATINGS, branchesFor, googleClicksByStaff, rankStaff, ratingsFor, staffFor } from "@/lib/staff";
-import { saveBranchAction, saveEmployee, savePlaque } from "./actions";
+import { MIN_RATINGS, PLAQUE_LABEL, branchesFor, googleClicksByStaff, plaqueState, rankStaff, ratingsFor, staffFor } from "@/lib/staff";
+import { addStaff, plaqueActive, saveBranchAction, savePlaque, staffStatus } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ periodo?: string; desde?: string; hasta?: string; sucursal?: string; ok?: string; error?: string }> };
-const OK: Record<string, string> = { placa: "Placa actualizada.", sucursal: "Sucursal guardada.", estado: "Listo." };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ periodo?: string; desde?: string; hasta?: string; sucursal?: string; ok?: string; error?: string; ver?: string }> };
+const OK: Record<string, string> = { placa: "Placa actualizada.", sucursal: "Sucursal guardada.", estado: "Listo.", eliminado: "Mesero eliminado. Su historial y sus estadísticas se conservan; su tarjeta quedó desactivada y libre.", activado: "¡Listo! Tu restaurante ya es tu sistema definitivo: sin datos de demostración." };
 
 /** Waiter performance: who is doing well, from how many ratings, and the team's cards and branches. */
 export default async function TeamPage({ params, searchParams }: Props) {
@@ -34,8 +34,9 @@ export default async function TeamPage({ params, searchParams }: Props) {
   const range = rangeFrom(sp);
   const [branches, hasBranches] = await Promise.all([branchesFor(b.id), can(b, "branches")]);
   const branch = branches.find((x) => x.id === sp.sucursal) ?? null;
-  const [staff, ratings, google] = await Promise.all([
+  const [staff, removed, ratings, google] = await Promise.all([
     staffFor(b.id, { branchId: branch?.id ?? null }),
+    staffFor(b.id, { deleted: true }),
     ratingsFor(b.id, { from: range.from, to: range.to, branchId: branch?.id ?? null }),
     googleClicksByStaff(b.id, range.from, range.to),
   ]);
@@ -110,24 +111,71 @@ export default async function TeamPage({ params, searchParams }: Props) {
           <p className="muted tp-rule">Cómo se ordena: por el promedio de estrellas, ajustado para que pocas evaluaciones no engañen (cuenta como si cada persona empezara con 5 evaluaciones en el promedio del equipo). Con menos de {MIN_RATINGS} evaluaciones en el periodo, la persona aparece sin puesto. La línea gris es el promedio del equipo. “A Google” son clientes que abrieron Google desde su tarjeta (no una reseña confirmada).</p>
         </section>
 
-        {owner && (
-          <section className="panel" id="empleados">
-            <div className="panel-head"><h2>Agregar empleado</h2></div>
-            <form action={saveEmployee} className="form-section">
-              <input type="hidden" name="token" value={token} />
-              <input type="hidden" name="back" value={back} />
-              <div className="grid-2">
-                <label className="field"><span>Nombre</span><input className="input" name="name" required maxLength={50} placeholder="Ej.: Carla" /></label>
-                <label className="field"><span>Puesto</span><input className="input" name="title" maxLength={30} defaultValue="Mesero" /></label>
-              </div>
-              {branches.length > 0 && (
-                <label className="field"><span>Sucursal</span><select className="select" name="branch_id" defaultValue={branch?.id ?? ""}><option value="">Todas</option>{branches.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
-              )}
-              <SubmitButton className="btn btn-dark" pending="Guardando…">Agregar y personalizar su avatar</SubmitButton>
-            </form>
-            {inactive.length > 0 && <p className="muted" style={{ padding: "0 16px 16px" }}>Inactivos: {inactive.map((s, i) => <span key={s.id}>{i ? ", " : ""}<Link href={`/mi/${token}/equipo/${s.id}`}>{s.name}</Link></span>)}</p>}
-          </section>
+        {b.is_demo && (
+          <p className="alert alert-warn">Estás viendo una <b>demostración</b>: meseros y evaluaciones de ejemplo. {owner && <Link href={`/mi/${token}/activar`}>Activar mi restaurante →</Link>}</p>
         )}
+        {staff.some((x) => !x.approved) && owner && (
+          <Link className="alert alert-ok" href={`/mi/${token}/equipo/revisar`} style={{ display: "block" }}><b>{staff.filter((x) => !x.approved).length} avatares listos para revisar</b> · Revísalos y apruébalos para que los clientes los vean →</Link>
+        )}
+
+        <section className="panel" id="meseros">
+          <div className="panel-head"><h2>Meseros</h2></div>
+          <nav className="cl-tabs tp-tabs" aria-label="Estado">
+            {[["activos", `Activos · ${staff.filter((x) => x.active).length}`], ["desactivados", `Desactivados · ${staff.filter((x) => !x.active).length}`], ["eliminados", `Eliminados · ${removed.length}`]].map(([k, l]) => (
+              <Link key={k} href={`?ver=${k}#meseros`} className={(sp.ver ?? "activos") === k ? "on" : undefined}>{l}</Link>
+            ))}
+          </nav>
+          <ul className="tp-staff">
+            {((sp.ver ?? "activos") === "eliminados" ? removed : staff.filter((x) => (sp.ver === "desactivados" ? !x.active : x.active))).map((x) => {
+              const cards = tags.filter((t) => t.staff_id === x.id);
+              const card = cards.find((t) => t.active) ?? cards[0];
+              const profile = x.deleted_at ? "Eliminado" : !x.active ? "Desactivado" : !x.approved ? "Pendiente de aprobar" : "Publicado";
+              return (
+                <li key={x.id}>
+                  <span className="tp-initial">{x.name.slice(0, 1)}</span>
+                  <span className="tp-who"><b>{x.name}{x.is_demo ? " · demo" : ""}</b><small>{x.title}</small></span>
+                  <span className="tp-chips">
+                    <em className={`chip ${profile === "Publicado" ? "ok" : profile === "Pendiente de aprobar" ? "warn" : "off"}`}>{profile}</em>
+                    <em className={`chip ${card && plaqueState(card) === "active" ? "ok" : "off"}`}>{card ? `Tarjeta ${PLAQUE_LABEL[plaqueState(card)].toLowerCase()}` : "Sin tarjeta"}</em>
+                  </span>
+                  <span className="tp-actions">
+                    <Link className="btn btn-ghost btn-sm" href={`/mi/${token}/equipo/${x.id}`}>{x.deleted_at ? "Historial" : "Editar"}</Link>
+                    {owner && !x.deleted_at && (
+                      <form action={staffStatus}><input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={back} /><input type="hidden" name="id" value={x.id} /><input type="hidden" name="op" value={x.active ? "deactivate" : "activate"} /><button className="btn btn-ghost btn-sm" type="submit">{x.active ? "Desactivar" : "Activar"}</button></form>
+                    )}
+                    {owner && !x.deleted_at && (
+                      <details className="tp-del">
+                        <summary className="btn btn-ghost btn-sm">Eliminar</summary>
+                        <form action={staffStatus} className="tp-del-box">
+                          <input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={back} /><input type="hidden" name="id" value={x.id} /><input type="hidden" name="op" value="delete" />
+                          <label className="check"><input type="checkbox" name="confirm" value="1" required /><span>Confirmo que {x.name} ya no trabaja aquí. Deja de aparecer, su tarjeta se desactiva y su historial se conserva.</span></label>
+                          <button className="btn btn-dark btn-sm" type="submit">Eliminar mesero</button>
+                        </form>
+                      </details>
+                    )}
+                    {owner && x.deleted_at && (
+                      <form action={staffStatus}><input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={back} /><input type="hidden" name="id" value={x.id} /><input type="hidden" name="op" value="restore" /><button className="btn btn-ghost btn-sm" type="submit">Restaurar</button></form>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+            {!((sp.ver ?? "activos") === "eliminados" ? removed : staff.filter((x) => (sp.ver === "desactivados" ? !x.active : x.active))).length && <li className="empty"><p>Nadie en esta lista.</p></li>}
+          </ul>
+          {owner && (
+            <form action={addStaff} className="form-section tp-add">
+              <input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={back} />
+              <h3>Agregar meseros</h3>
+              <label className="field"><span>Nombres (uno por línea)</span><textarea className="input" name="names" rows={4} required placeholder={"Carla Méndez\nLuis Pérez"} /></label>
+              <div className="grid-2">
+                <label className="field"><span>Puesto</span><input className="input" name="title" defaultValue="Mesero" maxLength={30} /></label>
+                {branches.length > 0 ? <label className="field"><span>Sucursal</span><select className="select" name="branch_id" defaultValue={branch?.id ?? ""}><option value="">Todas</option>{branches.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label> : <span />}
+              </div>
+              <SubmitButton className="btn btn-dark" pending="Creando avatares…">Agregar y crear sus avatares</SubmitButton>
+              <small className="muted">FiveTap crea un avatar para cada persona, con tu uniforme y tu logo. Los revisas, cambias el que quieras y los apruebas. Nadie aparece a los clientes hasta tener su perfil aprobado y su tarjeta activa.</small>
+            </form>
+          )}
+        </section>
 
         <section className="panel" id="placas">
           <div className="panel-head"><h2>Placas y tarjetas</h2><span className="muted">{tags.length}</span></div>
@@ -138,12 +186,13 @@ export default async function TeamPage({ params, searchParams }: Props) {
                 <form action={savePlaque} className="tp-plaque">
                   <input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={back} /><input type="hidden" name="tag" value={t.id} />
                   <span className="tp-plaque-id"><b>{t.label}</b><small>{t.kind === "waiter" ? "Tarjeta de mesero" : "Placa de mesa"} · {t.code}</small></span>
+                  <em className={`chip ${plaqueState(t) === "active" ? "ok" : plaqueState(t) === "unassigned" ? "warn" : "off"}`}>{PLAQUE_LABEL[plaqueState(t)]}</em>
                   {owner ? (
                     <>
                       {t.kind === "waiter" && (
                         <select className="select" name="staff_id" defaultValue={t.staff_id ?? ""} aria-label={`Persona de ${t.label}`}>
                           <option value="">Sin asignar</option>
-                          {staff.filter((s) => s.active || s.id === t.staff_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          {staff.filter((s) => (s.active && !s.deleted_at) || s.id === t.staff_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                       )}
                       {branches.length > 0 && (
@@ -153,6 +202,7 @@ export default async function TeamPage({ params, searchParams }: Props) {
                         </select>
                       )}
                       {(t.kind === "waiter" || branches.length > 0) && <SubmitButton className="btn btn-ghost btn-sm" pending="…">Guardar</SubmitButton>}
+                      <button className="btn btn-ghost btn-sm" type="submit" formAction={plaqueActive} name="active" value={t.active ? "0" : "1"}>{t.active ? "Desactivar" : "Activar"}</button>
                     </>
                   ) : (
                     <small className="muted">{t.kind === "waiter" ? staff.find((s) => s.id === t.staff_id)?.name ?? "Sin asignar" : ""}</small>

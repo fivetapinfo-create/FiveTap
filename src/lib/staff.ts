@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomInt } from "node:crypto";
 import { headers } from "next/headers";
-import { asAvatar, type AvatarConfig } from "./avatar";
+import { asAvatar, randomAvatar, type AvatarBody, type AvatarConfig } from "./avatar";
 import { sendPush } from "./push";
 import { reviewUrlFrom } from "./site";
 import { db } from "./supabase";
@@ -10,7 +10,7 @@ import { db } from "./supabase";
 // they are the restaurant's own private feedback. Every query is scoped to one business.
 
 export type Branch = { id: string; business_id: string; name: string; address: string | null; google_review_url: string | null; sort: number; active: boolean };
-export type StaffMember = { id: string; business_id: string; branch_id: string | null; ref: string; name: string; title: string; message: string | null; avatar: AvatarConfig; active: boolean; created_at: string };
+export type StaffMember = { id: string; business_id: string; branch_id: string | null; ref: string; name: string; title: string; message: string | null; avatar: AvatarConfig; active: boolean; approved: boolean; deleted_at: string | null; is_demo: boolean; created_at: string };
 export type Rating = { id: string; business_id: string; branch_id: string | null; staff_id: string | null; tag_id: string | null; source: "waiter" | "table"; rating: number; comment: string | null; issue: string | null; status: "new" | "seen" | "resolved"; created_at: string };
 
 export const ISSUES: Record<string, string> = { wait: "Demora", order: "Pedido equivocado", food: "La comida", service: "La atención", clean: "Limpieza", bill: "La cuenta", other: "Otro" };
@@ -41,8 +41,9 @@ export async function saveBranch(businessId: string, f: { id?: string; name: str
 
 // ---------- Employees ----------
 
-export async function staffFor(businessId: string, o: { activeOnly?: boolean; branchId?: string | null } = {}): Promise<StaffMember[]> {
+export async function staffFor(businessId: string, o: { activeOnly?: boolean; branchId?: string | null; deleted?: boolean } = {}): Promise<StaffMember[]> {
   let q = db().from("staff").select("*").eq("business_id", businessId).order("active", { ascending: false }).order("name");
+  q = o.deleted ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
   if (o.activeOnly) q = q.eq("active", true);
   if (o.branchId) q = q.or(`branch_id.eq.${o.branchId},branch_id.is.null`);
   const { data } = await q;
@@ -116,7 +117,7 @@ async function clientHash(salt: string) {
 }
 
 /** A guest rates the person who served them. One rating per phone and person every 6 hours. */
-export async function submitRating(o: { businessId: string; branchId: string | null; staffId: string; tagId: string; source: "waiter" | "table"; rating: number; comment: string; issue: string; device: string; businessName: string; staffName: string; tableLabel: string; ownerToken: string }) {
+export async function submitRating(o: { businessId: string; branchId: string | null; staffId: string; tagId: string; source: "waiter" | "table"; rating: number; comment: string; issue: string; device: string; businessName: string; staffName: string; tableLabel: string; ownerToken: string; isDemo?: boolean }) {
   const rating = Math.round(o.rating);
   if (!(rating >= 1 && rating <= 5)) throw new Error("Elige de 1 a 5 estrellas.");
   const issue = ISSUES[o.issue] ? o.issue : null;
@@ -131,7 +132,7 @@ export async function submitRating(o: { businessId: string; branchId: string | n
   if ((flood.count ?? 0) > 400) throw new Error("Hay muchas evaluaciones en este momento. Inténtalo en unos minutos.");
   const { error } = await db().from("service_ratings").insert({
     business_id: o.businessId, branch_id: o.branchId, staff_id: o.staffId, tag_id: o.tagId, source: o.source,
-    rating, comment: clean(o.comment, 600) || null, issue, device: o.device, client_hash: ch,
+    rating, comment: clean(o.comment, 600) || null, issue, device: o.device, client_hash: ch, is_demo: Boolean(o.isDemo),
   });
   if (error) throw new Error(error.message);
   // Important problems reach the owner and the manager at once.
@@ -244,4 +245,114 @@ export function topics(ratings: Rating[], messages: { message: string }[]) {
   }
   for (const m of messages) for (const t of TOPICS) if (t.re.test(m.message)) count.set(t.key, (count.get(t.key) ?? 0) + 1);
   return TOPICS.map((t) => ({ key: t.key, label: t.label, n: count.get(t.key) ?? 0 })).filter((t) => t.n > 0).sort((a, z) => z.n - a.n);
+}
+
+
+// ---------- Who guests can see, and the life of an employee ----------
+
+/**
+ * Who appears to guests ("Who served you?" and their own card): active, approved and not deleted.
+ * In a live venue they also need an active card of their own; in a sales demo the sample team shows as is.
+ */
+export async function publicStaff(businessId: string, branchId: string | null, demo: boolean): Promise<StaffMember[]> {
+  const team = (await staffFor(businessId, { activeOnly: true, branchId })).filter((s) => s.approved);
+  if (demo) return team;
+  const { data } = await db().from("tags").select("staff_id").eq("business_id", businessId).eq("active", true).not("staff_id", "is", null);
+  const carded = new Set(((data ?? []) as { staff_id: string }[]).map((t) => t.staff_id));
+  return team.filter((s) => carded.has(s.id));
+}
+
+export const isPublic = (s: StaffMember | null) => Boolean(s && s.active && s.approved && !s.deleted_at);
+
+export type PlaqueState = "active" | "disabled" | "unassigned";
+/** A waiter card is active (works and opens its person), disabled (opens nothing), or free to give to someone. */
+export const plaqueState = (t: { active: boolean; kind: string; staff_id?: string | null }): PlaqueState =>
+  !t.active ? "disabled" : t.kind === "waiter" && !t.staff_id ? "unassigned" : "active";
+export const PLAQUE_LABEL: Record<PlaqueState, string> = { active: "Activa", disabled: "Desactivada", unassigned: "Sin asignar" };
+
+export async function setStaffActive(businessId: string, id: string, active: boolean) {
+  const { data, error } = await db().from("staff").update({ active }).eq("id", id).eq("business_id", businessId).is("deleted_at", null).select("id").maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Ese empleado no es de este negocio.");
+}
+
+/**
+ * Someone leaves: hidden from guests and lists, their cards switched off and freed, and their
+ * history (ratings, stats) kept intact. Nothing about their past is deleted.
+ */
+export async function removeStaff(businessId: string, id: string) {
+  const now = new Date().toISOString();
+  const { data, error } = await db().from("staff").update({ active: false, deleted_at: now }).eq("id", id).eq("business_id", businessId).is("deleted_at", null).select("id").maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Ese empleado no es de este negocio o ya fue eliminado.");
+  await db().from("tags").update({ active: false, staff_id: null, staff_name: null, staff_since: now }).eq("business_id", businessId).eq("staff_id", id);
+}
+
+export async function restoreStaff(businessId: string, id: string) {
+  const { error } = await db().from("staff").update({ deleted_at: null, active: false }).eq("id", id).eq("business_id", businessId);
+  if (error) throw new Error(error.message);
+}
+
+/** Switch a card on or off. A card switched off opens nothing, even from a saved link. */
+export async function setPlaqueActive(businessId: string, tagId: string, active: boolean) {
+  const { data, error } = await db().from("tags").update({ active }).eq("id", tagId).eq("business_id", businessId).neq("status", "retired").select("id").maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Esa placa no es de este negocio.");
+}
+
+// ---------- Automatic avatars ----------
+
+/** A first guess of the figure from the first name (Spanish names ending in "a"); the owner can switch it. */
+export function guessBody(name: string): AvatarBody {
+  const first = name.trim().split(/\s+/)[0]!.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (/^(luca|joshua|elias|nicolas|tomas|jonas|andrea s)$/.test(first)) return "m";
+  return /a$|ia$|ela$|ina$|riz$|ilda$|beth$|ruth$|iris$|ines$|carmen$|isabel$|raquel$|mabel$|abigail$|yaneth$|lisbeth$/.test(first) ? "f" : "m";
+}
+
+/** Adds several people at once, each with an automatic avatar, waiting for approval before guests see them. */
+export async function addStaffBatch(businessId: string, names: string[], o: { branchId?: string | null; title?: string }) {
+  const clean_ = [...new Set(names.map((n) => clean(n, 50)).filter((n) => n.length >= 2))].slice(0, 60);
+  if (!clean_.length) throw new Error("Escribe al menos un nombre (uno por línea).");
+  const ids: string[] = [];
+  for (const name of clean_) {
+    const id = await saveStaffMember(businessId, { name, title: o.title || "Mesero", branch_id: o.branchId ?? null, avatar: randomAvatar(guessBody(name)) });
+    await db().from("staff").update({ approved: false }).eq("id", id).eq("business_id", businessId);
+    ids.push(id);
+  }
+  return ids;
+}
+
+export async function regenerateAvatar(businessId: string, id: string, body?: AvatarBody) {
+  const s = await staffMember(businessId, id);
+  if (!s) throw new Error("Ese empleado no es de este negocio.");
+  const next = randomAvatar(body ?? s.avatar.body, s.avatar);
+  const { error } = await db().from("staff").update({ avatar: next, approved: false }).eq("id", id).eq("business_id", businessId);
+  if (error) throw new Error(error.message);
+}
+
+export async function approveStaff(businessId: string, ids: string[]) {
+  if (!ids.length) return;
+  const { error } = await db().from("staff").update({ approved: true, active: true }).eq("business_id", businessId).in("id", ids).is("deleted_at", null);
+  if (error) throw new Error(error.message);
+}
+
+// ---------- From sales demo to the venue's own system ----------
+
+/**
+ * Activation: the sample team and every sample rating leave (unless the owner keeps someone, who then
+ * starts with no ratings), and the venue stops being a demo. Real data is never touched.
+ */
+export async function activateVenue(businessId: string, keep: string[]) {
+  await db().from("service_ratings").delete().eq("business_id", businessId).eq("is_demo", true);
+  const { data: demo } = await db().from("staff").select("id").eq("business_id", businessId).eq("is_demo", true);
+  const ids = ((demo ?? []) as { id: string }[]).map((x) => x.id);
+  const drop = ids.filter((id) => !keep.includes(id));
+  if (drop.length) {
+    await db().from("tags").update({ staff_id: null, staff_name: null }).eq("business_id", businessId).in("staff_id", drop);
+    await db().from("staff").delete().eq("business_id", businessId).in("id", drop);
+  }
+  const kept = ids.filter((id) => keep.includes(id));
+  if (kept.length) await db().from("staff").update({ is_demo: false }).eq("business_id", businessId).in("id", kept);
+  const { error } = await db().from("businesses").update({ is_demo: false }).eq("id", businessId);
+  if (error) throw new Error(error.message);
 }

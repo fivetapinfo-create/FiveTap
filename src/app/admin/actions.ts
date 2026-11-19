@@ -28,7 +28,7 @@ import { confirmClaim, rejectClaim } from "@/lib/claims";
 import { setModule, type ModuleKey } from "@/lib/orders";
 import { presetFor } from "@/lib/presets";
 import { EMPTY_EXPERIENCE } from "@/lib/experience-shape";
-import { deleteItem, deletePromotion, publishExperience, saveDraft, saveItem, savePromotion, setActive, unpublishExperience } from "@/lib/experience";
+import { deleteItem, deletePromotion, publishExperience, saveDraft, saveItem, savePromotion, setActive, unpublishExperience, uploadMedia } from "@/lib/experience";
 import { PANEL_KINDS, verticalByKey } from "@/lib/verticals";
 
 const str = (f: FormData, k: string, max = 200) => String(f.get(k) ?? "").trim().slice(0, max);
@@ -1148,4 +1148,18 @@ export async function managePasskeys(f: FormData) {
   }
   revalidatePath(back);
   redirect(`${back}?ok=seguridad`);
+}
+
+/** The waiter rating screen's stage: the venue drawn low-poly behind the avatar, and its floor. */
+export async function saveStage(f: FormData) {
+  await xRun(f, "escenario", "escenario", async (id) => {
+    const patch: Record<string, string | null> = { stage_floor: f.get("floor") === "checker" ? "checker" : null };
+    if (f.get("remove") === "1") patch.stage_url = null;
+    else {
+      const url = await uploadMedia(id, f.get("stage"), "stage");
+      if (url) patch.stage_url = url;
+    }
+    const { error } = await db().from("businesses").update(patch).eq("id", id);
+    if (error) throw new Error(error.message);
+  });
 }

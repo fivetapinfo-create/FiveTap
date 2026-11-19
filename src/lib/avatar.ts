@@ -27,3 +27,13 @@ export function asAvatar(v: unknown, seed = ""): AvatarConfig {
 export type AvatarMood = "idle" | "happy" | "celebrate" | "thanks" | "neutral" | "worried";
 /** How the avatar answers a rating. */
 export const moodFor = (stars: number): AvatarMood => (stars >= 5 ? "celebrate" : stars === 4 ? "happy" : stars === 3 ? "thanks" : "worried");
+
+/** A new look in the same family; never the same as the one it replaces. */
+export function randomAvatar(body: AvatarBody, avoid?: AvatarConfig): AvatarConfig {
+  for (let i = 0; i < 20; i++) {
+    const r = (n: number) => Math.floor(Math.random() * n);
+    const c: AvatarConfig = { body, skin: r(SKINS.length), hair: r(4), hairColor: r(HAIR_COLORS.length), brows: r(3) };
+    if (!avoid || c.body !== avoid.body || c.skin !== avoid.skin || c.hair !== avoid.hair || c.hairColor !== avoid.hairColor) return c;
+  }
+  return { body, skin: 1, hair: 0, hairColor: 0, brows: 1 };
+}

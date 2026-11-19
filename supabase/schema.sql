@@ -903,3 +903,12 @@ alter table loyalty_visit_codes enable row level security;
 alter table push_subscriptions drop constraint if exists push_subscriptions_role_check;
 alter table push_subscriptions add constraint push_subscriptions_role_check check (role in ('founder', 'owner', 'manager', 'customer'));
 alter table push_subscriptions add column if not exists card_id uuid references loyalty_cards(id) on delete cascade;
+
+-- ---------- Staff lifecycle, demo mode and the waiter's stage ----------
+alter table staff add column if not exists approved boolean not null default true;
+alter table staff add column if not exists deleted_at timestamptz;
+alter table staff add column if not exists is_demo boolean not null default false;
+alter table service_ratings add column if not exists is_demo boolean not null default false;
+alter table businesses add column if not exists is_demo boolean not null default false;
+alter table businesses add column if not exists stage_url text;
+alter table businesses add column if not exists stage_floor text;

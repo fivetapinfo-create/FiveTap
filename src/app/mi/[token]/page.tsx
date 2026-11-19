@@ -169,6 +169,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <b>{pending.length === 1 ? "1 mensaje de un cliente por resolver" : `${pending.length} mensajes de clientes por resolver`}</b> · Ver →
           </a>
         )}
+        {b.is_demo && (
+          <Link className="alert alert-warn glance-alert" href={role === "owner" ? `/mi/${token}/activar` : `/mi/${token}/equipo`}>
+            <b>Demostración de FiveTap</b> · Meseros y evaluaciones de ejemplo.{role === "owner" ? " Activar mi restaurante →" : ""}
+          </Link>
+        )}
         {billing.kind === "trial" && billing.suspendsOn && (
           <a className="alert alert-ok glance-alert" href={`/empezar?n=${encodeURIComponent(b.name)}`}>
             <b>Estás en FiveTap Test</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Elige tu plan para seguir sin pausa →
