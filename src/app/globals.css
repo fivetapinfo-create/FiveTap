@@ -2057,3 +2057,9 @@ main.guest.has-bg, div.guest.has-bg, .guest.gx.has-bg {
 .mz-who { font-size: 13.5px; }
 .mz-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mz-link .mz-url { flex: 1 1 100%; font-size: 12.5px; word-break: break-all; padding: 6px 8px; border-radius: 8px; background: var(--chip, #f1f0ec); }
+.tp-config { padding: 0; }
+.tp-config > summary { list-style: none; cursor: pointer; display: grid; gap: 2px; padding: 16px; }
+.tp-config > summary::-webkit-details-marker { display: none; }
+.tp-config > summary b::after { content: " ▾"; color: var(--muted); }
+.tp-config[open] > summary b::after { content: " ▴"; }
+.tp-config > .panel, .tp-config > .alert { margin: 0 12px 12px; }

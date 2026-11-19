@@ -60,15 +60,6 @@ export default async function TeamPage({ params, searchParams }: Props) {
           <nav className="cl-tabs" aria-label="Periodo">
             {QUICK.map((x) => <Link key={x.key} href={`?periodo=${x.key}${branch ? `&sucursal=${branch.id}` : ""}`} className={range.key === x.key ? "on" : undefined}>{x.label}</Link>)}
           </nav>
-          <details className="tp-custom" open={range.key === "custom"}>
-            <summary>Elegir fechas{range.key === "custom" ? ` · ${range.label}` : ""}</summary>
-            <div className="grid-2">
-              <label className="field"><span>Desde</span><input className="input" type="date" name="desde" defaultValue={sp.desde} /></label>
-              <label className="field"><span>Hasta</span><input className="input" type="date" name="hasta" defaultValue={sp.hasta} /></label>
-            </div>
-            {branch && <input type="hidden" name="sucursal" value={branch.id} />}
-            <button className="btn btn-dark btn-sm" type="submit">Ver</button>
-          </details>
           {branches.length > 1 && (
             <nav className="cl-tabs" aria-label="Sucursal">
               <Link href={`?${new URLSearchParams({ ...(sp.periodo ? { periodo: sp.periodo } : {}) })}`} className={!branch ? "on" : undefined}>Todas</Link>
@@ -83,8 +74,22 @@ export default async function TeamPage({ params, searchParams }: Props) {
           <div><b className="num">{rows.filter((r) => r.ranked).length}/{rows.length}</b><span>En el ranking</span></div>
         </section>
 
+        <section className="panel" id="opiniones">
+          <div className="panel-head"><h2>Lo que dicen los clientes</h2><span className="muted">{range.label}</span></div>
+          <ul className="tp-comments">
+            {ratings.slice(0, 25).map((r) => (
+              <li key={r.id} className={r.rating <= 2 ? "low" : r.rating >= 4 ? "high" : undefined}>
+                <span><b>{staff.find((x) => x.id === r.staff_id)?.name ?? removed.find((x) => x.id === r.staff_id)?.name ?? "Mesero"}</b> · <span className="tp-stars">{"★".repeat(r.rating)}<i>{"★".repeat(5 - r.rating)}</i></span></span>
+                {r.comment ? <p>“{r.comment}”</p> : <small className="muted">Sin comentario</small>}
+                <small className="muted">{new Intl.DateTimeFormat("es-PA", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Panama" }).format(new Date(r.created_at))}</small>
+              </li>
+            ))}
+            {!ratings.length && <li className="empty"><p>Aún no hay calificaciones en este periodo.</p></li>}
+          </ul>
+        </section>
+
         <section className="panel">
-          <div className="panel-head"><h2>Ranking · {range.label}</h2></div>
+          <div className="panel-head"><h2>Ranking del equipo</h2></div>
           {rows.length === 0 ? (
             <div className="empty"><p>Aún no hay empleados. {owner ? "Agrégalos abajo y asígnales su tarjeta." : "El dueño los agrega desde aquí."}</p></div>
           ) : (
@@ -108,9 +113,11 @@ export default async function TeamPage({ params, searchParams }: Props) {
               })}
             </ol>
           )}
-          <p className="muted tp-rule">Cómo se ordena: por el promedio de estrellas, ajustado para que pocas evaluaciones no engañen (cuenta como si cada persona empezara con 5 evaluaciones en el promedio del equipo). Con menos de {MIN_RATINGS} evaluaciones en el periodo, la persona aparece sin puesto. La línea gris es el promedio del equipo. “A Google” son clientes que abrieron Google desde su tarjeta (no una reseña confirmada).</p>
+          <p className="muted tp-rule">Ordenado por estrellas. Con menos de {MIN_RATINGS} calificaciones la persona aparece sin puesto.</p>
         </section>
 
+        <details className="panel tp-config" open={Boolean(sp.ver || sp.ok || sp.error)}>
+          <summary><b>Administrar meseros y tarjetas</b><small className="muted">Agregar meseros, avatares, tarjetas{hasBranches ? ", sucursales" : ""}</small></summary>
         {b.is_demo && (
           <p className="alert alert-warn">Estás viendo una <b>demostración</b>: meseros y evaluaciones de ejemplo. {owner && <Link href={`/mi/${token}/activar`}>Activar mi restaurante →</Link>}</p>
         )}
@@ -249,6 +256,7 @@ export default async function TeamPage({ params, searchParams }: Props) {
             </form>
           </section>
         )}
+        </details>
       </main>
     </div>
   );
