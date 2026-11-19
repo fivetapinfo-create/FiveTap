@@ -194,6 +194,14 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
                 <Chevron />
               </a>
             )}
+            {/* Social networks as rows, like every other section. */}
+            {networks.map((n) => (
+              <Ext key={n.k} className="gx-tile rise" href={n.url}>
+                <span className="gx-tile-ic">{n.icon}</span>
+                <span className="gx-tile-txt"><b>{n.label}</b>{handle(n.k) ? <small>{handle(n.k)!.startsWith("@") || handle(n.k)!.startsWith("http") ? handle(n.k) : `@${handle(n.k)}`}</small> : null}</span>
+                <Chevron />
+              </Ext>
+            ))}
             {e.wifi_ssid && (
               <details className="gx-tile gx-tile-wifi rise" style={i(8)}>
                 <summary>

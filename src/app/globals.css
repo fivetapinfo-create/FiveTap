@@ -2032,3 +2032,5 @@ main.guest.has-bg, div.guest.has-bg, .guest.gx.has-bg {
 .biz-setup-grid a { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .biz-setup-grid small { color: var(--muted); font-size: 12.5px; }
 .biz-setup-note { padding: 12px 16px 16px; margin: 0; font-size: 13px; }
+/* The table page and the waiter screen always look light and clean (as the reference), even in dark mode */
+.guest.gx, .guest.rw { color-scheme: light; --paper: #f6f5f1; --surface: #ffffff; --ink: #0a0a0a; --muted: #5c5b57; --faint: #8a8984; --line: rgba(10, 10, 10, 0.08); --line-strong: rgba(10, 10, 10, 0.16); background: var(--gx-tint, #f6f5f1); color: #0a0a0a; }
