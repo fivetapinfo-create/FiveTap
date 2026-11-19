@@ -185,7 +185,7 @@ export async function avatarPicture(config: AvatarConfig, logoUrl: string | null
       shared = { renderer, ...st };
     }
     const { renderer, scene, camera } = shared;
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
     renderer.setSize(w, h, false);
     camera.aspect = w / h; camera.updateProjectionMatrix();
     const tx = await loadLogo(logoUrl);

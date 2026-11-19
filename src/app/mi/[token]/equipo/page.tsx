@@ -166,7 +166,10 @@ export default async function TeamPage({ params, searchParams }: Props) {
             <form action={addStaff} className="form-section tp-add">
               <input type="hidden" name="token" value={token} /><input type="hidden" name="back" value={back} />
               <h3>Agregar meseros</h3>
-              <label className="field"><span>Nombres (uno por línea)</span><textarea className="input" name="names" rows={4} required placeholder={"Carla Méndez\nLuis Pérez"} /></label>
+              <div className="grid-2">
+                <label className="field"><span>Meseros (hombres) · uno por línea</span><textarea className="input" name="names_m" rows={4} placeholder={"Luis Pérez\nCarlos Ruiz"} /></label>
+                <label className="field"><span>Meseras (mujeres) · una por línea</span><textarea className="input" name="names_f" rows={4} placeholder={"Carla Méndez\nAna Gómez"} /></label>
+              </div>
               <div className="grid-2">
                 <label className="field"><span>Puesto</span><input className="input" name="title" defaultValue="Mesero" maxLength={30} /></label>
                 {branches.length > 0 ? <label className="field"><span>Sucursal</span><select className="select" name="branch_id" defaultValue={branch?.id ?? ""}><option value="">Todas</option>{branches.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label> : <span />}

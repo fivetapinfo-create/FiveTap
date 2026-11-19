@@ -13,7 +13,7 @@ export function StaffPicker({ people, logoUrl }: { people: Person[]; logoUrl: st
     (async () => {
       const { avatarPicture } = await import("./avatar3d/WaiterAvatar");
       for (const p of people) {
-        const url = await avatarPicture(p.avatar, logoUrl, 220, 280);
+        const url = await avatarPicture(p.avatar, logoUrl, 180, 230);
         if (!alive) return;
         if (url) setPics((x) => ({ ...x, [p.ref]: url }));
       }

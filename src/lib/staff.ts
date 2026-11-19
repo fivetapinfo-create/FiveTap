@@ -310,12 +310,12 @@ export function guessBody(name: string): AvatarBody {
 }
 
 /** Adds several people at once, each with an automatic avatar, waiting for approval before guests see them. */
-export async function addStaffBatch(businessId: string, names: string[], o: { branchId?: string | null; title?: string }) {
+export async function addStaffBatch(businessId: string, names: string[], o: { branchId?: string | null; title?: string; body?: AvatarBody }) {
   const clean_ = [...new Set(names.map((n) => clean(n, 50)).filter((n) => n.length >= 2))].slice(0, 60);
   if (!clean_.length) throw new Error("Escribe al menos un nombre (uno por línea).");
   const ids: string[] = [];
   for (const name of clean_) {
-    const body = guessBody(name);
+    const body = o.body ?? guessBody(name);
     const title = !o.title || /^mesero$/i.test(o.title) ? (body === "f" ? "Mesera" : "Mesero") : o.title;
     const id = await saveStaffMember(businessId, { name, title, branch_id: o.branchId ?? null, avatar: randomAvatar(body) });
     await db().from("staff").update({ approved: false }).eq("id", id).eq("business_id", businessId);

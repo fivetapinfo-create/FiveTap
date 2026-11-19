@@ -98,6 +98,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const team = acc.has.team
     ? await Promise.all([staffFor(b.id, { activeOnly: true }), ratingsFor(b.id, { from: since30 }), googleClicksByStaff(b.id, since30)]).then(([s, r, g]) => rankStaff(s, r, g))
     : null;
+  const latestTeam = acc.has.team ? await ratingsFor(b.id, { from: since30, limit: 4 }) : [];
   const tables = tags.filter((t) => t.active && !isWaiter(t)).map(row).sort(byScans);
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
@@ -283,6 +284,20 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         </section>
 
         {/* 4. The team: the best rated in the last 30 days, with how many ratings each number comes from. */}
+        {latestTeam.length > 0 && (
+          <section className="panel" id="opiniones-equipo">
+            <div className="panel-head"><h2>Lo que dicen de tu equipo</h2><Link className="btn btn-ghost btn-sm" href={`/mi/${token}/experiencia`}>Ver todo</Link></div>
+            <ul className="tp-comments">
+              {latestTeam.map((r) => (
+                <li key={r.id} className={r.rating <= 2 ? "low" : r.rating >= 4 ? "high" : undefined}>
+                  <span><b>{r.staff_id ? team?.rows.find((x) => x.staff.id === r.staff_id)?.staff.name ?? "Mesero" : "Mesero"}</b> · <span className="tp-stars">{"★".repeat(r.rating)}<i>{"★".repeat(5 - r.rating)}</i></span></span>
+                  {r.comment && <p>“{r.comment}”</p>}
+                  <small className="muted">{shortDate(r.created_at)}</small>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {team && team.rows.length > 0 && (
           <section className="panel" id="equipo">
             <div className="panel-head"><h2>Tu equipo · 30 días</h2><Link className="btn btn-ghost btn-sm" href={`/mi/${token}/equipo`}>Ver todo</Link></div>

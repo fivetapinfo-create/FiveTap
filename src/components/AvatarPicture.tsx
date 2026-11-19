@@ -9,7 +9,7 @@ export function AvatarPicture({ config, logoUrl, alt }: { config: AvatarConfig; 
   const key = JSON.stringify(config);
   useEffect(() => {
     let alive = true;
-    import("./avatar3d/WaiterAvatar").then(({ avatarPicture }) => avatarPicture(config, logoUrl, 220, 280)).then((u) => { if (alive) setUrl(u); });
+    import("./avatar3d/WaiterAvatar").then(({ avatarPicture }) => avatarPicture(config, logoUrl, 180, 230)).then((u) => { if (alive) setUrl(u); });
     return () => { alive = false; };
   }, [key, logoUrl]); // eslint-disable-line react-hooks/exhaustive-deps
   return url ? <img src={url} alt={alt} className="ap-img" /> : <span className="ap-wait" aria-label={alt} />;

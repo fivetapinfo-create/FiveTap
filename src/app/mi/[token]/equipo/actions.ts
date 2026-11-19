@@ -101,7 +101,12 @@ export async function addStaff(f: FormData) {
   const { b, back, token } = await ctx(f, true);
   let error = "";
   try {
-    await addStaffBatch(b.id, String(f.get("names") ?? "").split(/\r?\n|,/), { branchId: String(f.get("branch_id") ?? "") || null, title: String(f.get("title") ?? "") });
+    const lines = (k: string) => String(f.get(k) ?? "").split(/\r?\n|,/);
+    const o = { branchId: String(f.get("branch_id") ?? "") || null, title: String(f.get("title") ?? "") };
+    const men = lines("names_m").filter((n) => n.trim()), women = lines("names_f").filter((n) => n.trim());
+    if (!men.length && !women.length) throw new Error("Escribe al menos un nombre.");
+    if (men.length) await addStaffBatch(b.id, men, { ...o, body: "m" });
+    if (women.length) await addStaffBatch(b.id, women, { ...o, body: "f" });
   } catch (e) { error = msg(e); }
   revalidatePath(`/mi/${token}/equipo`);
   if (error) go(back, `error=${error}`, "#meseros");
