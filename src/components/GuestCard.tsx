@@ -1,7 +1,7 @@
 import { onColor, safeColor } from "@/lib/brand";
 import type { Copy } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
-import { Bag, Calendar, Card, Chat, Gift, StarSolid } from "./Icons";
+import { Bag, Calendar, Card, Chat, Gift, StarSolid, Users } from "./Icons";
 import { LogoMark } from "./Logo";
 
 export type GuestBusiness = { name: string; logo_url: string | null; brand_color: string; brand_accent?: string | null };
@@ -14,6 +14,7 @@ export function GuestCard({
   managerHref,
   clubHref,
   cardHref,
+  serviceHref,
   orderHref,
   reserveHref,
   embedded = false,
@@ -26,6 +27,8 @@ export function GuestCard({
   clubHref?: string;
   /** The venue's loyalty card (stamps). */
   cardHref?: string;
+  /** Rating the employee who served (restaurants with their team in FiveTap). */
+  serviceHref?: string;
   /** Ordering from the plaque (Orders module). */
   orderHref?: string;
   /** Booking from the plaque (Reservations module). */
@@ -75,6 +78,11 @@ export function GuestCard({
           </div>
         )}
 
+        {serviceHref && (
+          <a className="guest-club rise" href={serviceHref} tabIndex={tab} style={{ "--i": 5 } as React.CSSProperties}>
+            <Users /> {copy.wTile}
+          </a>
+        )}
         {cardHref && (
           <a className="guest-club rise" href={cardHref} tabIndex={tab} style={{ "--i": 5 } as React.CSSProperties}>
             <Card /> {copy.card}

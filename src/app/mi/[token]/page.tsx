@@ -19,12 +19,11 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { addDays, billingState, human, nextCharge, planLabel, renewalWhat, todayPanama } from "@/lib/agenda";
 import { after } from "next/server";
 import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
-import { setMessageResolved, setStaffName } from "./actions";
+import { setMessageResolved } from "./actions";
 import { moduleOn, newOrdersCount } from "@/lib/orders";
 import { reservationGlance } from "@/lib/reservations";
 import { presetFor } from "@/lib/presets";
-import { TeamRanking } from "@/components/TeamRanking";
-import { teamPeriod, teamRanking } from "@/lib/team";
+import { googleClicksByStaff, rankStaff, ratingsFor, staffFor } from "@/lib/staff";
 import { getPlans } from "@/lib/plans";
 import { answeredTicketsCount } from "@/lib/support";
 import { claimsFor } from "@/lib/claims";
@@ -94,8 +93,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const claimPending = role === "owner" ? (await claimsFor(b.id, 1))[0]?.status === "pending" : false;
   // Tools that suit this kind of business and it does not have yet (only for venues with the app).
   const rec = b.mode === "google" ? null : presetFor(b.kind).modules.reservations && !resvOn ? "reservas" : presetFor(b.kind).modules.orders && !ordersOn ? "pedidos" : null;
-  const period = teamPeriod(sp.equipo);
-  const team = await teamRanking(tags, period);
+  // The team at a glance (last 30 days); the full ranking lives in Equipo.
+  const since30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const team = acc.has.team
+    ? await Promise.all([staffFor(b.id, { activeOnly: true }), ratingsFor(b.id, { from: since30 }), googleClicksByStaff(b.id, since30)]).then(([s, r, g]) => rankStaff(s, r, g))
+    : null;
   const tables = tags.filter((t) => t.active && !isWaiter(t)).map(row).sort(byScans);
   const best = Math.max(0, ...tags.map((t) => tagStats.get(t.id)?.scans_30d ?? 0));
 
@@ -223,6 +225,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             { href: `/mi/${token}/clientes`, label: "Mis clientes", icon: <Users />, on: acc.has.clients },
             { href: `/mi/${token}/pagina`, label: "Mi página", icon: <Home />, on: acc.has.promos || acc.has.catalog },
             ...(b.mode === "full" ? [{ href: `/mi/${token}/fidelidad`, label: "Fidelidad", icon: <Card />, on: acc.has.loyalty }] : []),
+            ...(b.mode === "full" ? [{ href: `/mi/${token}/equipo`, label: "Equipo", icon: <Users />, on: acc.has.team }] : []),
+            ...(b.mode === "full" ? [{ href: `/mi/${token}/experiencia`, label: "Experiencia", icon: <Chat />, on: true }] : []),
             ...(ordersOn ? [{ href: `/mi/${token}/pedidos`, label: "Pedidos", icon: <Chart />, badge: newOrders || null, on: true }] : []),
             ...(resvOn ? [{ href: `/mi/${token}/reservas`, label: "Reservas", icon: <Chart />, badge: resv.pending || null, on: true }] : []),
             { href: `/mi/${token}/reporte`, label: "Reporte", icon: <Chart />, on: true },
@@ -273,8 +277,18 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           )}
         </section>
 
-        {/* 4. The team: who brings more guests to Google, live. */}
-        {acc.has.team && team.length > 0 && <TeamRanking rows={team} period={period} base={`/mi/${token}`} edit={{ action: setStaffName, hidden: { token } }} />}
+        {/* 4. The team: the best rated in the last 30 days, with how many ratings each number comes from. */}
+        {team && team.rows.length > 0 && (
+          <section className="panel" id="equipo">
+            <div className="panel-head"><h2>Tu equipo · 30 días</h2><Link className="btn btn-ghost btn-sm" href={`/mi/${token}/equipo`}>Ver todo</Link></div>
+            <ol className="tp-rank tp-mini">
+              {team.rows.filter((r) => r.ranked).slice(0, 3).map((r, i) => (
+                <li key={r.staff.id}><Link className="tp-row" href={`/mi/${token}/equipo/${r.staff.id}`}><span className={`tp-pos p${i + 1}`}>{i + 1}</span><span className="tp-who"><b>{r.staff.name}</b><small>{r.staff.title}</small></span><span className="tp-score"><b>★ {r.avg?.toFixed(1)}</b><small>{r.n} evaluaciones</small></span></Link></li>
+              ))}
+            </ol>
+            {!team.rows.some((r) => r.ranked) && <div className="empty"><p>Cuando cada persona tenga 5 evaluaciones o más, aparece aquí el ranking.</p></div>}
+          </section>
+        )}
 
         {/* 5. The club, with the promotion sender. */}
         {acc.has.club ? <ClubPanel contacts={contacts} tags={tags} csvHref={`/mi/${token}/clientes.csv`} business={b.name} /> : <Upsell feature="club" token={token} compact />}

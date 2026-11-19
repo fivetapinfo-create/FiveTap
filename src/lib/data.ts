@@ -15,6 +15,15 @@ function must<T>(res: { data: T | null; error: { message: string } | null }): T 
 
 export type TagWithBusiness = Tag & { business: Business };
 
+/** The Google review link for this piece: its branch's own listing when it has one, else the business's. */
+export async function reviewUrlFor(tag: Pick<TagWithBusiness, "branch_id" | "business">): Promise<string> {
+  if (tag.branch_id) {
+    const { data } = await db().from("branches").select("google_review_url").eq("id", tag.branch_id).maybeSingle();
+    if (data?.google_review_url) return data.google_review_url as string;
+  }
+  return tag.business.google_review_url;
+}
+
 export async function tagByCode(code: string): Promise<TagWithBusiness | null> {
   if (!/^[a-z0-9]{4,16}$/.test(code)) return null;
   const res = await db().from("tags").select("*, business:businesses(*)").eq("code", code).maybeSingle();

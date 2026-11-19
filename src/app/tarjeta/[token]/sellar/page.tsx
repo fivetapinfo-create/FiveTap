@@ -59,6 +59,7 @@ export default async function StampPage({ params, searchParams }: { params: Prom
             <ol className="lc-preview" aria-hidden="true">
               {Array.from({ length: program.stamps_needed }, (_, k) => <li key={k} className={k < card.stamps ? "on" : undefined} />)}
             </ol>
+            {full && card.reward_code && <p className="alert alert-ok">Premio listo · código <b>{card.reward_code}</b>. Verifica que coincida con el que muestra el cliente.</p>}
             <p className="muted">Premio: <b>{program.reward}</b>{card.rewards ? ` · Premios recibidos: ${card.rewards}` : ""}</p>
             <form action={stampCard} className="lc-stamp-actions">
               <input type="hidden" name="token" value={token} />

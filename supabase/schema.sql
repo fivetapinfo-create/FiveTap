@@ -830,3 +830,76 @@ create index if not exists loyalty_cards_biz on loyalty_cards (business_id, crea
 alter table loyalty_programs enable row level security;
 alter table loyalty_cards enable row level security;
 alter table loyalty_events enable row level security;
+
+-- ---------- Restaurants: branches, employees, internal service ratings ----------
+create table if not exists branches (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  name text not null,
+  address text,
+  google_review_url text,
+  sort int not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create index if not exists branches_biz on branches (business_id, sort);
+create table if not exists staff (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  branch_id uuid references branches(id) on delete set null,
+  ref text not null,
+  name text not null,
+  title text not null default 'Mesero',
+  message text,
+  avatar jsonb not null default '{}'::jsonb,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (business_id, ref)
+);
+create index if not exists staff_biz on staff (business_id, active);
+alter table tags add column if not exists staff_id uuid references staff(id) on delete set null;
+alter table tags add column if not exists branch_id uuid references branches(id) on delete set null;
+create table if not exists service_ratings (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  branch_id uuid references branches(id) on delete set null,
+  staff_id uuid references staff(id) on delete set null,
+  tag_id uuid references tags(id) on delete set null,
+  source text not null check (source in ('waiter', 'table')),
+  rating smallint not null check (rating between 1 and 5),
+  comment text,
+  issue text,
+  status text not null default 'new' check (status in ('new', 'seen', 'resolved')),
+  device text,
+  client_hash text,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists service_ratings_biz on service_ratings (business_id, created_at desc);
+create index if not exists service_ratings_staff on service_ratings (staff_id, created_at desc);
+alter table branches enable row level security;
+alter table staff enable row level security;
+alter table service_ratings enable row level security;
+
+-- ---------- Loyalty v2: reward codes, visit codes, customer reminders ----------
+alter table loyalty_programs add column if not exists name text not null default '';
+alter table loyalty_programs add column if not exists terms text not null default '';
+alter table loyalty_cards add column if not exists reward_code text;
+alter table loyalty_cards add column if not exists reward_ready_at timestamptz;
+alter table loyalty_events add column if not exists method text;
+alter table loyalty_events add column if not exists reward_code text;
+create table if not exists loyalty_visit_codes (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  code text not null,
+  created_by text,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  card_id uuid references loyalty_cards(id) on delete set null,
+  created_at timestamptz not null default now(),
+  unique (business_id, code)
+);
+alter table loyalty_visit_codes enable row level security;
+alter table push_subscriptions drop constraint if exists push_subscriptions_role_check;
+alter table push_subscriptions add constraint push_subscriptions_role_check check (role in ('founder', 'owner', 'manager', 'customer'));
+alter table push_subscriptions add column if not exists card_id uuid references loyalty_cards(id) on delete cascade;

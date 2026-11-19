@@ -3,7 +3,7 @@ import { openState, socialUrl, waDigits, type CatalogItem, type Experience, type
 import type { Copy, Lang } from "@/lib/i18n";
 import { BusinessLogo } from "./BusinessLogo";
 import { CopyText } from "./CopyText";
-import { Bag, Calendar, Camera, Card, Facebook, TikTok, Chat, Clock, Gift, Globe, Phone, Route, StarSolid, Tag } from "./Icons";
+import { Bag, Calendar, Camera, Card, Users, Facebook, TikTok, Chat, Clock, Gift, Globe, Phone, Route, StarSolid, Tag } from "./Icons";
 import { LogoMark } from "./Logo";
 import type { GuestBusiness } from "./GuestCard";
 
@@ -18,6 +18,7 @@ type Props = {
   managerHref: string;
   clubHref?: string;
   cardHref?: string;
+  serviceHref?: string;
   /** Ordering from the plaque, when the business has the Orders module. */
   orderHref?: string;
   /** Booking from the plaque, when the business has the Reservations module. */
@@ -61,7 +62,7 @@ const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits
  * published: its cover and identity, the review card (same as always, never filtered),
  * and only the sections the business turned on and filled in.
  */
-export function GuestExperience({ business, experience: e, promos, items, copy, lang, reviewHref, managerHref, clubHref, cardHref, orderHref, reserveHref, preview }: Props) {
+export function GuestExperience({ business, experience: e, promos, items, copy, lang, reviewHref, managerHref, clubHref, cardHref, serviceHref, orderHref, reserveHref, preview }: Props) {
   // Each business wears its own colors: main (cover, review button), secondary (icons), a soft page tint.
   const pal = palette(business.brand_color, business.brand_accent);
   const brand = pal.brand;
@@ -139,6 +140,13 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
               <span className="gx-tile-txt"><b>{copy.review}</b><span className="rate-stars" aria-hidden="true"><StarSolid /><StarSolid /><StarSolid /><StarSolid /><StarSolid /></span></span>
               <Chevron />
             </a>
+            {serviceHref && (
+              <a className="gx-tile gx-tile-service rise" style={i(6)} href={preview ? "#" : serviceHref}>
+                <span className="gx-tile-ic"><Users /></span>
+                <span className="gx-tile-txt"><b>{copy.wTile}</b><small>{copy.wTileHint}</small></span>
+                <Chevron />
+              </a>
+            )}
             <a className="gx-tile rise" style={i(6)} href={managerHref}>
               <span className="gx-tile-ic"><Chat /></span>
               <span className="gx-tile-txt"><b>{copy.manager}</b><small>{copy.managerHint}</small></span>

@@ -68,6 +68,10 @@ export type Tag = {
   /** Waiter cards: who carries it, and since when (when it changed hands). */
   staff_name?: string | null;
   staff_since?: string | null;
+  /** The employee profile this waiter card belongs to (re-linked if cards get mixed up). */
+  staff_id?: string | null;
+  /** The branch where this piece is installed. */
+  branch_id?: string | null;
   created_at: string;
 };
 

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { accessRole } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { can } from "@/lib/entitlements";
-import { addStamp, cardByCode, programFor, redeemReward, saveProgram } from "@/lib/loyalty-cards";
+import { addStamp, cardByCode, cardByRewardCode, createVisitCode, programFor, redeemReward, saveProgram } from "@/lib/loyalty-cards";
 
 async function ctx(f: FormData) {
   const token = String(f.get("token") ?? "");
@@ -28,6 +28,8 @@ export async function saveLoyaltyProgram(f: FormData) {
       stamps_needed: Number(f.get("stamps_needed") ?? 8),
       reward: String(f.get("reward") ?? ""),
       cooldown_hours: Number(f.get("cooldown_hours") ?? 3),
+      name: String(f.get("name") ?? ""),
+      terms: String(f.get("terms") ?? ""),
     });
   } catch (e) {
     error = e instanceof Error ? e.message : "No se pudo guardar.";
@@ -41,17 +43,26 @@ export async function stampByCode(f: FormData) {
   const { b, role, back } = await ctx(f);
   const code = String(f.get("code") ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
   const op = String(f.get("op") ?? "find");
-  const card = await cardByCode(b.id, code);
+  // A reward code (R + 6) finds the card whose reward is waiting; otherwise the card's own code.
+  const card = code.startsWith("R") && code.length === 7 ? await cardByRewardCode(b.id, code) : await cardByCode(b.id, code);
   if (!card) redirect(`${back}?error=${encodeURIComponent("No encontramos una tarjeta con ese código. Revísalo con el cliente.")}#sellar`);
   if (op === "find") redirect(`${back}?c=${card.code}#sellar`);
   const program = await programFor(b.id);
   let q = "";
   try {
     if (op === "redeem") { await redeemReward(card, program, role); q = "ok=canjeado"; }
-    else { const r = await addStamp(card, program, role); q = r.complete ? "ok=completa" : "ok=sello"; }
+    else { const r = await addStamp(card, program, role, "app"); q = r.complete ? "ok=completa" : "ok=sello"; }
   } catch (e) {
     q = `error=${encodeURIComponent(e instanceof Error ? e.message : "No se pudo completar.")}`;
   }
   revalidatePath(back);
   redirect(`${back}?c=${card.code}&${q}#sellar`);
+}
+
+/** The cashier makes a one-time visit code (6 digits, valid 10 minutes) for a customer to type on their card. */
+export async function makeVisitCode(f: FormData) {
+  const { b, role, back } = await ctx(f);
+  let q = "";
+  try { q = `vc=${await createVisitCode(b.id, role)}`; } catch (e) { q = `error=${encodeURIComponent(e instanceof Error ? e.message : "No se pudo crear.")}`; }
+  redirect(`${back}?${q}#codigo`);
 }

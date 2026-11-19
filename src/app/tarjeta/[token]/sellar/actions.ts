@@ -39,7 +39,7 @@ export async function stampCard(f: FormData) {
   let q = "";
   try {
     if (op === "redeem") { await redeemReward(card, program, role!); q = "ok=canjeado"; }
-    else { const r = await addStamp(card, program, role!); q = r.complete ? "ok=completa" : "ok=sello"; }
+    else { const r = await addStamp(card, program, role!, "qr"); q = r.complete ? "ok=completa" : "ok=sello"; }
   } catch (e) {
     q = `error=${encodeURIComponent(e instanceof Error ? e.message : "No se pudo completar.")}`;
   }

@@ -1,7 +1,7 @@
 import { NextResponse, after, type NextRequest } from "next/server";
 import { deviceFrom, isBot } from "@/lib/device";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-session";
-import { guestClosed, logEvent, tagByCode } from "@/lib/data";
+import { guestClosed, logEvent, reviewUrlFor, tagByCode } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -19,5 +19,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
       logEvent({ business_id: tag.business_id, tag_id: tag.id, type: "review_click", source, device: deviceFrom(ua), user_agent: ua }),
     );
   }
-  return NextResponse.redirect(tag.business.google_review_url, 302);
+  return NextResponse.redirect(await reviewUrlFor(tag), 302);
 }

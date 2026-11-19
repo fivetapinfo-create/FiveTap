@@ -6,9 +6,9 @@ import { db } from "./supabase";
 // Phone notifications through the FiveTap app (a PWA installed from the browser).
 // Web Push is free: Apple and Google deliver them, no paid API in between.
 
-export type PushRole = "founder" | "owner" | "manager";
+export type PushRole = "founder" | "owner" | "manager" | "customer";
 export type PushMessage = { title: string; body: string; url: string; tag?: string };
-export type PushTarget = { role: PushRole | PushRole[]; businessId?: string };
+export type PushTarget = { role: PushRole | PushRole[]; businessId?: string; cardId?: string };
 
 let configured: boolean | null = null;
 
@@ -32,10 +32,10 @@ export function parseSubscription(v: unknown): SubscriptionInput | null {
 }
 
 /** Saves this phone. The same phone subscribing again just updates its role. */
-export async function saveSubscription(s: SubscriptionInput, role: PushRole, businessId: string | null) {
+export async function saveSubscription(s: SubscriptionInput, role: PushRole, businessId: string | null, cardId: string | null = null) {
   const { error } = await db()
     .from("push_subscriptions")
-    .upsert({ endpoint: s.endpoint, p256dh: s.keys.p256dh, auth: s.keys.auth, role, business_id: businessId }, { onConflict: "endpoint" });
+    .upsert({ endpoint: s.endpoint, p256dh: s.keys.p256dh, auth: s.keys.auth, role, business_id: businessId, card_id: cardId }, { onConflict: "endpoint" });
   if (error) throw new Error(error.message);
 }
 
@@ -77,6 +77,9 @@ export async function sendPush(target: PushTarget, msg: PushMessage): Promise<nu
   if (!pushReady()) return 0;
   let q = db().from("push_subscriptions").select("endpoint, p256dh, auth").in("role", ([] as PushRole[]).concat(target.role));
   if (target.businessId) q = q.eq("business_id", target.businessId);
+  if (target.cardId) q = q.eq("card_id", target.cardId);
+  // A customer reminder only ever goes to that card's own phones.
+  if (([] as PushRole[]).concat(target.role).includes("customer") && !target.cardId) return 0;
   const { data, error } = await q;
   if (error) {
     console.error("[push]", error.message);

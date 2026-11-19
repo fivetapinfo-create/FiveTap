@@ -1,3 +1,4 @@
+import { staffFor } from "@/lib/staff";
 import { programFor } from "@/lib/loyalty-cards";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -10,7 +11,7 @@ import { hasContent } from "@/lib/experience-shape";
 import { moduleOn } from "@/lib/orders";
 import { accessOf } from "@/lib/entitlements";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/admin-session";
-import { guestClosed, logEvent, tagByCode } from "@/lib/data";
+import { guestClosed, logEvent, reviewUrlFor, tagByCode } from "@/lib/data";
 import { PIECE_LABEL, pieceState } from "@/lib/pieces";
 import { guestRequest, sourceFrom } from "./request";
 import { Inactive } from "./Inactive";
@@ -50,8 +51,12 @@ export default async function TapPage({ params, searchParams }: Props) {
         logEvent({ business_id: tag.business_id, tag_id: tag.id, type: "review_click", source, device: req.device, user_agent: req.ua }),
       );
     }
-    redirect(tag.business.google_review_url);
+    redirect(await reviewUrlFor(tag));
   }
+
+  // A waiter's own card opens that person's rating right away (no need to pick them).
+  const acc0 = await accessOf(tag.business);
+  if (tag.kind === "waiter" && tag.staff_id && acc0.has.team && sp.preview !== "1") redirect(`/t/${code}/atencion`);
 
   const q = source === "qr" ? "?s=q" : "";
   const orderHref = moduleOn(tag.business, "orders") ? `/t/${code}/pedir` : undefined;
@@ -59,7 +64,9 @@ export default async function TapPage({ params, searchParams }: Props) {
   // A published experience (cover, promotions, catalog…) wraps the same review card.
   const x = await publishedExperience(tag.business_id);
   // Only what the business contracted reaches its page (no tier yet = everything, as before).
-  const acc = await accessOf(tag.business);
+  const acc = acc0;
+  // "Rate who served you" appears once the business has its team in FiveTap.
+  const serviceHref = acc.has.team && (await staffFor(tag.business_id, { activeOnly: true, branchId: tag.branch_id ?? null })).length > 0 ? `/t/${code}/atencion` : undefined;
   const clubHref = acc.has.club ? `/t/${code}/club${q}` : undefined;
   const cardHref = acc.has.loyalty && (await programFor(tag.business_id)).enabled ? `/t/${code}/tarjeta` : undefined;
   if (x) { if (!acc.has.promos) x.promos = []; if (!acc.has.catalog) x.items = []; }
@@ -78,6 +85,7 @@ export default async function TapPage({ params, searchParams }: Props) {
           managerHref={`/t/${code}/mensaje${q}`}
           clubHref={clubHref}
           cardHref={cardHref}
+          serviceHref={serviceHref}
           orderHref={orderHref}
           reserveHref={reserveHref}
         />
@@ -94,6 +102,7 @@ export default async function TapPage({ params, searchParams }: Props) {
       managerHref={`/t/${code}/mensaje${q}`}
       clubHref={clubHref}
       cardHref={cardHref}
+      serviceHref={serviceHref}
       orderHref={orderHref}
       reserveHref={reserveHref}
     />

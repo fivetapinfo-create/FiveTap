@@ -1,7 +1,7 @@
 import "server-only";
 import { parseSubscription, pushReady, removeSubscription, saveSubscription, sendWelcome, type PushMessage, type PushRole } from "./push";
 
-type Who = { role: PushRole; businessId: string | null; welcome: PushMessage };
+type Who = { role: PushRole; businessId: string | null; welcome: PushMessage; cardId?: string | null };
 
 /** POST saves this phone for notifications (and sends a first one); DELETE forgets it. */
 export async function subscribeHandler(req: Request, who: (role: string | null) => Who | null) {
@@ -14,7 +14,7 @@ export async function subscribeHandler(req: Request, who: (role: string | null) 
   const sub = parseSubscription(body?.subscription);
   const w = who(body?.role ?? null);
   if (!sub || !w) return Response.json({ error: "Datos inválidos." }, { status: 400 });
-  await saveSubscription(sub, w.role, w.businessId);
+  await saveSubscription(sub, w.role, w.businessId, w.cardId ?? null);
   await sendWelcome(sub, w.welcome);
   return Response.json({ ok: true });
 }
