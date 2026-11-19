@@ -2045,3 +2045,9 @@ main.guest.has-bg, div.guest.has-bg, .guest.gx.has-bg {
 .gx-social-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%); color: #fff; }
 .gx-social-tiktok { background: #111; color: #fff; }
 .gx-social-facebook { background: #1877f2; color: #fff; }
+.mz-steps { margin: 0; padding: 0 16px 8px 36px; display: grid; gap: 4px; font-size: 14px; }
+.mz-table td { vertical-align: middle; }
+.mz-url { font-size: 12.5px; word-break: break-all; }
+.mz-team { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.mz-team li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.mz-team li small { flex: 1 1 140px; }

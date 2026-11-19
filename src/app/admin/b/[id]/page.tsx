@@ -19,6 +19,7 @@ import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, pieceUrl } from "@/lib/site";
 import { verticalByKey } from "@/lib/verticals";
+import { PLAQUE_LABEL, plaqueState, staffFor } from "@/lib/staff";
 import { moduleOn } from "@/lib/orders";
 import { db } from "@/lib/supabase";
 import { ticketsFor } from "@/lib/support";
@@ -88,6 +89,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const isWaiter = (t: { kind?: string; label: string }) => t.kind === "waiter" || (!t.kind && /meser|camarer|tarjeta/i.test(t.label));
   const tables = tags.filter((t) => !isWaiter(t));
   const waiters = tags.filter(isWaiter);
+  const crew = await staffFor(b.id);
+  const staffName = new Map(crew.map((s) => [s.id, s]));
   const period = teamPeriod(sp.equipo);
   const team = await teamRanking(tags, period);
   const receiptByPayment = new Map(receipts.filter((r) => r.payment_id).map((r) => [r.payment_id!, r]));
@@ -137,6 +140,59 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <p className="muted biz-setup-note">Enlaces para grabar en el chip: las <b>placas de mesa</b> usan <span className="code">/t/código</span> (el local) y las <b>tarjetas de mesero</b> usan <span className="code">/m/código</span> (el servicio de esa persona). Los encuentras en Placas.</p>
       </section>
 
+      {/* Waiters: their cards (links for the chips), who has each one, and their status, all in one place. */}
+      {waiters.length > 0 || crew.length > 0 ? (
+        <section className="panel" id="meseros-panel">
+          <div className="panel-head">
+            <h2>Meseros y sus tarjetas</h2>
+            <span className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+              <a className="btn btn-dark btn-sm" href={`/mi/${b.owner_token}/equipo#meseros`}>Agregar o editar meseros</a>
+              {crew.some((s) => !s.approved) && <a className="btn btn-ghost btn-sm" href={`/mi/${b.owner_token}/equipo/revisar`}>Revisar avatares ({crew.filter((s) => !s.approved).length})</a>}
+            </span>
+          </div>
+          <ol className="mz-steps">
+            <li><b>Graba cada chip</b> con el enlace de su tarjeta (columna “Enlace para el chip”). El enlace nunca cambia.</li>
+            <li><b>Agrega los meseros</b> por nombre: FiveTap crea su avatar (hombre o mujer según el nombre).</li>
+            <li><b>Asigna cada tarjeta</b> a su mesero y aprueba. Desde ese momento el chip abre su avatar y su valoración.</li>
+          </ol>
+          <div className="table-wrap">
+            <table className="table mz-table">
+              <thead><tr><th>Tarjeta</th><th>Enlace para el chip</th><th>Mesero</th><th>Estado</th></tr></thead>
+              <tbody>
+                {waiters.map((t) => {
+                  const st = plaqueState({ active: t.active, kind: "waiter", staff_id: t.staff_id });
+                  const who = t.staff_id ? staffName.get(t.staff_id) : null;
+                  return (
+                    <tr key={t.id}>
+                      <td><b>{t.label}</b></td>
+                      <td><span className="code mz-url">{pieceUrl(t.code, "waiter")}</span> <CopyButton value={pieceUrl(t.code, "waiter")} label="Copiar" /></td>
+                      <td>{who ? <>{who.name}{!who.approved ? <small className="muted"> · avatar por aprobar</small> : null}{!who.active ? <small className="muted"> · desactivado</small> : null}</> : <span className="muted">Sin asignar</span>}</td>
+                      <td><em className={`chip ${st === "active" ? "ok" : st === "unassigned" ? "warn" : "off"}`}>{PLAQUE_LABEL[st]}</em></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {crew.length > 0 && (
+            <ul className="mz-team">
+              {crew.map((s) => {
+                const card = waiters.find((t) => t.staff_id === s.id);
+                const status = !s.active ? "Desactivado" : !s.approved ? "Pendiente de aprobar" : card && card.active ? "Publicado" : "Sin tarjeta activa";
+                return (
+                  <li key={s.id}>
+                    <b>{s.name}{s.is_demo ? " · demo" : ""}</b>
+                    <small className="muted">{s.title}{card ? ` · ${card.label}` : ""}</small>
+                    <em className={`chip ${status === "Publicado" ? "ok" : status === "Pendiente de aprobar" ? "warn" : "off"}`}>{status}</em>
+                    {card?.active && s.active && s.approved && <a className="btn btn-ghost btn-sm" href={pieceUrl(card.code, "waiter")} target="_blank" rel="noreferrer">Ver como cliente</a>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
       {/* Every section of the venue, one tap away; stays at the top while scrolling. */}
       <nav className="biz-tabs" aria-label="Secciones del negocio">
         <Link href={`/admin/b/${b.id}/experiencia`} className="biz-tab-strong">Experiencia NFC →</Link>
@@ -144,6 +200,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <a href="#pagos">Pagos</a>
         <a href="#resenas">Reseñas</a>
         <a href="#permisos">Permisos</a>
+        <a href="#meseros-panel">Meseros</a>
         <a href="#app">Accesos</a>
         {waiters.length > 0 && <a href="#equipo">Equipo</a>}
         <a href="#placas">Placas</a>
