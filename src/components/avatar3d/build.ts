@@ -193,9 +193,11 @@ export function buildAvatar(cfg: AvatarConfig, logo: THREE.Texture | null): Rig 
       const bob = piece(new THREE.CylinderGeometry(0.9, 0.96, 0.85, 9, 1, true, Math.PI * 0.7, Math.PI * 1.6), [0, 0.6, -0.04], [0, 0, 0], 6);
       bob.scale.z = 0.98;
     } else if (cfg.hair === 2) {
+      for (const s of [-1, 1]) piece(new THREE.BoxGeometry(0.24, 1.0, 0.3), [s * 0.72, 0.62, 0.16], [0, 0, s * 0.05], 14 + s);
       piece(new THREE.ConeGeometry(0.25, 1.35, 6), [0, 0.7, -0.98], [Math.PI * 0.86, 0, 0], 7);
       piece(new THREE.IcosahedronGeometry(0.19, 0), [0, 1.26, -0.82], [0, 0, 0], 8, M.hairDark);
     } else {
+      for (const s of [-1, 1]) piece(new THREE.BoxGeometry(0.22, 0.85, 0.3), [s * 0.72, 0.7, 0.16], [0, 0, s * 0.05], 16 + s);
       piece(new THREE.IcosahedronGeometry(0.36, 0), [0, 1.78, -0.36], [0.4, 0.3, 0], 9);
     }
   }

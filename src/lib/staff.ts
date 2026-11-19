@@ -315,7 +315,9 @@ export async function addStaffBatch(businessId: string, names: string[], o: { br
   if (!clean_.length) throw new Error("Escribe al menos un nombre (uno por línea).");
   const ids: string[] = [];
   for (const name of clean_) {
-    const id = await saveStaffMember(businessId, { name, title: o.title || "Mesero", branch_id: o.branchId ?? null, avatar: randomAvatar(guessBody(name)) });
+    const body = guessBody(name);
+    const title = !o.title || /^mesero$/i.test(o.title) ? (body === "f" ? "Mesera" : "Mesero") : o.title;
+    const id = await saveStaffMember(businessId, { name, title, branch_id: o.branchId ?? null, avatar: randomAvatar(body) });
     await db().from("staff").update({ approved: false }).eq("id", id).eq("business_id", businessId);
     ids.push(id);
   }
@@ -326,7 +328,8 @@ export async function regenerateAvatar(businessId: string, id: string, body?: Av
   const s = await staffMember(businessId, id);
   if (!s) throw new Error("Ese empleado no es de este negocio.");
   const next = randomAvatar(body ?? s.avatar.body, s.avatar);
-  const { error } = await db().from("staff").update({ avatar: next, approved: false }).eq("id", id).eq("business_id", businessId);
+  const title = body && /^meser[oa]$/i.test(s.title) ? (body === "f" ? "Mesera" : "Mesero") : s.title;
+  const { error } = await db().from("staff").update({ avatar: next, approved: false, title }).eq("id", id).eq("business_id", businessId);
   if (error) throw new Error(error.message);
 }
 
