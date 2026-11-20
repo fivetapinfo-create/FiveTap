@@ -96,7 +96,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const staffName = new Map(crew.map((s) => [s.id, s]));
   // Test data the founder can clear: latest ratings and how many taps are recorded.
   const [testRatings, tapCount] = await Promise.all([
-    db().from("service_ratings").select("id, stars, comment, created_at, staff_id").eq("business_id", b.id).order("created_at", { ascending: false }).limit(30).then((r) => (r.data ?? []) as { id: string; stars: number; comment: string | null; created_at: string; staff_id: string | null }[]),
+    db().from("service_ratings").select("id, rating, comment, created_at, staff_id").eq("business_id", b.id).order("created_at", { ascending: false }).limit(30).then((r) => (r.data ?? []) as { id: string; rating: number; comment: string | null; created_at: string; staff_id: string | null }[]),
     db().from("events").select("id", { count: "exact", head: true }).eq("business_id", b.id).then((r) => r.count ?? 0),
   ]);
   const period = teamPeriod(sp.equipo);
@@ -743,7 +743,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <ul className="test-list">
             {testRatings.map((r) => (
               <li key={r.id}>
-                <span><b>{"★".repeat(r.stars)}{"☆".repeat(Math.max(0, 5 - r.stars))}</b> {r.staff_id ? staffName.get(r.staff_id)?.name ?? "Mesero" : "Mesero"}{r.comment ? ` · “${r.comment.slice(0, 80)}”` : ""}<small className="muted"> · {dateTime(r.created_at)}</small></span>
+                <span><b>{"★".repeat(r.rating)}{"☆".repeat(Math.max(0, 5 - r.rating))}</b> {r.staff_id ? staffName.get(r.staff_id)?.name ?? "Mesero" : "Mesero"}{r.comment ? ` · “${r.comment.slice(0, 80)}”` : ""}<small className="muted"> · {dateTime(r.created_at)}</small></span>
                 <form action={deleteTestItem}><input type="hidden" name="business_id" value={b.id} /><input type="hidden" name="kind" value="rating" /><input type="hidden" name="id" value={r.id} /><button className="btn btn-ghost btn-sm" type="submit">Borrar</button></form>
               </li>
             ))}
