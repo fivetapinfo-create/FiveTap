@@ -1,4 +1,3 @@
-import { publicStaff } from "@/lib/staff";
 import { programFor } from "@/lib/loyalty-cards";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -73,7 +72,8 @@ export default async function TapPage({ params, searchParams }: Props) {
   // Only what the business contracted reaches its page (no tier yet = everything, as before).
   const acc = acc0;
   // "Rate who served you" appears once the business has its team in FiveTap.
-  const serviceHref = acc.has.team && (await publicStaff(tag.business_id, tag.branch_id ?? null, Boolean(tag.business.is_demo))).length > 0 ? `/t/${code}/atencion` : undefined;
+  // The table plaque is about the venue; each waiter is rated only from their own card (/m/).
+  const serviceHref: string | undefined = undefined;
   const clubHref = acc.has.club ? `/t/${code}/club${q}` : undefined;
   const cardHref = acc.has.loyalty && (await programFor(tag.business_id)).enabled ? `/t/${code}/tarjeta` : undefined;
   if (x) { if (!acc.has.promos) x.promos = []; if (!acc.has.catalog) x.items = []; }
