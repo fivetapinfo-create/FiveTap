@@ -64,7 +64,7 @@ export default async function ServicePage({ params, searchParams }: { params: Pr
         <RateWaiter
           action={rateStaff}
           hidden={{ code, p: person.ref }}
-          person={{ name: person.name, title: person.title, message: person.message, avatar: person.avatar }}
+          person={{ name: person.name, title: person.title, message: person.message || copy.wHello.replace("{name}", person.name.split(" ")[0]!), avatar: person.avatar }}
           logoUrl={b.logo_url}
           business={b.name}
           googleHref={`/t/${code}/go`}

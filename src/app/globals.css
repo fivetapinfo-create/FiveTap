@@ -2096,3 +2096,4 @@ body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom))
 .mz-card-pick .select { flex: 1 1 140px; min-width: 140px; }
 .mz-del summary { cursor: pointer; font-size: 13px; color: var(--muted); }
 .mz-del form { display: grid; gap: 8px; padding-top: 8px; }
+.mz-card-pick .input { flex: 1 1 140px; min-width: 140px; }

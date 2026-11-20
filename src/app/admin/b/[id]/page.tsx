@@ -200,6 +200,11 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                         {card?.active && s.active && s.approved && <a className="btn btn-ghost btn-sm" href={pieceUrl(card.code, "waiter")} target="_blank" rel="noreferrer">Ver como cliente</a>}
                       </div>
                       <form action={adminWaiterOp} className="mz-card-pick">
+                        {hid("rename")}
+                        <input className="input" name="name" defaultValue={s.name} maxLength={50} aria-label={`Nombre de ${s.name}`} />
+                        <button className="btn btn-ghost btn-sm" type="submit">Guardar nombre</button>
+                      </form>
+                      <form action={adminWaiterOp} className="mz-card-pick">
                         {hid("card")}
                         <select className="select" name="tag" defaultValue={card?.id ?? ""} aria-label={`Tarjeta de ${s.name}`}>
                           <option value="">Sin tarjeta</option>

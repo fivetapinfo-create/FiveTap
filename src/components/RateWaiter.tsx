@@ -21,13 +21,14 @@ export function RateWaiter({ action, hidden, person, logoUrl, business, googleHr
   const [issue, setIssue] = useState("");
   const done = state.ok;
   const given = state.stars ?? stars;
-  const mood = done ? moodFor(given) : stars ? (stars >= 4 ? "happy" : stars === 3 ? "neutral" : "worried") : "idle";
+  // Before any star: the waiter waves and greets the guest.
+  const mood = done ? moodFor(given) : stars ? (stars >= 4 ? "happy" : stars === 3 ? "neutral" : "worried") : "happy";
   const say = done ? (state.duplicate ? copy.dup : given >= 5 ? copy.say5 : given === 4 ? copy.say4 : given === 3 ? copy.say3 : copy.sayLow) : person.message;
 
   return (
     <section className={`rw-card${done ? " is-done" : ""}${backdrop ? " has-scene" : ""}`}>
       <div className="rw-stage">
-        <WaiterAvatar config={person.avatar} logoUrl={logoUrl} mood={done ? mood : stars ? mood : "idle"} say={done || !stars ? say : null} label={person.name} backdrop={backdrop} floor={floor} />
+        <WaiterAvatar config={person.avatar} logoUrl={logoUrl} mood={mood} say={done || !stars ? say : null} label={person.name} backdrop={backdrop} floor={floor} />
       </div>
       <div className="rw-id"><b>{person.name}</b><small>{person.title} · {business}</small></div>
       {!done ? (

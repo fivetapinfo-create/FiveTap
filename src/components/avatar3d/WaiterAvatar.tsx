@@ -28,7 +28,7 @@ function poseFor(mood: AvatarMood, t: number, since: number): { pose: Pose; mout
     p.lz = 0.1 + up * 2.55 + Math.sin(t * 9) * 0.12 * up;
     p.rz = -0.1 - up * 2.55 - Math.sin(t * 9 + 1) * 0.12 * up;
     p.flz = up * 0.5; p.frz = -up * 0.5;
-    p.hop = k < 1.6 ? Math.abs(Math.sin(k * Math.PI * 2.4)) * 0.38 : 0;
+    p.hop = k < 2.1 ? Math.abs(Math.sin(k * Math.PI * 2.4)) * 0.42 : 0;
     p.headX = -0.12 * up; p.browUp = 0.06;
     mouth = "open";
   } else if (mood === "happy") {
@@ -140,7 +140,8 @@ export function WaiterAvatar({ config, logoUrl, mood = "idle", say, className, l
   const clock = useRef(0);
 
   useEffect(() => {
-    moodRef.current = { mood, since: clock.current, talkUntil: clock.current + (say ? 1.6 : 0) };
+    // The mouth moves for as long as the line takes to say (about 15 letters a second).
+    moodRef.current = { mood, since: clock.current, talkUntil: clock.current + (say ? Math.max(1.6, say.length / 15) : 0) };
   }, [mood, say]);
 
   useEffect(() => {

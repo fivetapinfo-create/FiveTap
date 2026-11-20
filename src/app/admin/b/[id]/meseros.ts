@@ -58,6 +58,13 @@ export async function adminWaiterOp(f: FormData) {
     if (op === "regenerate") { await regenerateAvatar(businessId, id); await approveStaff(businessId, [id]); }
     else if (op === "body") { await regenerateAvatar(businessId, id, f.get("body") === "f" ? "f" : "m"); await approveStaff(businessId, [id]); }
     else if (op === "approve") await approveStaff(businessId, [id]);
+    else if (op === "rename") {
+      const name = String(f.get("name") ?? "").replace(/\s+/g, " ").trim().slice(0, 50);
+      if (name.length < 2) throw new Error("Escribe el nombre del mesero.");
+      const { error } = await db().from("staff").update({ name }).eq("id", id).eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+      await db().from("tags").update({ staff_name: name }).eq("business_id", businessId).eq("staff_id", id);
+    }
     else if (op === "activate" || op === "deactivate") await setStaffActive(businessId, id, op === "activate");
     else if (op === "card") {
       // Free whatever card the waiter had, then give them the chosen one (if any).
