@@ -16,7 +16,9 @@ export function PromoSender({ business, people }: { business: string; people: Pe
   const [onlyBirthdays, setOnlyBirthdays] = useState(false);
   const list = onlyBirthdays ? people.filter((p) => p.birthday) : people;
   const first = (n: string) => n.trim().split(/\s+/)[0] ?? "";
-  const href = (p: Person) => `https://wa.me/${p.phone}?text=${encodeURIComponent(text.replaceAll("{nombre}", first(p.name)))}`;
+  // Always says how to stop: the club sign-up promises it ("puedo darme de baja cuando quiera").
+  const OPT_OUT = "\n\nSi ya no quieres recibir promociones, responde BAJA.";
+  const href = (p: Person) => `https://wa.me/${p.phone}?text=${encodeURIComponent(text.replaceAll("{nombre}", first(p.name)) + OPT_OUT)}`;
 
   if (!open) {
     return (

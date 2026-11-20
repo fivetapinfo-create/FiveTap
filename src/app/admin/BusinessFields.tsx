@@ -4,8 +4,9 @@ import { KindSelect } from "./KindSelect";
 import { BrandColors } from "./BrandColors";
 import { TIERS } from "@/lib/features";
 
+// Reference plans are no longer sold: only a venue already on one still sees it.
 const pick = (plans: Plan[], keep?: string): PickPlan[] =>
-  plans.filter((p) => p.active || p.key === keep).map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards, lanyards: p.lanyards, flex_pieces: p.flex_pieces, line: p.line }));
+  plans.filter((p) => p.key === keep).map((p) => ({ key: p.key, name: p.name, monthly: p.monthly, plaques: p.plaques, cards: p.cards, lanyards: p.lanyards, flex_pieces: p.flex_pieces, line: p.line }));
 import type { Business } from "@/lib/types";
 import { PANEL_KINDS } from "@/lib/verticals";
 
@@ -66,7 +67,7 @@ export function OptionFields({ b, plans, planKey, compact }: { b?: Business; pla
     ? b.status === "trial" && Number(b.monthly_fee) <= 0 ? (b.mode === "google" ? "test-google" : "test")
       : b.mode === "google" && Number(b.monthly_fee) <= 0 && !b.plan_key ? "once"
       : planOf(b, plans)?.key ?? "custom"
-    : planKey ?? "start";
+    : planKey ?? "custom";
   return (
     <div className="form-section">
       <div className="grid-2">
@@ -74,8 +75,8 @@ export function OptionFields({ b, plans, planKey, compact }: { b?: Business; pla
         <PlanPicker plans={pick(plans, current)} defaultKey={current} label="Plan" />
         <label className="field">
           <span>Mensualidad (USD)</span>
-          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b ? b.monthly_fee : undefined} placeholder="La del plan" />
-          <small>{b ? "Si cambias de plan aquí, toma el precio del plan nuevo. Su precio no cambia si editas el plan en Planes." : "Vacío: el precio del plan. Pon 0 para un negocio de prueba (no cobra ni se pausa)."}</small>
+          <input className="input" type="number" min={0} step="0.01" name="monthly_fee" defaultValue={b ? b.monthly_fee : undefined} placeholder="Ej. 300" />
+          <small>La mensualidad cotizada para este local. Pon 0 para un negocio de prueba (no cobra ni se pausa).</small>
         </label>
         <label className="field">
           <span>Tipo de negocio</span>
@@ -86,13 +87,6 @@ export function OptionFields({ b, plans, planKey, compact }: { b?: Business; pla
           </select>
         </label>
         </>)}
-        {compact && (
-          <label className="field">
-            <span>Mensualidad (USD)</span>
-            <input className="input" type="number" min={0} step="0.01" name="monthly_fee" placeholder="La del plan" />
-            <small>Vacío: el precio del plan elegido arriba.</small>
-          </label>
-        )}
         <BrandColors primary={b?.brand_color} accent={b?.brand_accent} logoUrl={b?.logo_url} />
       </div>
       {/* One-time pieces are no longer sold; kept only for venues that already had them. */}
@@ -141,7 +135,7 @@ export function PlanFields({ plans, planKey, kind }: { plans: Plan[]; planKey?: 
           <small>Define qué herramientas recibe. Luego lo ajustas por función en su ficha (Contratación y permisos).</small>
         </label>
       </div>
-      <small className="muted">De 1 a 4 piezas es pago único; desde 5 piezas, plan mensual (de referencia o a la medida). Una sola placa con FiveTap Business también puede ir en plan mensual a la medida. Vacío: las piezas del plan de referencia.</small>
+      <small className="muted">Plan personalizado: escribe la mensualidad y las piezas que cotizaste. Pago único: de 1 a 4 piezas directas a Google, sin mensualidad.</small>
     </div>
   );
 }

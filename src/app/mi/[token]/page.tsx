@@ -12,6 +12,7 @@ import { ClubPanel } from "@/components/ClubPanel";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Logo } from "@/components/Logo";
 import { MessageActions } from "@/components/MessageActions";
+import { ResolveMessage } from "@/components/ResolveMessage";
 import { MemberCard } from "@/components/MemberCard";
 import { loyaltyStatus } from "@/lib/loyalty";
 import { PausedScreen } from "@/components/PausedScreen";
@@ -273,12 +274,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
                 <p>{f.message}</p>
                 <div className="row msg-row">
                   {!f.resolved_at && <MessageActions business={b.name} spot={(f.tag_id && label.get(f.tag_id)) || null} guestName={f.name} guestPhone={f.phone} message={f.message} />}
-                  <form action={setMessageResolved}>
-                    <input type="hidden" name="token" value={token} />
-                    <input type="hidden" name="feedback_id" value={f.id} />
-                    <input type="hidden" name="resolved" value={f.resolved_at ? "0" : "1"} />
-                    <button className={`btn btn-sm ${f.resolved_at ? "btn-ghost" : "btn-dark"}`} type="submit">{f.resolved_at ? "Reabrir" : "Marcar resuelto ✓"}</button>
-                  </form>
+                  <ResolveMessage token={token} id={f.id} resolved={Boolean(f.resolved_at)} action={setMessageResolved} />
                 </div>
               </div>
             ))
@@ -367,14 +363,6 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         </p>
       </main>
 
-      {/* App-style bar: the four places the owner goes, always at hand. */}
-      <nav className="owner-tabs" aria-label="Secciones">
-        <a href="#inicio"><Home />Inicio</a>
-        <a href="#mensajes"><Chat />Mensajes{pending.length > 0 && <i className="num">{pending.length}</i>}</a>
-        <a href="#club"><Users />Club</a>
-        <Link href={`/mi/${token}/reporte`}><Chart />Reporte</Link>
-        <Link href={`/mi/${token}/ajustes`}><Gear />Ajustes</Link>
-      </nav>
     </div>
   );
 }

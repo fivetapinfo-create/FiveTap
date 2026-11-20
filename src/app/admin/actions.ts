@@ -109,7 +109,8 @@ export async function createBusiness(f: FormData) {
     if (str(f, "cards") === "") cards = str(f, "spots") === "" ? 0 : Math.max(total - spots, 0);
     if (spots + cards > total) fail("/admin/new", new Error(`${plan.name} incluye ${total} ${total === 1 ? "pieza" : "piezas"}: reparte placas + tarjetas hasta ${total}, o elige un plan más grande.`));
   }
-  const fee = isTest || once ? 0 : str(f, "monthly_fee") === "" ? plan?.monthly ?? 129 : num(f, "monthly_fee", 129);
+  if (!isTest && !once && !plan && str(f, "monthly_fee") === "") fail("/admin/new", new Error("Escribe la mensualidad que cotizaste para este local."));
+  const fee = isTest || once ? 0 : str(f, "monthly_fee") === "" ? plan?.monthly ?? 0 : num(f, "monthly_fee", 0);
   const spotLabel = str(f, "spot_label", 30) || verticalByKey(kind).spot;
   if (!name || !review) fail("/admin/new", new Error("Escribe el nombre y el enlace de reseñas de Google."));
   // The "before": how many reviews and stars the venue has in Google today. Without it,

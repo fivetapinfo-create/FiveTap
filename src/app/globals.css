@@ -2067,3 +2067,16 @@ main.guest.has-bg, div.guest.has-bg, .guest.gx.has-bg {
 .refresh-btn:active { transform: scale(0.94); }
 .refresh-btn.spinning svg { animation: refresh-spin 0.8s linear infinite; }
 @keyframes refresh-spin { to { transform: rotate(360deg); } }
+
+/* FiveTap Business: shared bottom bar, pull-to-refresh and undo notices */
+body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.owner-tabs a.on { color: var(--ink); font-weight: 600; }
+.owner-tabs a.on svg { stroke-width: 2.2; }
+.ptr { position: fixed; top: env(safe-area-inset-top, 0px); left: 50%; z-index: 60; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 6px 18px rgba(10, 10, 10, 0.12); color: var(--muted); pointer-events: none; }
+.ptr-ic { display: grid; place-items: center; }
+.ptr-ic.ready { color: var(--ink); }
+.ptr-ic.spinning { animation: refresh-spin 0.8s linear infinite; }
+.snackbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 70; display: flex; align-items: center; gap: 16px; width: max-content; max-width: calc(100vw - 32px); padding: 12px 14px 12px 18px; border-radius: 14px; background: var(--ink); color: var(--paper); font-size: 14px; box-shadow: 0 10px 30px rgba(10, 10, 10, 0.25); animation: snack-in 0.2s ease-out; }
+.snackbar button { border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 13px; padding: 4px 6px; cursor: pointer; opacity: 0.9; }
+@keyframes snack-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .snackbar { animation: none; } .ptr-ic.spinning { animation: none; } }

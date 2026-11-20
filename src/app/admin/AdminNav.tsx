@@ -16,7 +16,6 @@ const MORE: { href: string; label: string; hint: string }[] = [
   { href: "/admin/agenda", label: "Agenda", hint: "La semana y el calendario" },
   { href: "/admin/comprobantes", label: "Recibos y facturación", hint: "Recibos, PDFs y envíos" },
   { href: "/admin/contratos", label: "Contratos", hint: "Contratos de 3 meses" },
-  { href: "/admin/planes", label: "Planes", hint: "Precios y lo que incluye cada plan" },
   { href: "/admin/empresa", label: "Empresa", hint: "Datos de FiveTap e ingresos" },
   { href: "/admin/soporte", label: "Soporte", hint: "Solicitudes de tus clientes" },
   { href: "/admin/claude", label: "Actividad de Claude", hint: "Lo que Claude hizo y cómo conectarlo" },
