@@ -20,6 +20,7 @@ import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusines
 import { SITE_URL, pieceUrl } from "@/lib/site";
 import { AvatarPicture } from "@/components/AvatarPicture";
 import { adminAddWaiters, adminWaiterOp } from "./meseros";
+import { clearTestData, deleteTestItem } from "./limpiar";
 import { verticalByKey } from "@/lib/verticals";
 import { PLAQUE_LABEL, plaqueState, staffFor } from "@/lib/staff";
 import { moduleOn } from "@/lib/orders";
@@ -93,6 +94,11 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const waiters = tags.filter(isWaiter);
   const crew = await staffFor(b.id);
   const staffName = new Map(crew.map((s) => [s.id, s]));
+  // Test data the founder can clear: latest ratings and how many taps are recorded.
+  const [testRatings, tapCount] = await Promise.all([
+    db().from("service_ratings").select("id, stars, comment, created_at, staff_id").eq("business_id", b.id).order("created_at", { ascending: false }).limit(30).then((r) => (r.data ?? []) as { id: string; stars: number; comment: string | null; created_at: string; staff_id: string | null }[]),
+    db().from("events").select("id", { count: "exact", head: true }).eq("business_id", b.id).then((r) => r.count ?? 0),
+  ]);
   const period = teamPeriod(sp.equipo);
   const team = await teamRanking(tags, period);
   const receiptByPayment = new Map(receipts.filter((r) => r.payment_id).map((r) => [r.payment_id!, r]));
@@ -238,6 +244,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <a href="#placas">Placas</a>
         <a href="#contrato">Contrato</a>
         <a href="#club">Club</a>
+        <a href="#prueba">Prueba</a>
         <a href="#datos">Datos</a>
       </nav>
 
@@ -727,6 +734,41 @@ export default async function BusinessPage({ params, searchParams }: Props) {
       </section>
 
       <ClubPanel contacts={contacts} tags={tags} csvHref={`/admin/b/${b.id}/clientes.csv`} remove={removeContact} />
+
+      {/* Test data: ratings, private messages and taps left by demos, cleared here (never payments or contracts). */}
+      <details className="panel more" id="prueba" open={Boolean(sp.ok?.startsWith("prueba"))}>
+        <summary><span>Datos de prueba</span><small className="muted">{testRatings.length} calificaciones · {feedback.length} mensajes · {tapCount} toques</small></summary>
+        <p className="muted" style={{ padding: "0 20px" }}>Borra lo que dejaste al probar o en una demo, para que la app del dueño quede limpia. No toca pagos, recibos, contratos, placas ni meseros.</p>
+        {testRatings.length > 0 && (
+          <ul className="test-list">
+            {testRatings.map((r) => (
+              <li key={r.id}>
+                <span><b>{"★".repeat(r.stars)}{"☆".repeat(Math.max(0, 5 - r.stars))}</b> {r.staff_id ? staffName.get(r.staff_id)?.name ?? "Mesero" : "Mesero"}{r.comment ? ` · “${r.comment.slice(0, 80)}”` : ""}<small className="muted"> · {dateTime(r.created_at)}</small></span>
+                <form action={deleteTestItem}><input type="hidden" name="business_id" value={b.id} /><input type="hidden" name="kind" value="rating" /><input type="hidden" name="id" value={r.id} /><button className="btn btn-ghost btn-sm" type="submit">Borrar</button></form>
+              </li>
+            ))}
+          </ul>
+        )}
+        {feedback.length > 0 && (
+          <ul className="test-list">
+            {feedback.slice(0, 30).map((m) => (
+              <li key={m.id}>
+                <span><b>Mensaje</b> · {m.name || "Sin nombre"}: “{m.message.slice(0, 80)}”<small className="muted"> · {dateTime(m.created_at)}</small></span>
+                <form action={deleteTestItem}><input type="hidden" name="business_id" value={b.id} /><input type="hidden" name="kind" value="message" /><input type="hidden" name="id" value={m.id} /><button className="btn btn-ghost btn-sm" type="submit">Borrar</button></form>
+              </li>
+            ))}
+          </ul>
+        )}
+        <form action={clearTestData} className="test-clear">
+          <input type="hidden" name="business_id" value={b.id} />
+          <b>Borrar todo de una vez</b>
+          <label className="check"><input type="checkbox" name="ratings" value="1" defaultChecked /> <span>Calificaciones de meseros ({testRatings.length})</span></label>
+          <label className="check"><input type="checkbox" name="messages" value="1" defaultChecked /> <span>Mensajes privados ({feedback.length})</span></label>
+          <label className="check"><input type="checkbox" name="taps" value="1" defaultChecked /> <span>Toques en las placas ({tapCount})</span></label>
+          <label className="check"><input type="checkbox" name="confirm" value="1" /> <span>Sí, son de prueba. Borrar lo marcado de {b.name} (no se puede deshacer).</span></label>
+          <button className="btn btn-danger btn-sm" type="submit">Borrar datos de prueba</button>
+        </form>
+      </details>
 
       <details className="panel more" id="datos" style={{ borderTop: "1px solid var(--line)" }}>
         <summary>Editar datos del negocio</summary>

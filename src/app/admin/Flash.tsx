@@ -1,4 +1,6 @@
 const OK: Record<string, string> = {
+  "prueba-borrado": "Borrado.",
+  "prueba-limpia": "Datos de prueba borrados. La app del dueño quedó limpia.",
   "meseros-agregados": "Meseros agregados: cada uno ya tiene su avatar con el logo y su tarjeta asignada.",
   "meseros-sin-tarjeta": "Meseros agregados. Algunos quedaron sin tarjeta porque no hay tarjetas libres: agrega más tarjetas de mesero.",
   mesero: "Mesero actualizado.",

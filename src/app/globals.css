@@ -2097,3 +2097,10 @@ body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom))
 .mz-del summary { cursor: pointer; font-size: 13px; color: var(--muted); }
 .mz-del form { display: grid; gap: 8px; padding-top: 8px; }
 .mz-card-pick .input { flex: 1 1 140px; min-width: 140px; }
+
+/* Founder panel: clearing test data */
+.test-list { list-style: none; margin: 0; padding: 0 20px; }
+.test-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.test-list li span { min-width: 0; overflow-wrap: anywhere; }
+.test-list form { margin: 0; flex: none; }
+.test-clear { display: grid; gap: 8px; padding: 14px 20px 18px; border-top: 1px solid var(--line); margin-top: 8px; }
