@@ -107,7 +107,7 @@ export function buildAvatar(cfg: AvatarConfig, logo: THREE.Texture | null): Rig 
     logoMesh.rotation.y = -0.3;
     body.add(logoMesh);
     // The logo again, bigger, on the front of the apron.
-    const al = mesh(g(new THREE.PlaneGeometry(0.62, 0.62)), lm, [0, 2.86, (hipR + 0.14) * 0.78 + 0.03], false);
+    const al = mesh(g(new THREE.PlaneGeometry(0.7, 0.7)), lm, [0, 2.86, (hipR + 0.14) * 0.78 + 0.03], false);
     body.add(al);
   }
   body.add(mesh(g(new THREE.CylinderGeometry(0.2, 0.24, 0.42, 6)), M.skinDark, [0, 5.58, 0]));
@@ -190,7 +190,8 @@ export function buildAvatar(cfg: AvatarConfig, logo: THREE.Texture | null): Rig 
       piece(new THREE.BoxGeometry(1.5, 1.95, 0.36), [0, 0.42, -0.5], [0.06, 0, 0], 3);
       for (const s of [-1, 1]) piece(new THREE.BoxGeometry(0.3, 1.6, 0.34), [s * 0.71, 0.4, 0.14], [0, 0, s * 0.05], 4 + s);
     } else if (cfg.hair === 1) {
-      const bob = piece(new THREE.CylinderGeometry(0.9, 0.96, 0.85, 9, 1, true, Math.PI * 0.7, Math.PI * 1.6), [0, 0.6, -0.04], [0, 0, 0], 6);
+      // Open at the front (theta 0 faces forward), so the face stays clear.
+      const bob = piece(new THREE.CylinderGeometry(0.9, 0.96, 0.85, 9, 1, true, Math.PI * 0.275, Math.PI * 1.45), [0, 0.6, -0.04], [0, 0, 0], 6);
       bob.scale.z = 0.98;
     } else if (cfg.hair === 2) {
       for (const s of [-1, 1]) piece(new THREE.BoxGeometry(0.24, 1.0, 0.3), [s * 0.72, 0.62, 0.16], [0, 0, s * 0.05], 14 + s);

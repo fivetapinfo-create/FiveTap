@@ -55,14 +55,79 @@ function poseFor(mood: AvatarMood, t: number, since: number): { pose: Pose; mout
   return { pose: p, mouth };
 }
 
-/** Load the restaurant's logo for the shirt; without one (or if it fails) the shirt stays plain. */
+/**
+ * The restaurant's logo as an embroidered patch for the shirt and apron: a round badge,
+ * the logo fitted inside without stretching, and a patch color that contrasts with the logo
+ * (light logos on a dark patch, dark logos on a light one), so it reads on the black uniform.
+ * Without a logo (or if it fails) the uniform stays plain.
+ */
+const patchCache = new Map<string, Promise<HTMLCanvasElement | null>>();
 function loadLogo(url: string | null | undefined): Promise<THREE.Texture | null> {
   if (!url) return Promise.resolve(null);
-  return new Promise((ok) => {
-    const l = new THREE.TextureLoader();
-    l.setCrossOrigin("anonymous");
-    l.load(url, (tx) => { tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; ok(tx); }, undefined, () => ok(null));
+  // Each avatar gets its own texture (they are disposed with it); the drawn patch is shared.
+  return logoPatch(url).then((c) => {
+    if (!c) return null;
+    const tx = new THREE.CanvasTexture(c);
+    tx.colorSpace = THREE.SRGBColorSpace;
+    tx.anisotropy = 8;
+    tx.minFilter = THREE.LinearMipmapLinearFilter;
+    return tx;
   });
+}
+function logoPatch(url: string): Promise<HTMLCanvasElement | null> {
+  const hit = patchCache.get(url);
+  if (hit) return hit;
+  const job = new Promise<HTMLCanvasElement | null>((ok) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    img.onerror = () => ok(null);
+    img.onload = () => {
+      try {
+        const S = 512, R = S / 2;
+        const c = document.createElement("canvas");
+        c.width = c.height = S;
+        const x = c.getContext("2d")!;
+        // How light is the logo itself (opaque pixels only)?
+        const probe = document.createElement("canvas");
+        probe.width = probe.height = 48;
+        const px = probe.getContext("2d", { willReadFrequently: true })!;
+        px.drawImage(img, 0, 0, 48, 48);
+        const d = px.getImageData(0, 0, 48, 48).data;
+        let lum = 0, n = 0, opaque = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i + 3] < 128) continue;
+          opaque++;
+          lum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+          n++;
+        }
+        const solid = opaque > 48 * 48 * 0.92; // a photo or a logo with its own background
+        const light = n ? lum / n > 0.62 : false;
+        const patch = solid ? "#0f0f11" : light ? "#16161a" : "#f5f4f0";
+        const ring = light || solid ? "rgba(255,255,255,0.55)" : "rgba(20,20,24,0.35)";
+        // Patch with a stitched edge.
+        x.beginPath(); x.arc(R, R, R - 6, 0, Math.PI * 2); x.fillStyle = patch; x.fill();
+        x.lineWidth = 6; x.strokeStyle = ring; x.setLineDash([14, 9]);
+        x.beginPath(); x.arc(R, R, R - 22, 0, Math.PI * 2); x.stroke();
+        x.setLineDash([]);
+        // The logo, fitted and centered, clipped to the patch.
+        x.save();
+        x.beginPath(); x.arc(R, R, R - 34, 0, Math.PI * 2); x.clip();
+        const box = solid ? (R - 34) * 2 : (R - 34) * 2 * 0.78;
+        const k = solid ? Math.max(box / img.width, box / img.height) : Math.min(box / img.width, box / img.height);
+        const w = img.width * k, h = img.height * k;
+        x.imageSmoothingQuality = "high";
+        x.drawImage(img, R - w / 2, R - h / 2, w, h);
+        x.restore();
+        ok(c);
+      } catch {
+        ok(null); // a logo without CORS can't be read: keep the uniform plain
+      }
+    };
+    img.src = url;
+  });
+  patchCache.set(url, job);
+  return job;
 }
 
 /**
