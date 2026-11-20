@@ -2080,3 +2080,19 @@ body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom))
 .snackbar button { border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 13px; padding: 4px 6px; cursor: pointer; opacity: 0.9; }
 @keyframes snack-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (prefers-reduced-motion: reduce) { .snackbar { animation: none; } .ptr-ic.spinning { animation: none; } }
+
+/* Founder panel: waiters managed in place (add, avatar, card, on/off) */
+.mz-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; padding: 14px 0 6px; }
+@media (max-width: 760px) { .mz-add { grid-template-columns: 1fr; } }
+.mz-team.mz-team-full { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.mz-team.mz-team-full > li { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.mz-pic { width: 96px; height: 123px; border-radius: 10px; overflow: hidden; background: color-mix(in srgb, var(--ink) 5%, transparent); display: grid; place-items: center; }
+.mz-pic img { width: 100%; height: 100%; object-fit: cover; }
+.mz-info { display: grid; gap: 6px; min-width: 0; }
+.mz-info .chip { justify-self: start; }
+.mz-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.mz-actions form { margin: 0; }
+.mz-card-pick { display: flex; gap: 6px; align-items: center; }
+.mz-card-pick .select { flex: 1; min-width: 0; }
+.mz-del summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.mz-del form { display: grid; gap: 8px; padding-top: 8px; }

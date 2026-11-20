@@ -18,6 +18,8 @@ import { agreementsFor } from "@/lib/agreements-db";
 import { longDay, money2 } from "@/lib/agreement";
 import { KIND_LABEL, METHOD_LABEL, customMethods, methodName, receiptsForBusiness } from "@/lib/receipts";
 import { SITE_URL, pieceUrl } from "@/lib/site";
+import { AvatarPicture } from "@/components/AvatarPicture";
+import { adminAddWaiters, adminWaiterOp } from "./meseros";
 import { verticalByKey } from "@/lib/verticals";
 import { PLAQUE_LABEL, plaqueState, staffFor } from "@/lib/staff";
 import { moduleOn } from "@/lib/orders";
@@ -141,20 +143,23 @@ export default async function BusinessPage({ params, searchParams }: Props) {
       </section>
 
       {/* Waiters: their cards (links for the chips), who has each one, and their status, all in one place. */}
-      {waiters.length > 0 || crew.length > 0 ? (
+      {b.mode === "full" ? (
         <section className="panel" id="meseros-panel">
           <div className="panel-head">
             <h2>Meseros y sus tarjetas</h2>
-            <span className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-              <a className="btn btn-dark btn-sm" href={`/mi/${b.owner_token}/equipo#meseros`}>Agregar o editar meseros</a>
-              {crew.some((s) => !s.approved) && <a className="btn btn-ghost btn-sm" href={`/mi/${b.owner_token}/equipo/revisar`}>Revisar avatares ({crew.filter((s) => !s.approved).length})</a>}
-            </span>
+            <span className="muted">{crew.length} {crew.length === 1 ? "mesero" : "meseros"} · {waiters.filter((t) => !t.staff_id && t.active).length} tarjetas libres</span>
           </div>
           <ol className="mz-steps">
             <li><b>Graba cada chip</b> con el enlace de su tarjeta (abajo, botón “Copiar enlace”). El enlace nunca cambia.</li>
-            <li><b>Agrega los meseros</b> por nombre: FiveTap crea su avatar (hombre o mujer según el nombre).</li>
-            <li><b>Asigna cada tarjeta</b> a su mesero y aprueba. Desde ese momento el chip abre su avatar y su valoración.</li>
+            <li><b>Agrega los meseros</b> aquí abajo, separando hombres y mujeres. Su avatar sale solo, con el logo del local, y toman la siguiente tarjeta libre.</li>
+            <li><b>Revisa cada uno:</b> otro look, cambiar a hombre o mujer, o cambiar su tarjeta. El chip abre su avatar y su valoración al instante.</li>
           </ol>
+          <form action={adminAddWaiters} className="mz-add">
+            <input type="hidden" name="business_id" value={b.id} />
+            <label className="field"><span>Hombres (uno por línea)</span><textarea className="textarea" name="names_m" rows={3} placeholder={"Carlos\nLuis"} /></label>
+            <label className="field"><span>Mujeres (una por línea)</span><textarea className="textarea" name="names_f" rows={3} placeholder={"Ana\nSofía"} /></label>
+            <button className="btn btn-dark" type="submit">Agregar y asignar tarjetas</button>
+          </form>
           <ul className="mz-cards">
             {waiters.map((t) => {
               const st = plaqueState({ active: t.active, kind: "waiter", staff_id: t.staff_id });
@@ -175,16 +180,38 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             })}
           </ul>
           {crew.length > 0 && (
-            <ul className="mz-team">
+            <ul className="mz-team mz-team-full">
               {crew.map((s) => {
                 const card = waiters.find((t) => t.staff_id === s.id);
                 const status = !s.active ? "Desactivado" : !s.approved ? "Pendiente de aprobar" : card && card.active ? "Publicado" : "Sin tarjeta activa";
+                const hid = (op: string) => (<><input type="hidden" name="business_id" value={b.id} /><input type="hidden" name="id" value={s.id} /><input type="hidden" name="op" value={op} /></>);
                 return (
-                  <li key={s.id}>
-                    <b>{s.name}{s.is_demo ? " · demo" : ""}</b>
-                    <small className="muted">{s.title}{card ? ` · ${card.label}` : ""}</small>
-                    <em className={`chip ${status === "Publicado" ? "ok" : status === "Pendiente de aprobar" ? "warn" : "off"}`}>{status}</em>
-                    {card?.active && s.active && s.approved && <a className="btn btn-ghost btn-sm" href={pieceUrl(card.code, "waiter")} target="_blank" rel="noreferrer">Ver como cliente</a>}
+                  <li key={s.id} id={`mz-${s.id}`}>
+                    <div className="mz-pic"><AvatarPicture config={s.avatar} logoUrl={b.logo_url} alt={`Avatar de ${s.name}`} /></div>
+                    <div className="mz-info">
+                      <b>{s.name}{s.is_demo ? " · demo" : ""}</b>
+                      <small className="muted">{s.title}{card ? ` · ${card.label}` : " · sin tarjeta"}</small>
+                      <em className={`chip ${status === "Publicado" ? "ok" : status === "Pendiente de aprobar" ? "warn" : "off"}`}>{status}</em>
+                      <div className="mz-actions">
+                        <form action={adminWaiterOp}>{hid("regenerate")}<button className="btn btn-ghost btn-sm" type="submit">Otro look</button></form>
+                        <form action={adminWaiterOp}>{hid("body")}<input type="hidden" name="body" value={s.avatar.body === "f" ? "m" : "f"} /><button className="btn btn-ghost btn-sm" type="submit">Cambiar a {s.avatar.body === "f" ? "hombre" : "mujer"}</button></form>
+                        {!s.approved && <form action={adminWaiterOp}>{hid("approve")}<button className="btn btn-dark btn-sm" type="submit">Aprobar</button></form>}
+                        <form action={adminWaiterOp}>{hid(s.active ? "deactivate" : "activate")}<button className="btn btn-ghost btn-sm" type="submit">{s.active ? "Desactivar" : "Activar"}</button></form>
+                        {card?.active && s.active && s.approved && <a className="btn btn-ghost btn-sm" href={pieceUrl(card.code, "waiter")} target="_blank" rel="noreferrer">Ver como cliente</a>}
+                      </div>
+                      <form action={adminWaiterOp} className="mz-card-pick">
+                        {hid("card")}
+                        <select className="select" name="tag" defaultValue={card?.id ?? ""} aria-label={`Tarjeta de ${s.name}`}>
+                          <option value="">Sin tarjeta</option>
+                          {waiters.filter((t) => !t.staff_id || t.staff_id === s.id).map((t) => <option key={t.id} value={t.id}>{t.label}{t.active ? "" : " (apagada)"}</option>)}
+                        </select>
+                        <button className="btn btn-ghost btn-sm" type="submit">Cambiar tarjeta</button>
+                      </form>
+                      <details className="mz-del">
+                        <summary>Eliminar</summary>
+                        <form action={adminWaiterOp}>{hid("delete")}<label className="check"><input type="checkbox" name="confirm" value="1" /> <span>Sí, eliminar a {s.name}. Su tarjeta queda libre y su historial se guarda.</span></label><button className="btn btn-danger btn-sm" type="submit">Eliminar mesero</button></form>
+                      </details>
+                    </div>
                   </li>
                 );
               })}

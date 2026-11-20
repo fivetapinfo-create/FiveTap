@@ -1,4 +1,8 @@
 const OK: Record<string, string> = {
+  "meseros-agregados": "Meseros agregados: cada uno ya tiene su avatar con el logo y su tarjeta asignada.",
+  "meseros-sin-tarjeta": "Meseros agregados. Algunos quedaron sin tarjeta porque no hay tarjetas libres: agrega más tarjetas de mesero.",
+  mesero: "Mesero actualizado.",
+  "mesero-eliminado": "Mesero eliminado. Su tarjeta quedó libre y su historial se guarda.",
   creado: "Negocio creado. Graba cada enlace en su placa NFC con NFC Tools.",
   guardado: "Cambios guardados.",
   "x-modulo": "Módulo actualizado. Sus placas ya lo reflejan.",
