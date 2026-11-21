@@ -913,3 +913,20 @@ alter table businesses add column if not exists is_demo boolean not null default
 alter table businesses add column if not exists stage_url text;
 alter table businesses add column if not exists stage_floor text;
 alter table businesses add column if not exists page_bg_url text;
+
+-- Audit 2026-11: indexes for foreign keys used by branch and waiter lookups (non-destructive).
+create index if not exists tags_branch_idx on public.tags (branch_id);
+create index if not exists tags_staff_idx on public.tags (staff_id);
+create index if not exists service_ratings_branch_idx on public.service_ratings (branch_id);
+create index if not exists service_ratings_tag_idx on public.service_ratings (tag_id);
+create index if not exists staff_branch_idx on public.staff (branch_id);
+create index if not exists contacts_tag_idx on public.contacts (tag_id);
+create index if not exists contracts_business_idx on public.contracts (business_id);
+create index if not exists guest_orders_tag_idx on public.guest_orders (tag_id);
+create index if not exists guest_order_items_item_idx on public.guest_order_items (item_id);
+create index if not exists reservations_tag_idx on public.reservations (tag_id);
+create index if not exists loyalty_events_card_idx on public.loyalty_events (card_id);
+create index if not exists loyalty_visit_codes_card_idx on public.loyalty_visit_codes (card_id);
+create index if not exists push_subscriptions_card_idx on public.push_subscriptions (card_id);
+create index if not exists signups_business_idx on public.signups (business_id);
+create index if not exists businesses_plan_key_idx on public.businesses (plan_key);

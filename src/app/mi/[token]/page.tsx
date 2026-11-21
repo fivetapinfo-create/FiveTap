@@ -18,6 +18,8 @@ import { loyaltyStatus } from "@/lib/loyalty";
 import { PausedScreen } from "@/components/PausedScreen";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RefreshButton } from "@/components/RefreshButton";
+import { BranchStats } from "@/components/BranchStats";
+import { branchStats } from "@/lib/branch-stats";
 import { addDays, billingState, human, nextCharge, planLabel, renewalWhat, todayPanama } from "@/lib/agenda";
 import { after } from "next/server";
 import { businessByOwnerToken, businessDetail, contactsFor, markRead, reportData, reviewSnapshots } from "@/lib/data";
@@ -32,6 +34,7 @@ import { claimsFor } from "@/lib/claims";
 import { salesWhatsAppUrl } from "@/lib/site";
 import type { Tag } from "@/lib/types";
 import { dateTime } from "../../admin/format";
+import { db } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +64,11 @@ export default async function OwnerPage({ params, searchParams }: Props) {
   const role = await accessRole(b);
   if (!role) return <AccessGate b={b} token={token} error={sp.acceso} install={sp.instalar === "1"} />;
   // Everything at once: one round trip after finding the venue.
-  const [d, contacts, snapshots, report] = await Promise.all([businessDetail(b.id), contactsFor(b.id), reviewSnapshots(b.id), reportData(b.id)]);
+  const [d, contacts, snapshots, report, branchData] = await Promise.all([
+    businessDetail(b.id), contactsFor(b.id), reviewSnapshots(b.id), reportData(b.id),
+    // Chains only: branches side by side (skipped, with no extra cost, when there are none).
+    db().from("branches").select("id", { count: "exact", head: true }).eq("business_id", b.id).then((r) => ((r.count ?? 0) > 0 ? branchStats(b.id) : null)),
+  ]);
   if (!d) notFound();
   const { tags, tagStats, feedback, payments } = d;
   const billing = billingState(b, payments);
@@ -179,8 +186,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           </Link>
         )}
         {billing.kind === "trial" && billing.suspendsOn && (
-          <a className="alert alert-ok glance-alert" href={`/empezar?n=${encodeURIComponent(b.name)}`}>
-            <b>Estás en FiveTap Test</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Elige tu plan para seguir sin pausa →
+          <a className="alert alert-ok glance-alert" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Quiero seguir con FiveTap cuando termine la prueba.`)}>
+            <b>Estás en FiveTap Test</b> · Termina el {shortDate(addDays(billing.suspendsOn, -1))}. Escríbenos para seguir sin pausa →
           </a>
         )}
         {role === "owner" && charge && !charge.auto && b.status === "active" && charge.due <= addDays(today, 3) && (
@@ -226,6 +233,8 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <a href="#club"><b className="num">{now!.club}</b><span>Nuevos en el club</span></a>
           </div>
         </section>
+
+        {branchData && branchData.rows.length > 0 && <BranchStats rows={branchData.rows} total={branchData.total} />}
 
         {/* Everything the business uses, one tap away; tools not contracted show a lock and lead to the upgrade. */}
         <nav className="qa-grid" aria-label="Accesos rápidos">

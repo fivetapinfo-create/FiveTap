@@ -2104,3 +2104,12 @@ body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom))
 .test-list li span { min-width: 0; overflow-wrap: anywhere; }
 .test-list form { margin: 0; flex: none; }
 .test-clear { display: grid; gap: 8px; padding: 14px 20px 18px; border-top: 1px solid var(--line); margin-top: 8px; }
+
+/* Branch comparison (chains) */
+.bs-scroll { overflow-x: auto; padding: 0 20px 16px; }
+.bs-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; min-width: 520px; }
+.bs-table th, .bs-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.bs-table th:first-child { text-align: left; }
+.bs-table thead th { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.bs-table tr.bs-total th, .bs-table tr.bs-total td { font-weight: 700; border-bottom: 0; }
+.bs-table tr.bs-off { opacity: 0.55; }

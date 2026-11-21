@@ -1,5 +1,7 @@
 "use server";
 
+import { assertAdmin } from "@/lib/admin-guard";
+
 import { revalidatePath, revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { agreementById } from "@/lib/agreements-db";
@@ -63,11 +65,12 @@ async function uploadLogo(file: FormDataEntryValue | null, slug: string): Promis
 }
 
 /** Inserts `count` tags labelled "<label> <n>", retrying on the rare code collision. */
-async function createTags(businessId: string, label: string, count: number, startAt: number, kind: "table" | "waiter" = "table") {
+async function createTags(businessId: string, label: string, count: number, startAt: number, kind: "table" | "waiter" = "table", branchId: string | null = null) {
   if (count < 1) return;
   const rows = Array.from({ length: count }, (_, i) => ({
     business_id: businessId,
     kind,
+    branch_id: branchId,
     label: count === 1 && startAt === 1 ? label : `${label} ${startAt + i}`,
   }));
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -86,6 +89,7 @@ function fail(path: string, e: unknown): never {
 }
 
 export async function createBusiness(f: FormData) {
+  await assertAdmin();
   const name = str(f, "name", 80);
   const review = str(f, "review", 500);
   const kind = PANEL_KINDS.some((v) => v.key === str(f, "kind")) ? str(f, "kind") : "restaurant";
@@ -177,6 +181,7 @@ export async function createBusiness(f: FormData) {
 }
 
 export async function updateBusiness(f: FormData) {
+  await assertAdmin();
   const id = str(f, "id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -242,6 +247,7 @@ export async function updateBusiness(f: FormData) {
 }
 
 export async function addTags(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -261,7 +267,15 @@ export async function addTags(f: FormData) {
       .eq("business_id", id)
       .like("label", `${label}%`);
     if (error) throw new Error(error.message);
-    await createTags(id, label, count, (existing ?? 0) + 1, kind);
+    // Optional branch: only one of this business's own branches is accepted.
+    let branchId: string | null = null;
+    const wanted = str(f, "branch_id", 60);
+    if (wanted) {
+      const { data: br } = await db().from("branches").select("id").eq("id", wanted).eq("business_id", id).maybeSingle();
+      if (!br) throw new Error("Esa sucursal no es de este negocio.");
+      branchId = br.id;
+    }
+    await createTags(id, label, count, (existing ?? 0) + 1, kind, branchId);
   } catch (e) {
     fail(back, e);
   }
@@ -270,6 +284,7 @@ export async function addTags(f: FormData) {
 }
 
 export async function setTagActive(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const tagId = str(f, "tag_id", 60);
   const on = str(f, "active") === "1";
@@ -294,6 +309,7 @@ const STATUS_WORD = { written: "Grabada", delivered: "Entregada", retired: "Reti
 
 /** Moves a piece along created → written → delivered → retired, and keeps the date. */
 export async function setTagStatus(f: FormData) {
+  await assertAdmin();
   const tagId = str(f, "tag_id", 60);
   const back = str(f, "back", 300).startsWith("/admin") ? str(f, "back", 300) : "/admin/placas";
   const to = TAG_STATUS.find((x) => x === str(f, "status", 12));
@@ -319,6 +335,7 @@ export async function setTagStatus(f: FormData) {
 
 /** The founder's name and note for a piece. Never touches the link written on the chip. */
 export async function saveTagInfo(f: FormData) {
+  await assertAdmin();
   const tagId = str(f, "tag_id", 60);
   const back = str(f, "back", 300).startsWith("/admin") ? str(f, "back", 300) : "/admin/placas";
   try {
@@ -347,6 +364,7 @@ const KINDS = ["setup", "monthly", "annual", "pieces", "other"] as const;
  * the form's one-time key; the receipt is one per payment.
  */
 export async function recordPayment(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   let result = "pago";
@@ -418,6 +436,7 @@ export async function recordPayment(f: FormData) {
  * records "opened" (the founder still taps Send).
  */
 export async function sendReceiptWhatsApp(f: FormData) {
+  await assertAdmin();
   const rid = str(f, "receipt_id", 60);
   const back = str(f, "back", 160).startsWith("/admin") ? str(f, "back", 160) : "/admin/comprobantes";
   let target = "";
@@ -454,6 +473,7 @@ const PRODUCTS = Object.keys(PLAN_TEST_PRODUCTS) as PlanTestProduct[];
 
 /** Plan Test: a one-time sale of single pieces. Registers it and, if already paid, issues its receipt. */
 export async function createOrder(f: FormData) {
+  await assertAdmin();
   const back = "/admin/contratos";
   let ok = "compra";
   try {
@@ -507,6 +527,7 @@ export async function createOrder(f: FormData) {
 
 /** A pending Plan Test purchase was paid: payment, receipt and (optionally) its delivery. */
 export async function payOrder(f: FormData) {
+  await assertAdmin();
   const back = "/admin/contratos";
   let ok = "compra-pagada";
   try {
@@ -556,6 +577,7 @@ async function payOrderNow(orderId: string, send: boolean): Promise<string> {
 
 /** Sends an existing receipt again (email and app). The receipt and its number stay the same. */
 export async function resendReceipt(f: FormData) {
+  await assertAdmin();
   const rid = str(f, "receipt_id", 60);
   const back = str(f, "back", 160).startsWith("/admin") ? str(f, "back", 160) : "/admin/comprobantes";
   let ok = "reenviado";
@@ -579,6 +601,7 @@ export async function resendReceipt(f: FormData) {
  * Then the right payment is registered again, with a new receipt.
  */
 export async function voidPayment(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const pid = str(f, "payment_id", 60);
   const back = `/admin/b/${id}`;
@@ -605,6 +628,7 @@ export async function voidPayment(f: FormData) {
 
 /** Receipt for a payment registered before receipts existed (issued only, not sent). */
 export async function emitReceipt(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   let number = "";
@@ -621,6 +645,7 @@ export async function emitReceipt(f: FormData) {
 
 /** A payment method of the founder's own (e.g. "Nequi"), offered when registering payments. */
 export async function addPaymentMethod(f: FormData) {
+  await assertAdmin();
   const label = str(f, "label", 40);
   try {
     if (label.length < 2) throw new Error("Escribe el nombre del método.");
@@ -635,6 +660,7 @@ export async function addPaymentMethod(f: FormData) {
 }
 
 export async function removePaymentMethod(f: FormData) {
+  await assertAdmin();
   const mid = str(f, "id", 60);
   const { data } = await db().from("payment_methods").delete().eq("id", mid).select("label").maybeSingle();
   if (data) await audit("method.removed", { entity: "payment_method", entityId: data.label });
@@ -644,6 +670,7 @@ export async function removePaymentMethod(f: FormData) {
 
 /** A few more days before the automatic pause (the owner promised to pay). */
 export async function extendGrace(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const days = Math.min(Math.max(Math.round(num(f, "days", 7)), 1), 30);
   const back = str(f, "back", 120).startsWith("/admin") ? str(f, "back", 120) : `/admin/b/${id}`;
@@ -667,6 +694,7 @@ export async function extendGrace(f: FormData) {
 
 /** Google review count taken by hand: the first one before FiveTap, then each month. */
 export async function addSnapshot(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -686,6 +714,7 @@ export async function addSnapshot(f: FormData) {
 
 /** Reads today's review count and stars straight from Google (needs the Place ID and the API key). */
 export async function countFromGoogle(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -701,6 +730,7 @@ export async function countFromGoogle(f: FormData) {
 }
 
 export async function removeSnapshot(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   try {
     await deleteReviewSnapshot(str(f, "snapshot_id", 60));
@@ -712,6 +742,7 @@ export async function removeSnapshot(f: FormData) {
 
 /** Test notification to the owner's and manager's phones. */
 export async function testOwnerPush(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   const { data: b } = await db().from("businesses").select("name, owner_token").eq("id", id).maybeSingle();
@@ -722,6 +753,7 @@ export async function testOwnerPush(f: FormData) {
 /** New private link for the venue: the old one stops working and its phones stop getting notifications. */
 /** A new access code for the owner or the manager; phones that used the old one ask again. */
 export async function renewAccessCode(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -737,6 +769,7 @@ export async function renewAccessCode(f: FormData) {
 }
 
 export async function resetOwnerLink(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -753,12 +786,14 @@ export async function resetOwnerLink(f: FormData) {
 
 /** An online payment from /pagar is now recorded in its business: drop it from the Agenda. */
 export async function markWebPaymentHandled(f: FormData) {
+  await assertAdmin();
   const id = str(f, "id", 60);
   if (/^[0-9a-f-]{36}$/i.test(id)) await db().from("web_payments").update({ handled: true }).eq("id", id);
   revalidatePath("/admin/agenda");
 }
 
 export async function renameTag(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const tagId = str(f, "tag_id", 60);
   const label = str(f, "label", 60);
@@ -773,6 +808,7 @@ export async function renameTag(f: FormData) {
 }
 
 export async function removeContact(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const { error } = await db().from("contacts").delete().eq("id", str(f, "contact_id", 60));
   if (error) fail(`/admin/b/${id}`, new Error(error.message));
@@ -781,6 +817,7 @@ export async function removeContact(f: FormData) {
 
 /** Deletes a business and everything under it (placas, toques, mensajes, club, pagos). */
 export async function deleteBusiness(f: FormData) {
+  await assertAdmin();
   const id = str(f, "id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -817,6 +854,7 @@ export async function deleteBusiness(f: FormData) {
  * PayPal plan. Venues already on it keep their own price; the website updates at once.
  */
 export async function updatePlan(f: FormData) {
+  await assertAdmin();
   const key = str(f, "key", 30);
   try {
     const before = await planByKey(key);
@@ -853,6 +891,7 @@ export async function updatePlan(f: FormData) {
  * and waiter cards it has. Only the signer, start date and payment method are typed.
  */
 export async function createAgreement(f: FormData) {
+  await assertAdmin();
   const bid = str(f, "business_id", 60);
   let id = "";
   try {
@@ -895,6 +934,7 @@ export async function createAgreement(f: FormData) {
 
 /** Removes a contract created by mistake (the action stays in the audit log). */
 export async function deleteAgreement(f: FormData) {
+  await assertAdmin();
   const aid = str(f, "id", 60);
   const { data } = await db().from("agreements").delete().eq("id", aid).select("number, business_id, venue_name").maybeSingle();
   if (data) await audit("contract.deleted", { businessId: data.business_id, entity: "contract", entityId: data.number, details: { venue: data.venue_name } });
@@ -905,6 +945,7 @@ export async function deleteAgreement(f: FormData) {
 
 /** Founder: who carries each waiter card (and the card's number). */
 export async function setStaff(f: FormData) {
+  await assertAdmin();
   const businessId = str(f, "business_id", 60);
   const back = `/admin/b/${businessId}`;
   try {
@@ -939,38 +980,48 @@ async function xRun(f: FormData, ok: string, anchor: string, run: (id: string) =
 }
 
 export async function saveExperienceDraft(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-borrador", "estado", (id) => saveDraft(id, f));
 }
 export async function publishExperienceAction(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-publicada", "estado", async (id) => {
     await publishExperience(id);
     await audit("experience.published", { businessId: id, entity: "business", entityId: id });
   });
 }
 export async function unpublishExperienceAction(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-oculta", "estado", (id) => unpublishExperience(id));
 }
 export async function savePromoAdmin(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-promo", "promos", (id) => savePromotion(id, f));
 }
 export async function deletePromoAdmin(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-promo-borrada", "promos", (id) => deletePromotion(id, str(f, "id", 60)));
 }
 export async function togglePromoAdmin(f: FormData) {
+  await assertAdmin();
   await xRun(f, "guardado", "promos", (id) => setActive(id, "promotions", str(f, "id", 60), str(f, "active", 1) === "1"));
 }
 export async function saveItemAdmin(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-item", "catalogo", (id) => saveItem(id, f));
 }
 export async function deleteItemAdmin(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-item-borrado", "catalogo", (id) => deleteItem(id, str(f, "id", 60)));
 }
 export async function toggleItemAdmin(f: FormData) {
+  await assertAdmin();
   await xRun(f, "guardado", "catalogo", (id) => setActive(id, "catalog_items", str(f, "id", 60), str(f, "active", 1) === "1"));
 }
 
 /** Founder: a module on, off, or back to what the plan includes. */
 export async function setModuleAdmin(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-modulo", "modulos", async (id) => {
     const key = (["orders", "reservations"] as ModuleKey[]).find((k) => k === str(f, "module", 20));
     if (!key) throw new Error("Módulo no válido.");
@@ -983,6 +1034,7 @@ export async function setModuleAdmin(f: FormData) {
 // ---------- Soporte (founder) ----------
 
 export async function replySupportAdmin(f: FormData) {
+  await assertAdmin();
   const id = str(f, "ticket_id", 60);
   const back = `/admin/soporte/${id}`;
   try {
@@ -999,6 +1051,7 @@ export async function replySupportAdmin(f: FormData) {
 
 /** Founder: the money of a reported renewal arrived (registers it and issues the receipt) or not. */
 export async function decideClaim(f: FormData) {
+  await assertAdmin();
   const id = str(f, "claim_id", 60);
   const back = "/admin/cobros";
   let receipt = "";
@@ -1018,6 +1071,7 @@ export async function decideClaim(f: FormData) {
 
 /** Founder: the business's tier, per-feature exceptions, timed trials and limits (with history). */
 export async function saveBusinessAccess(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   try {
@@ -1049,6 +1103,7 @@ export async function saveBusinessAccess(f: FormData) {
 
 /** Founder: username and password access for empresas (turn on/off, people, close all sessions). */
 export async function manageBusinessLogin(f: FormData) {
+  await assertAdmin();
   const id = str(f, "business_id", 60);
   const back = `/admin/b/${id}`;
   const op = str(f, "op", 20);
@@ -1079,6 +1134,7 @@ export async function manageBusinessLogin(f: FormData) {
 
 /** Founder: which tiers receive each feature (new features start with none). */
 export async function saveRollout(f: FormData) {
+  await assertAdmin();
   try {
     const rows = FEATURES.map((feat) => ({
       key: feat.key,
@@ -1100,6 +1156,7 @@ export async function saveRollout(f: FormData) {
 
 /** Founder: marks a contract as sent for electronic signature, or countersigns it as FiveTap. */
 export async function contractSigning(f: FormData) {
+  await assertAdmin();
   const id = str(f, "id", 60);
   const back = "/admin/contratos";
   try {
@@ -1124,6 +1181,7 @@ export async function contractSigning(f: FormData) {
 
 /** Founder: remove a passkey, or turn "passkey only" sign-in on or off. */
 export async function managePasskeys(f: FormData) {
+  await assertAdmin();
   const back = "/admin/seguridad";
   const op = str(f, "op", 20);
   try {
@@ -1153,6 +1211,7 @@ export async function managePasskeys(f: FormData) {
 
 /** The waiter rating screen's stage: the venue drawn low-poly behind the avatar, and its floor. */
 export async function saveStage(f: FormData) {
+  await assertAdmin();
   await xRun(f, "escenario", "escenario", async (id) => {
     const patch: Record<string, string | null> = { stage_floor: f.get("floor") === "checker" ? "checker" : null };
     if (f.get("remove") === "1") patch.stage_url = null;
@@ -1167,6 +1226,7 @@ export async function saveStage(f: FormData) {
 
 /** Background photo of the venue behind the table plaque page (applies at once). */
 export async function saveBackground(f: FormData) {
+  await assertAdmin();
   await xRun(f, "fondo", "fondo", async (id) => {
     const patch: Record<string, string | null> = {};
     if (f.get("remove") === "1") patch.page_bg_url = null;
@@ -1182,6 +1242,7 @@ export async function saveBackground(f: FormData) {
 
 /** Saves the plaque page and publishes it in one step: the chips show it right away. */
 export async function saveAndPublishExperience(f: FormData) {
+  await assertAdmin();
   await xRun(f, "x-publicada", "estado", async (id) => {
     await saveDraft(id, f);
     await publishExperience(id);

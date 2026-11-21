@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { subscriptionId?: string; venue?: string; owner?: string; phone?: string; plan?: string } | null;
   const plans = await activePlans();
   const plan = plans.find((p) => p.key === body?.plan) ?? plans[0];
-  if (!plan) return Response.json({ error: "No hay planes disponibles." }, { status: 500 });
+  if (!plan) return Response.json({ error: "El registro por la web no está disponible: escríbenos y te cotizamos." }, { status: 410 });
   const venue = String(body?.venue ?? "").trim().slice(0, 80);
   const owner = String(body?.owner ?? "").trim().slice(0, 80);
   const phone = normalizePhone(String(body?.phone ?? ""));

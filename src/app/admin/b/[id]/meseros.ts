@@ -1,5 +1,7 @@
 "use server";
 
+import { assertAdmin } from "@/lib/admin-guard";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addStaffBatch, approveStaff, linkPlaque, regenerateAvatar, removeStaff, restoreStaff, setStaffActive } from "@/lib/staff";
@@ -33,6 +35,7 @@ async function run(f: FormData, ok: string, work: (businessId: string) => Promis
  * with the venue's logo, is approved at once and takes the next free waiter card in order.
  */
 export async function adminAddWaiters(f: FormData) {
+  await assertAdmin();
   await run(f, "meseros-agregados", async (businessId) => {
     const lines = (k: string) => String(f.get(k) ?? "").split(/\r?\n|,/).map((n) => n.trim()).filter(Boolean);
     const men = lines("names_m"), women = lines("names_f");
@@ -51,6 +54,7 @@ export async function adminAddWaiters(f: FormData) {
 
 /** One waiter: another look, man/woman, approve, card, on/off, delete or restore. */
 export async function adminWaiterOp(f: FormData) {
+  await assertAdmin();
   await run(f, "mesero", async (businessId) => {
     const id = String(f.get("id") ?? "");
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error("Mesero no encontrado.");

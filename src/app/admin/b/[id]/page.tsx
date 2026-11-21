@@ -21,8 +21,10 @@ import { SITE_URL, pieceUrl } from "@/lib/site";
 import { AvatarPicture } from "@/components/AvatarPicture";
 import { adminAddWaiters, adminWaiterOp } from "./meseros";
 import { clearTestData, deleteTestItem } from "./limpiar";
+import { branchStats } from "@/lib/branch-stats";
+import { BranchStats } from "@/components/BranchStats";
 import { verticalByKey } from "@/lib/verticals";
-import { PLAQUE_LABEL, plaqueState, staffFor } from "@/lib/staff";
+import { PLAQUE_LABEL, branchesFor, plaqueState, staffFor } from "@/lib/staff";
 import { moduleOn } from "@/lib/orders";
 import { db } from "@/lib/supabase";
 import { ticketsFor } from "@/lib/support";
@@ -94,6 +96,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
   const waiters = tags.filter(isWaiter);
   const crew = await staffFor(b.id);
   const staffName = new Map(crew.map((s) => [s.id, s]));
+  const [branches, bStats] = await Promise.all([branchesFor(b.id), branchStats(b.id)]);
   // Test data the founder can clear: latest ratings and how many taps are recorded.
   const [testRatings, tapCount] = await Promise.all([
     db().from("service_ratings").select("id, rating, comment, created_at, staff_id").eq("business_id", b.id).order("created_at", { ascending: false }).limit(30).then((r) => (r.data ?? []) as { id: string; rating: number; comment: string | null; created_at: string; staff_id: string | null }[]),
@@ -147,6 +150,8 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         </div>
         <p className="muted biz-setup-note">Enlaces para grabar en el chip: las <b>placas de mesa</b> usan <span className="code">/t/código</span> (el local) y las <b>tarjetas de mesero</b> usan <span className="code">/m/código</span> (el servicio de esa persona). Los encuentras en Placas.</p>
       </section>
+
+      {branches.length > 0 && <BranchStats rows={bStats.rows} total={bStats.total} />}
 
       {/* Waiters: their cards (links for the chips), who has each one, and their status, all in one place. */}
       {b.mode === "full" ? (
@@ -627,6 +632,12 @@ export default async function BusinessPage({ params, searchParams }: Props) {
               <option value="waiter">Tarjetas de meseros</option>
             </select>
             <input className="input" name="label" placeholder={`${v.spot} / Mesero`} style={{ width: 120, minHeight: 36, padding: "6px 10px" }} aria-label="Nombre" />
+            {branches.length > 0 && (
+              <select className="select" name="branch_id" defaultValue="" style={{ minHeight: 36, padding: "6px 10px", width: "auto" }} aria-label="Sucursal">
+                <option value="">Sin sucursal</option>
+                {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
+              </select>
+            )}
             <SubmitButton className="btn btn-ghost btn-sm" pending="…">+ Agregar</SubmitButton>
           </form>
         </div>

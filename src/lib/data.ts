@@ -44,6 +44,11 @@ export async function billingOf(b: Business): Promise<Billing> {
 /** The plaque's pages (tap, message, club, Google) are closed: plaque off, venue paused, canceled or unpaid. */
 export async function guestClosed(tag: TagWithBusiness | null): Promise<boolean> {
   if (!tag || !tag.active) return true;
+  // A branch the business switched off closes its own pieces; the other branches keep working.
+  if (tag.branch_id) {
+    const { data } = await db().from("branches").select("active").eq("id", tag.branch_id).maybeSingle();
+    if (data && data.active === false) return true;
+  }
   return (await billingOf(tag.business)).blocked;
 }
 

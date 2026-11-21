@@ -1,5 +1,7 @@
 "use server";
 
+import { assertAdmin } from "@/lib/admin-guard";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { removePrivate, uploadPrivate } from "@/lib/company";
@@ -23,6 +25,7 @@ function fail(e: unknown): never {
 }
 
 export async function saveCompany(f: FormData) {
+  await assertAdmin();
   try {
     const costs = [0, 1, 2, 3, 4, 5]
       .map((i) => ({ name: str(f, `cost_name_${i}`, 40), amount: num(f, `cost_amount_${i}`) }))
@@ -53,6 +56,7 @@ export async function saveCompany(f: FormData) {
 }
 
 export async function saveFounder(f: FormData) {
+  await assertAdmin();
   try {
     const row = {
       first_name: str(f, "first_name", 60),
@@ -76,6 +80,7 @@ export async function saveFounder(f: FormData) {
 }
 
 export async function deleteFounder(f: FormData) {
+  await assertAdmin();
   const { error } = await db().from("founders").delete().eq("id", str(f, "id", 60));
   if (error) fail(new Error(error.message));
   done("fundador");
@@ -90,6 +95,7 @@ const DOC_TYPES: Record<string, string> = {
 };
 
 export async function uploadDocument(f: FormData) {
+  await assertAdmin();
   try {
     const file = f.get("file");
     if (!(file instanceof File) || file.size === 0) throw new Error("Elige un archivo.");
@@ -111,6 +117,7 @@ export async function uploadDocument(f: FormData) {
 }
 
 export async function deleteDocument(f: FormData) {
+  await assertAdmin();
   const id = str(f, "id", 60);
   const { data } = await db().from("documents").select("path").eq("id", id).maybeSingle();
   if (data?.path) await removePrivate(data.path as string);

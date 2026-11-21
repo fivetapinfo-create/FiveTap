@@ -1,5 +1,7 @@
 "use server";
 
+import { assertAdmin } from "@/lib/admin-guard";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/supabase";
@@ -26,6 +28,7 @@ async function run(f: FormData, ok: string, work: (businessId: string) => Promis
 
 /** One rating or one private message. */
 export async function deleteTestItem(f: FormData) {
+  await assertAdmin();
   await run(f, "prueba-borrado", async (businessId) => {
     const id = String(f.get("id") ?? "");
     const kind = String(f.get("kind") ?? "");
@@ -39,6 +42,7 @@ export async function deleteTestItem(f: FormData) {
 
 /** Everything a demo leaves behind: the checked groups, after a confirmation. */
 export async function clearTestData(f: FormData) {
+  await assertAdmin();
   await run(f, "prueba-limpia", async (businessId) => {
     if (f.get("confirm") !== "1") throw new Error("Marca la casilla para confirmar.");
     const groups = { ratings: "service_ratings", messages: "feedback", taps: "events" } as const;

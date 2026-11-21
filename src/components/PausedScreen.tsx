@@ -49,8 +49,7 @@ export function PausedScreen({ b, billing, token, plan }: { b: Business; billing
           <div className="msg">
             {ended ? (
               <div className="row">
-                <a className="btn btn-dark" href={`/empezar?n=${encodeURIComponent(b.name)}`}>Elegir mi plan</a>
-                <a className="btn btn-ghost" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Terminó mi prueba de FiveTap y quiero elegir mi plan.`)}>Hablar con FiveTap</a>
+                <a className="btn btn-dark" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Terminó mi prueba de FiveTap y quiero seguir con el servicio.`)}>Seguir con FiveTap</a>
               </div>
             ) : unpaid ? (
               <>
