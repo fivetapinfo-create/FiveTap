@@ -19,7 +19,7 @@ export default async function WaiterCardPage(props: Props) {
   if (tag && tag.kind !== "waiter") redirect(`/t/${code}`); // a table plaque opens the venue
   if (tag) {
     const [req, jar] = await Promise.all([guestRequest(), cookies()]);
-    if (!req.bot && !(await isAdminSession(jar.get(ADMIN_COOKIE)?.value))) {
+    if (!req.bot && !req.replay && !(await isAdminSession(jar.get(ADMIN_COOKIE)?.value))) {
       after(() => logEvent({ business_id: tag.business_id, tag_id: tag.id, type: "scan", source: "nfc", device: req.device, user_agent: req.ua }));
     }
   }

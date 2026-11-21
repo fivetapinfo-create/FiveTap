@@ -41,7 +41,7 @@ export default async function TapPage({ params, searchParams }: Props) {
   const source = sourceFrom(sp.s);
   // Logged after the response is sent: the guest never waits on the insert.
   // A waiter card is counted on its own address (/m/…), never twice.
-  if (!req.bot && sp.preview !== "1" && !founder && tag.kind !== "waiter") {
+  if (!req.bot && !req.replay && sp.preview !== "1" && !founder && tag.kind !== "waiter") {
     after(() =>
       logEvent({ business_id: tag.business_id, tag_id: tag.id, type: "scan", source, device: req.device, user_agent: req.ua }),
     );
