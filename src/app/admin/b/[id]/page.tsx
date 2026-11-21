@@ -22,6 +22,7 @@ import { AvatarPicture } from "@/components/AvatarPicture";
 import { adminAddWaiters, adminWaiterOp } from "./meseros";
 import { clearTestData, deleteTestItem } from "./limpiar";
 import { branchStats } from "@/lib/branch-stats";
+import { adminSaveBranch } from "./sucursales";
 import { BranchStats } from "@/components/BranchStats";
 import { verticalByKey } from "@/lib/verticals";
 import { PLAQUE_LABEL, branchesFor, plaqueState, staffFor } from "@/lib/staff";
@@ -151,6 +152,37 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <p className="muted biz-setup-note">Enlaces para grabar en el chip: las <b>placas de mesa</b> usan <span className="code">/t/código</span> (el local) y las <b>tarjetas de mesero</b> usan <span className="code">/m/código</span> (el servicio de esa persona). Los encuentras en Placas.</p>
       </section>
 
+      {/* Branches: one business, several locations, each with its own Google listing and pieces. */}
+      <details className="panel more" id="sucursales-admin" open={branches.length > 0 || sp.ok === "sucursal"}>
+        <summary><span>Sucursales</span><small className="muted">{branches.length ? `${branches.filter((x) => x.active).length} activas de ${branches.length}` : "Para cadenas: una cuenta, varias ubicaciones"}</small></summary>
+        <div className="br-list">
+          {branches.map((x) => (
+            <div key={x.id} className={`br-item${x.active ? "" : " off"}`}>
+              <form action={adminSaveBranch} className="br-form">
+                <input type="hidden" name="business_id" value={b.id} /><input type="hidden" name="id" value={x.id} />
+                <input className="input" name="name" defaultValue={x.name} required maxLength={60} aria-label="Nombre de la sucursal" />
+                <input className="input" name="address" defaultValue={x.address ?? ""} placeholder="Dirección" maxLength={160} aria-label="Dirección" />
+                <input className="input" name="review" defaultValue={x.google_review_url ?? ""} placeholder="Enlace de reseñas de Google de esta sucursal" aria-label="Google" />
+                <button className="btn btn-ghost btn-sm" type="submit">Guardar</button>
+              </form>
+              <form action={adminSaveBranch}>
+                <input type="hidden" name="business_id" value={b.id} /><input type="hidden" name="id" value={x.id} /><input type="hidden" name="op" value="toggle" /><input type="hidden" name="active" value={x.active ? "0" : "1"} />
+                <button className={`btn btn-sm ${x.active ? "btn-ghost" : "btn-dark"}`} type="submit">{x.active ? "Desactivar sucursal" : "Activar sucursal"}</button>
+              </form>
+              {!x.active && <small className="muted">Desactivada: sus placas y tarjetas no abren; las demás sucursales siguen igual.</small>}
+            </div>
+          ))}
+          <form action={adminSaveBranch} className="br-form br-new">
+            <input type="hidden" name="business_id" value={b.id} />
+            <input className="input" name="name" required maxLength={60} placeholder="Nueva sucursal (ej. Costa del Este)" aria-label="Nueva sucursal" />
+            <input className="input" name="address" placeholder="Dirección" maxLength={160} aria-label="Dirección" />
+            <input className="input" name="review" placeholder="Enlace de reseñas de Google (opcional)" aria-label="Google" />
+            <button className="btn btn-dark btn-sm" type="submit">Agregar sucursal</button>
+          </form>
+          <small className="muted">Después asigna placas y meseros a cada sucursal: al agregar piezas elige su sucursal, y cada placa usa el enlace de Google de su sucursal.</small>
+        </div>
+      </details>
+
       {branches.length > 0 && <BranchStats rows={bStats.rows} total={bStats.total} />}
 
       {/* Waiters: their cards (links for the chips), who has each one, and their status, all in one place. */}
@@ -169,6 +201,14 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             <input type="hidden" name="business_id" value={b.id} />
             <label className="field"><span>Hombres (uno por línea)</span><textarea className="textarea" name="names_m" rows={3} placeholder={"Carlos\nLuis"} /></label>
             <label className="field"><span>Mujeres (una por línea)</span><textarea className="textarea" name="names_f" rows={3} placeholder={"Ana\nSofía"} /></label>
+            {branches.length > 0 && (
+              <label className="field"><span>Sucursal</span>
+                <select className="select" name="branch_id" defaultValue="">
+                  <option value="">Todas / sin sucursal</option>
+                  {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
+                </select>
+              </label>
+            )}
             <button className="btn btn-dark" type="submit">Agregar y asignar tarjetas</button>
           </form>
           <ul className="mz-cards">
@@ -201,7 +241,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                     <div className="mz-pic"><AvatarPicture config={s.avatar} logoUrl={b.logo_url} alt={`Avatar de ${s.name}`} /></div>
                     <div className="mz-info">
                       <b>{s.name}{s.is_demo ? " · demo" : ""}</b>
-                      <small className="muted">{s.title}{card ? ` · ${card.label}` : " · sin tarjeta"}</small>
+                      <small className="muted">{s.title}{card ? ` · ${card.label}` : " · sin tarjeta"}{s.branch_id ? ` · ${branches.find((br) => br.id === s.branch_id)?.name ?? ""}` : ""}</small>
                       <em className={`chip ${status === "Publicado" ? "ok" : status === "Pendiente de aprobar" ? "warn" : "off"}`}>{status}</em>
                       <div className="mz-actions">
                         <form action={adminWaiterOp}>{hid("regenerate")}<button className="btn btn-ghost btn-sm" type="submit">Otro look</button></form>
@@ -215,6 +255,16 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                         <input className="input" name="name" defaultValue={s.name} maxLength={50} aria-label={`Nombre de ${s.name}`} />
                         <button className="btn btn-ghost btn-sm" type="submit">Guardar nombre</button>
                       </form>
+                      {branches.length > 0 && (
+                        <form action={adminWaiterOp} className="mz-card-pick">
+                          {hid("branch")}
+                          <select className="select" name="branch_id" defaultValue={s.branch_id ?? ""} aria-label={`Sucursal de ${s.name}`}>
+                            <option value="">Todas las sucursales</option>
+                            {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
+                          </select>
+                          <button className="btn btn-ghost btn-sm" type="submit">Cambiar sucursal</button>
+                        </form>
+                      )}
                       <form action={adminWaiterOp} className="mz-card-pick">
                         {hid("card")}
                         <select className="select" name="tag" defaultValue={card?.id ?? ""} aria-label={`Tarjeta de ${s.name}`}>

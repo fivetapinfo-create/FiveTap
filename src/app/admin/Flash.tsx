@@ -1,4 +1,5 @@
 const OK: Record<string, string> = {
+  sucursal: "Sucursal guardada.",
   "prueba-borrado": "Borrado.",
   "prueba-limpia": "Datos de prueba borrados. La app del dueño quedó limpia.",
   "meseros-agregados": "Meseros agregados: cada uno ya tiene su avatar con el logo y su tarjeta asignada.",

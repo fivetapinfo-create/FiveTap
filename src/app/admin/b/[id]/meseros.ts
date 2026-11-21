@@ -40,13 +40,25 @@ export async function adminAddWaiters(f: FormData) {
     const lines = (k: string) => String(f.get(k) ?? "").split(/\r?\n|,/).map((n) => n.trim()).filter(Boolean);
     const men = lines("names_m"), women = lines("names_f");
     if (!men.length && !women.length) throw new Error("Escribe al menos un nombre.");
+    // Optional branch: only one of this business's own branches.
+    let branchId: string | null = null;
+    const wanted = String(f.get("branch_id") ?? "");
+    if (wanted) {
+      const { data: br } = await db().from("branches").select("id").eq("id", wanted).eq("business_id", businessId).maybeSingle();
+      if (!br) throw new Error("Esa sucursal no es de este negocio.");
+      branchId = br.id;
+    }
     const ids = [
-      ...(men.length ? await addStaffBatch(businessId, men, { body: "m" }) : []),
-      ...(women.length ? await addStaffBatch(businessId, women, { body: "f" }) : []),
+      ...(men.length ? await addStaffBatch(businessId, men, { body: "m", branchId }) : []),
+      ...(women.length ? await addStaffBatch(businessId, women, { body: "f", branchId }) : []),
     ];
     await approveStaff(businessId, ids);
-    const { data } = await db().from("tags").select("id, label").eq("business_id", businessId).eq("kind", "waiter").eq("active", true).is("staff_id", null);
-    const free = ((data ?? []) as { id: string; label: string }[]).sort((a, z) => a.label.localeCompare(z.label, "es", { numeric: true }));
+    const { data } = await db().from("tags").select("id, label, branch_id").eq("business_id", businessId).eq("kind", "waiter").eq("active", true).is("staff_id", null);
+    // Free cards of the same branch first (then cards with no branch), in label order.
+    const rank = (t: { branch_id: string | null }) => (branchId ? (t.branch_id === branchId ? 0 : t.branch_id ? 2 : 1) : t.branch_id ? 1 : 0);
+    const free = ((data ?? []) as { id: string; label: string; branch_id: string | null }[])
+      .filter((t) => !branchId || !t.branch_id || t.branch_id === branchId)
+      .sort((a, z) => rank(a) - rank(z) || a.label.localeCompare(z.label, "es", { numeric: true }));
     for (let i = 0; i < ids.length && i < free.length; i++) await linkPlaque(businessId, free[i].id, ids[i]);
     if (ids.length > free.length) return "meseros-sin-tarjeta";
   });
@@ -70,6 +82,15 @@ export async function adminWaiterOp(f: FormData) {
       await db().from("tags").update({ staff_name: name }).eq("business_id", businessId).eq("staff_id", id);
     }
     else if (op === "activate" || op === "deactivate") await setStaffActive(businessId, id, op === "activate");
+    else if (op === "branch") {
+      const wanted = String(f.get("branch_id") ?? "");
+      if (wanted) {
+        const { data: br } = await db().from("branches").select("id").eq("id", wanted).eq("business_id", businessId).maybeSingle();
+        if (!br) throw new Error("Esa sucursal no es de este negocio.");
+      }
+      const { error } = await db().from("staff").update({ branch_id: wanted || null }).eq("id", id).eq("business_id", businessId);
+      if (error) throw new Error(error.message);
+    }
     else if (op === "card") {
       // Free whatever card the waiter had, then give them the chosen one (if any).
       const { data } = await db().from("tags").select("id").eq("business_id", businessId).eq("staff_id", id);
