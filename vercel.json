@@ -1,32 +1,11 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/daily",
-      "schedule": "7 12 * * *"
-    }
-  ],
+  "crons": [{ "path": "/api/cron/daily", "schedule": "7 12 * * *" }],
   "redirects": [
     {
       "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "fivetap-snowy.vercel.app"
-        }
-      ],
+      "has": [{ "type": "host", "value": "fivetap-snowy.vercel.app" }],
       "destination": "https://getfivetap.com/",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "fivetap-snowy.vercel.app"
-        }
-      ],
-      "destination": "https://getfivetap.com/:path*",
-      "permanent": true
+      "permanent": false
     }
   ]
 }
