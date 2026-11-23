@@ -96,8 +96,8 @@ export function ScrollFx() {
       clearTimeout(timer);
       timer = window.setTimeout(tag, 80);
     });
-    const main = document.querySelector(".admin") ?? document.body;
-    mo.observe(main, { childList: true, subtree: true });
+    // The whole body: a loading screen may be swapped for the page after this runs.
+    mo.observe(document.body, { childList: true, subtree: true });
 
     // Zoom out + shrinking header: one cheap scroll handler, at most once per frame.
     let raf = 0;
