@@ -168,13 +168,6 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             <b>{resv.today === 1 ? "1 reserva hoy" : `${resv.today} reservas hoy`}{resv.pending ? ` · ${resv.pending} por confirmar` : ""}</b> · Ver reservas →
           </Link>
         )}
-        {rec && (
-          <a className="rec-card" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Quiero activar ${rec === "reservas" ? "las reservas" : "los pedidos"} desde la placa.`)}>
-            <span className="eyebrow-caps">Recomendado para tu negocio</span>
-            <b>{rec === "reservas" ? "Activa las reservas desde la placa" : "Activa los pedidos desde la placa"}</b>
-            <span className="muted">{rec === "reservas" ? "Tus clientes reservan tocando la placa y tú las confirmas por WhatsApp desde aquí." : "Tus clientes piden desde la mesa con tu menú y el pedido te llega aquí al instante."} Escríbenos para activarlo →</span>
-          </a>
-        )}
         {pending.length > 0 && (
           <a className="alert alert-warn glance-alert" href="#mensajes">
             <b>{pending.length === 1 ? "1 mensaje de un cliente por resolver" : `${pending.length} mensajes de clientes por resolver`}</b> · Ver →
@@ -197,22 +190,6 @@ export default async function OwnerPage({ params, searchParams }: Props) {
           </Link>
         )}
 
-        <AppSetup
-          endpoint={`/mi/${token}/push`}
-          benefits={[
-            "Te avisamos al instante cuando un cliente deja un mensaje privado.",
-            "Cada mañana, tu resumen del día anterior.",
-            "Tu reporte a fin de mes.",
-          ]}
-          guided={sp.instalar === "1"}
-          compactWhenOn
-          initialRole={role}
-          roles={[
-            role === "owner"
-              ? { value: "owner", label: "Dueño/a", hint: "Recibes todo, incluidos los recordatorios de pago." }
-              : { value: "manager", label: "Gerente", hint: "Recibes los mensajes de clientes y el resumen diario. Sin recordatorios de pago." },
-          ]}
-        />
 
         {/* 2. The result, in one look. */}
         <section className="owner-hero glance">
@@ -259,6 +236,24 @@ export default async function OwnerPage({ params, searchParams }: Props) {
             </Link>
           ))}
         </nav>
+
+        {/* Install + notifications: after the result and the shortcuts, never before them. */}
+        <AppSetup
+          endpoint={`/mi/${token}/push`}
+          benefits={[
+            "Te avisamos al instante cuando un cliente deja un mensaje privado.",
+            "Cada mañana, tu resumen del día anterior.",
+            "Tu reporte a fin de mes.",
+          ]}
+          guided={sp.instalar === "1"}
+          compactWhenOn
+          initialRole={role}
+          roles={[
+            role === "owner"
+              ? { value: "owner", label: "Dueño/a", hint: "Recibes todo, incluidos los recordatorios de pago." }
+              : { value: "manager", label: "Gerente", hint: "Recibes los mensajes de clientes y el resumen diario. Sin recordatorios de pago." },
+          ]}
+        />
 
         {member && <MemberCard b={b} since={member.since} status={member.status} fee={Number(b.monthly_fee)} />}
 
@@ -339,6 +334,15 @@ export default async function OwnerPage({ params, searchParams }: Props) {
               </table>
             </div>
           </details>
+        )}
+
+        {/* A suggestion, never in the way: at the end. */}
+        {rec && (
+          <a className="rec-card" href={salesWhatsAppUrl(`Hola, soy de ${b.name}. Quiero activar ${rec === "reservas" ? "las reservas" : "los pedidos"} desde la placa.`)}>
+            <span className="eyebrow-caps">Recomendado para tu negocio</span>
+            <b>{rec === "reservas" ? "Activa las reservas desde la placa" : "Activa los pedidos desde la placa"}</b>
+            <span className="muted">{rec === "reservas" ? "Tus clientes reservan tocando la placa y tú las confirmas por WhatsApp desde aquí." : "Tus clientes piden desde la mesa con tu menú y el pedido te llega aquí al instante."} Escríbenos para activarlo →</span>
+          </a>
         )}
 
         {/* 7. The plan: the owner only. */}
