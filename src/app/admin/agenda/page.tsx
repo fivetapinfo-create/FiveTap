@@ -42,7 +42,7 @@ export default async function Agenda() {
         ]}
       />
 
-      <section className="panel">
+      <section className="panel fx-stack">
         <div className="panel-head"><h2>Hoy</h2></div>
         {now.length ? now.map((t) => <TaskRow key={t.id} t={t} />) : <div className="empty"><p>Todo al día. Aquí aparecen los cobros, renovaciones, registros nuevos y quejas nuevas.</p></div>}
       </section>

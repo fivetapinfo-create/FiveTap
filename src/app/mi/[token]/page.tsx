@@ -263,7 +263,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         {member && <MemberCard b={b} since={member.since} status={member.status} fee={Number(b.monthly_fee)} />}
 
         {/* 3. Messages from guests: open ones first. */}
-        <section className="panel" id="mensajes">
+        <section className="panel fx-stack" id="mensajes">
           <div className="panel-head">
             <h2>Mensajes de clientes</h2>
             {feedback.length > 0 && <span className="muted">{pending.length ? `${pending.length} por resolver` : "Todo resuelto ✓"}</span>}

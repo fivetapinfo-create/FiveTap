@@ -2,6 +2,7 @@ import { IntroSplash } from "@/components/IntroSplash";
 import { OwnerTabs } from "@/components/OwnerTabs";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Snackbar } from "@/components/Snackbar";
+import { ScrollFx } from "@/components/ScrollFx";
 import { accessRole } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { accessOf } from "@/lib/entitlements";
@@ -26,6 +27,7 @@ export default async function OwnerLayout({ children, params }: { children: Reac
         <OwnerTabs token={token} team={b.mode === "full" && Boolean(acc?.has.team)} clients={Boolean(acc?.has.clients)} pending={open.count ?? 0} />
         <PullToRefresh />
         <Snackbar />
+        <ScrollFx />
       </>
     );
   }

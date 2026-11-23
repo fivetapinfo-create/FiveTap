@@ -2124,3 +2124,52 @@ body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom))
 
 /* Privacy note under the guest forms that ask for data. */
 .data-note { font-size: 12px; text-align: center; margin: 4px 0 0; }
+
+/* ---------- Scroll styles (Founder + Fivetap Business), driven by ScrollFx ----------
+   1 Zoom out · 2 Blur in · 3 Snap · 4 Stacking · 5 Shrink header · 6 Tilt in · 7 Count up · 8 Mask reveal */
+
+/* 5 · Shrinking header: big at the top, compact once you scroll. */
+.admin .admin-top { position: sticky; top: 0; z-index: 30; transition: box-shadow 260ms var(--ease-out), background-color 260ms var(--ease-out); }
+.admin .admin-top .container { transition: height 260ms var(--ease-out); }
+.admin .admin-top .container > a:first-child svg, .admin .admin-top .container > a:first-child img { transition: transform 260ms var(--ease-out); transform-origin: left center; }
+html.fx-scrolled .admin .admin-top { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22); background: color-mix(in srgb, #0a0a0a 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+html.fx-scrolled .admin .admin-top .container { height: 48px; }
+html.fx-scrolled .admin .admin-top .container > a:first-child svg, html.fx-scrolled .admin .admin-top .container > a:first-child img { transform: scale(0.88); }
+/* Sticky rows below the header sit under it, not behind it. */
+html.fx-on .admin .biz-tabs, html.fx-on .admin .gx-nav { top: 60px; transition: top 260ms var(--ease-out); }
+html.fx-on.fx-scrolled .admin .biz-tabs, html.fx-on.fx-scrolled .admin .gx-nav { top: 48px; }
+
+/* 3 · Snap: rows that scroll sideways stop on one item per swipe. */
+.admin .biz-tabs, .admin .gx-nav, .admin .cl-tabs, .admin .admin-nav { scroll-snap-type: x proximity; }
+.admin .biz-tabs > *, .admin .gx-nav > *, .admin .cl-tabs > *, .admin .admin-nav > * { scroll-snap-align: start; }
+@media (max-width: 640px) {
+  .admin .home-kpis { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 -20px; padding: 0 20px 6px; scroll-padding: 0 20px; scrollbar-width: none; }
+  .admin .home-kpis::-webkit-scrollbar { display: none; }
+  .admin .home-kpis > .kpi { flex: 0 0 calc(50% - 5px); scroll-snap-align: start; }
+}
+
+/* 4 · Stacking cards: each one lands on the last. */
+.admin .panel.fx-stack { overflow: clip; padding-bottom: 6px; }
+.admin .fx-stack > .msg { position: sticky; top: calc(64px + var(--fx-i, 0) * 7px); margin: 10px 12px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.05), 0 10px 24px rgba(0, 0, 0, 0.04); }
+html[data-theme="dark"] .admin .fx-stack > .msg { box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.35); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 1 · Zoom out: the hero shrinks into the page as you scroll. */
+  html.fx-on .admin .owner-hero, html.fx-on .admin .admin-head { transform: scale(calc(1 - 0.06 * var(--fx-top, 0))); opacity: calc(1 - 0.35 * var(--fx-top, 0)); transform-origin: 50% 0; will-change: transform; }
+
+  /* 2 · Blur in: content comes into focus. */
+  html.fx-on .fx-blur { opacity: 0; filter: blur(10px); transform: translateY(16px); transition: opacity 620ms var(--ease-out), filter 620ms var(--ease-out), transform 620ms var(--ease-out); }
+  html.fx-on .fx-blur.fx-in { opacity: 1; filter: none; transform: none; }
+
+  /* 6 · Tilt in: cards flip up as they enter, one after another. */
+  html.fx-on .fx-tilt { opacity: 0; transform: perspective(900px) rotateX(22deg) translateY(18px); transform-origin: 50% 100%; transition: opacity 560ms var(--ease-out), transform 560ms var(--ease-out); transition-delay: calc(var(--fx-i, 0) * 55ms); }
+  html.fx-on .fx-tilt.fx-in { opacity: 1; transform: none; }
+
+  /* 8 · Mask reveal: images wipe into view. */
+  html.fx-on .fx-mask { clip-path: inset(0 0 100% 0); transition: clip-path 760ms var(--ease-out); transition-delay: calc(var(--fx-i, 0) * 40ms); }
+  html.fx-on .fx-mask.fx-in { clip-path: inset(0 0 0 0); }
+
+  /* 4 · Stacking: the card settles as it lands. */
+  html.fx-on .admin .fx-stack > .msg { transition: transform 300ms var(--ease-out); }
+}
+@media print { html.fx-on .fx-blur, html.fx-on .fx-tilt, html.fx-on .fx-mask { opacity: 1 !important; filter: none !important; transform: none !important; clip-path: none !important; } }
