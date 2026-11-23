@@ -2130,14 +2130,17 @@ body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom))
 
 /* 5 · Shrinking header: big at the top, compact once you scroll. */
 .admin .admin-top { position: sticky; top: 0; z-index: 30; transition: box-shadow 260ms var(--ease-out), background-color 260ms var(--ease-out); }
-.admin .admin-top .container { transition: height 260ms var(--ease-out); }
+.admin .admin-top .container { transition: height 260ms var(--ease-out), padding 260ms var(--ease-out); }
 .admin .admin-top .container > a:first-child svg, .admin .admin-top .container > a:first-child img { transition: transform 260ms var(--ease-out); transform-origin: left center; }
 html.fx-scrolled .admin .admin-top { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22); background: color-mix(in srgb, #0a0a0a 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 html.fx-scrolled .admin .admin-top .container { height: 48px; }
+/* On phones the founder header has two rows (logo + menu): it shrinks its padding instead. */
+@media (max-width: 480px) {
+  html.fx-scrolled .admin .admin-top .container { height: auto; padding-block: 6px; row-gap: 2px; }
+}
 html.fx-scrolled .admin .admin-top .container > a:first-child svg, html.fx-scrolled .admin .admin-top .container > a:first-child img { transform: scale(0.88); }
 /* Sticky rows below the header sit under it, not behind it. */
-html.fx-on .admin .biz-tabs, html.fx-on .admin .gx-nav { top: 60px; transition: top 260ms var(--ease-out); }
-html.fx-on.fx-scrolled .admin .biz-tabs, html.fx-on.fx-scrolled .admin .gx-nav { top: 48px; }
+html.fx-on .admin .biz-tabs, html.fx-on .admin .gx-nav { top: var(--fx-head, 60px); }
 
 /* 3 · Snap: rows that scroll sideways stop on one item per swipe. */
 .admin .biz-tabs, .admin .gx-nav, .admin .cl-tabs, .admin .admin-nav { scroll-snap-type: x proximity; }
@@ -2150,7 +2153,7 @@ html.fx-on.fx-scrolled .admin .biz-tabs, html.fx-on.fx-scrolled .admin .gx-nav {
 
 /* 4 · Stacking cards: each one lands on the last. */
 .admin .panel.fx-stack { overflow: clip; padding-bottom: 6px; }
-.admin .fx-stack > .msg { position: sticky; top: calc(64px + var(--fx-i, 0) * 7px); margin: 10px 12px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.05), 0 10px 24px rgba(0, 0, 0, 0.04); }
+.admin .fx-stack > .msg { position: sticky; top: calc(var(--fx-head, 60px) + 6px + var(--fx-i, 0) * 7px); margin: 10px 12px 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.05), 0 10px 24px rgba(0, 0, 0, 0.04); }
 html[data-theme="dark"] .admin .fx-stack > .msg { box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.35); }
 
 @media (prefers-reduced-motion: no-preference) {

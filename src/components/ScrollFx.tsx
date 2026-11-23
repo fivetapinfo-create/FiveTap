@@ -108,16 +108,27 @@ export function ScrollFx() {
         const y = window.scrollY;
         root.style.setProperty("--fx-top", Math.min(1, Math.max(0, y / 260)).toFixed(3));
         root.classList.toggle("fx-scrolled", y > 12);
+        // Real header height (one or two rows, big or compact): sticky rows sit right under it.
+        const head = document.querySelector<HTMLElement>(".admin .admin-top");
+        if (head) root.style.setProperty("--fx-head", `${Math.round(head.getBoundingClientRect().height)}px`);
       });
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    // The header animates its height for 260 ms after crossing the top: measure again after it.
+    let settleTimer = 0;
+    const settle = () => { clearTimeout(settleTimer); settleTimer = window.setTimeout(onScroll, 300); };
+    window.addEventListener("scroll", settle, { passive: true });
 
     return () => {
       io.disconnect();
       mo.disconnect();
       clearTimeout(timer);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("scroll", settle);
+      clearTimeout(settleTimer);
       cancelAnimationFrame(raf);
     };
   }, [path]);
