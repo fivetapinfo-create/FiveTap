@@ -97,6 +97,9 @@ export default async function ClubPage({ params, searchParams }: Props) {
             {copy.clubJoin}
           </SubmitButton>
         </form>
+        <p className="rise" style={{ ...i(4), textAlign: "center", marginTop: 18 }}>
+          <a className="muted link-u" style={{ fontSize: 13 }} href={`/t/${code}/club/salir`}>{copy.clubLeaveLink}</a>
+        </p>
       </div>
     </main>
   );

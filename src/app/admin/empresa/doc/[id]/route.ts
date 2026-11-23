@@ -1,3 +1,4 @@
+import { adminAllowed, notAllowed } from "@/lib/admin-guard";
 import { downloadPrivate } from "@/lib/company";
 import { db } from "@/lib/supabase";
 
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 const TYPE: Record<string, string> = { pdf: "application/pdf", jpg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic" };
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await adminAllowed())) return notAllowed();
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) return new Response("No encontrado", { status: 404 });
   const { data } = await db().from("documents").select("path, title").eq("id", id).maybeSingle();

@@ -16,8 +16,9 @@ export async function requestCancel(f: FormData) {
   const back = `/mi/${token}/ajustes`;
   const reason = String(f.get("reason") ?? "");
   const detail = String(f.get("detail") ?? "").trim().slice(0, 300);
-  if (!CANCEL_REASONS.includes(reason as (typeof CANCEL_REASONS)[number])) redirect(`${back}?error=motivo#suscripcion`);
-  const text = detail ? `${reason}: ${detail}` : reason;
+  // Cancelling is as easy as signing up: the reason is optional, never a hurdle.
+  const known = CANCEL_REASONS.includes(reason as (typeof CANCEL_REASONS)[number]) ? reason : "";
+  const text = [known, detail].filter(Boolean).join(": ") || "Sin motivo";
   const { error } = await db().from("businesses").update({ cancel_requested_at: new Date().toISOString(), cancel_reason: text }).eq("id", b.id);
   if (error) redirect(`${back}?error=guardar#suscripcion`);
   await sendPush({ role: "founder" }, { title: `${b.name} pidió cancelar`, body: text, url: `/admin/b/${b.id}` });

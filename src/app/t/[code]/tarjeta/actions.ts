@@ -28,7 +28,7 @@ export async function joinLoyalty(f: FormData) {
     token = card.token;
     // Promotions only with their own, separate yes (and only where the venue has the club).
     if (f.get("marketing") === "1" && (await can(tag.business, "club"))) {
-      await upsertContact({ business_id: tag.business_id, tag_id: tag.id, name, phone, birthday_month: null, birthday_day: null }).catch(() => {});
+      await upsertContact({ business_id: tag.business_id, tag_id: tag.id, name, phone, birthday_month: null, birthday_day: null, source: "tarjeta" }).catch(() => {});
     }
   } catch (e) {
     console.error("[tarjeta]", e);

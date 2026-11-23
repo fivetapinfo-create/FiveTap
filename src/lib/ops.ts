@@ -83,6 +83,33 @@ async function createTags(businessId: string, label: string, count: number, star
   fail("No se pudieron generar códigos únicos.");
 }
 
+/** A host we must never download from: this server, private networks, cloud metadata. */
+function internalHost(host: string) {
+  const h = host.replace(/^\[|\]$/g, "").toLowerCase();
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".internal") || h.endsWith(".local")) return true;
+  if (/^[0-9.]+$/.test(h)) {
+    const [a, b] = h.split(".").map(Number);
+    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
+  }
+  return h.includes(":"); // IPv6 literals: not needed for public images
+}
+
+/** Downloads an image over https only, following at most 3 redirects, never to an internal address. */
+async function safeImageFetch(start: string): Promise<Response | null> {
+  let url = start;
+  for (let hop = 0; hop < 4; hop++) {
+    let u: URL;
+    try { u = new URL(url); } catch { return null; }
+    if (u.protocol !== "https:" || internalHost(u.hostname)) return null;
+    const res = await fetch(u, { redirect: "manual", signal: AbortSignal.timeout(15000) }).catch(() => null);
+    if (!res) return null;
+    const next = res.status >= 300 && res.status < 400 ? res.headers.get("location") : null;
+    if (!next) return res;
+    url = new URL(next, u).toString();
+  }
+  return null;
+}
+
 const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 
 /** Reads an image from base64 or an https link: PNG/JPG/WEBP up to 3 MB. */
@@ -93,7 +120,7 @@ async function imageFrom(a: Record<string, unknown>): Promise<File> {
     bytes = Uint8Array.from(Buffer.from(raw, "base64"));
     type = str(a.content_type, 40) || "image/jpeg";
   } else if (typeof a.image_url === "string" && /^https:\/\//i.test(a.image_url)) {
-    const res = await fetch(a.image_url, { redirect: "follow", signal: AbortSignal.timeout(15000) }).catch(() => null);
+    const res = await safeImageFetch(a.image_url);
     if (!res?.ok) fail("No se pudo descargar la imagen de ese enlace.");
     type = (res!.headers.get("content-type") ?? "").split(";")[0]!.trim();
     bytes = new Uint8Array(await res!.arrayBuffer());

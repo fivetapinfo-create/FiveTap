@@ -2121,3 +2121,6 @@ body:has(.owner-tabs) { padding-bottom: calc(84px + env(safe-area-inset-bottom))
 .br-item form { margin: 0; }
 .br-form { display: grid; grid-template-columns: 1.1fr 1.2fr 1.6fr auto; gap: 8px; align-items: center; }
 @media (max-width: 860px) { .br-form { grid-template-columns: 1fr; } }
+
+/* Privacy note under the guest forms that ask for data. */
+.data-note { font-size: 12px; text-align: center; margin: 4px 0 0; }

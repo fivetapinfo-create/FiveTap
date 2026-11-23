@@ -166,14 +166,14 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
               </div>
             ) : (
               <details className="cancel-box">
-                <summary>Cancelar mi plan</summary>
+                <summary>Cancelar el servicio</summary>
                 <form action={requestCancel} className="cancel-form">
                   <input type="hidden" name="token" value={token} />
-                  <p>Antes de irte, cuéntanos en breve por qué. Nos ayuda a mejorar.</p>
+                  <p>Si quieres, cuéntanos por qué (opcional). Nos ayuda a mejorar.</p>
                   <div className="chips-pick" role="radiogroup" aria-label="Motivo">
                     {CANCEL_REASONS.map((r) => (
                       <label key={r} className="pick">
-                        <input type="radio" name="reason" value={r} required />
+                        <input type="radio" name="reason" value={r} />
                         {r}
                       </label>
                     ))}
@@ -182,7 +182,7 @@ export default async function OwnerSettings({ params, searchParams }: Props) {
                   <p className="muted">
                     {charge?.kind === "annual"
                       ? "Tu plan anual sigue activo hasta que termine el año ya pagado, que no se reembolsa."
-                      : "No se te vuelve a cobrar. El servicio sigue hasta el final del período ya pagado."}{" "}
+                      : "El servicio sigue hasta el final del período ya pagado. Si tu contrato tiene un plazo o un aviso previo, te confirmamos por WhatsApp la fecha exacta en que termina, según lo firmado."}{" "}
                     Luego retiramos las placas.
                   </p>
                   <SubmitButton className="btn btn-danger btn-sm" pending="Enviando…">Confirmar cancelación</SubmitButton>

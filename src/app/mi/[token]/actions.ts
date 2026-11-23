@@ -279,3 +279,17 @@ export async function passwordLogin(f: FormData) {
   await new Promise((res) => setTimeout(res, 1000));
   redirect(`/mi/${token}?acceso=${r.locked ? "bloqueado" : "clave"}`);
 }
+
+/** A club member asked to leave (replied BAJA): the owner or manager deletes them from the club. */
+export async function removeClubMember(f: FormData) {
+  const token = String(f.get("token") ?? "");
+  const id = String(f.get("contact_id") ?? "");
+  const b = await businessByOwnerToken(token);
+  if (!b || !(await accessRole(b))) redirect("/");
+  if (/^[0-9a-f-]{36}$/i.test(id)) {
+    const { error } = await db().from("contacts").delete().eq("id", id).eq("business_id", b.id);
+    if (error) console.error("[removeClubMember]", error.message);
+  }
+  revalidatePath(`/mi/${token}/clientes`);
+  redirect(`/mi/${token}/clientes?ok=baja`);
+}

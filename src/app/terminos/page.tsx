@@ -1,67 +1,102 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/LegalPage";
 import { REPLACEMENT_FEE, money } from "@/lib/contract";
-import { activePlans, planPieces } from "@/lib/plans";
-import { FOUNDER_PHONE, ONE_TIME, TEST_MAX_PIECES, TEST_OFFER } from "@/lib/test-kit";
+import { PRIVACY_UPDATED, TERMS_VERSION } from "@/lib/legal";
+import { FOUNDER_PHONE, ONE_TIME } from "@/lib/test-kit";
 import { salesWhatsAppUrl } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Términos del servicio — FiveTap" };
+export const metadata: Metadata = { title: "Términos del servicio — Fivetap" };
 
-export const revalidate = 300;
-
-export default async function Terms() {
-  const plans = await activePlans().catch(() => []);
+export default function Terms() {
   return (
-    <LegalPage title="Términos del servicio" updated="12 de noviembre de 2026">
-      <p>Estos términos explican cómo funciona FiveTap para los negocios que lo contratan. Si firmaste un contrato con nosotros, el contrato manda sobre esta página.</p>
+    <LegalPage title="Términos del servicio" updated={PRIVACY_UPDATED}>
+      <p>
+        Estos términos explican cómo funciona Fivetap. La parte A aplica a los negocios que lo contratan; la parte B, a las personas que
+        tocan una placa o tarjeta. Si un negocio firmó un contrato o aceptó una cotización por escrito, lo firmado manda sobre esta página.
+      </p>
 
-      <h2>1. Qué es FiveTap</h2>
-      <p>FiveTap es una plataforma de reputación y relación con clientes. Instala placas y tarjetas NFC en tu negocio; tus clientes las tocan con el celular y pueden dejar una reseña en Google, escribirte en privado o unirse a tu club de clientes. Incluye FiveTap Business, la app privada del negocio con tus resultados en tiempo real, avisos al celular y un reporte mensual.</p>
+      <h2>A. Para negocios</h2>
 
-      <h2>2. Planes y precios</h2>
+      <h3>1. Qué es Fivetap</h3>
+      <p>
+        Fivetap instala placas y tarjetas NFC en tu negocio. Tus clientes las tocan con el celular y pueden dejar una reseña en Google,
+        escribirte en privado, calificar al personal o unirse a tu club. Incluye Fivetap Business, la app privada del negocio con
+        resultados en tiempo real, avisos al celular y un reporte mensual.
+      </p>
+
+      <h3>2. Precio: siempre por escrito y sin sorpresas</h3>
       <ul>
-        {plans.map((p) => (
-          <li key={p.key}>
-            <b>{p.name}:</b> {money(p.monthly)} al mes, con {planPieces(p).join(" y ")}, y FiveTap Business.
-          </li>
-        ))}
-        <li><b>Pago único:</b> placa NFC {money(ONE_TIME.plaque)}, tarjeta NFC {money(ONE_TIME.card)}, Pack Dúo (2 placas) {money(ONE_TIME.packs[0].price)} y Pack Local (4 placas) {money(ONE_TIME.packs[1].price)}, de 1 a {ONE_TIME.max} piezas. Se entregan grabadas y probadas, llevan directo a la página de reseñas de Google del local y no incluyen FiveTap Business ni mensualidad.</li>
-        <li><b>{TEST_OFFER.name}:</b> de 1 a {TEST_MAX_PIECES} piezas con FiveTap Business, válido por 30 días: {money(TEST_OFFER.plaque)} cada placa FiveTap y {money(TEST_OFFER.card)} cada tarjeta de equipo con cordón. Se cancela solo al terminar el día 29 y el local elige un plan para seguir. Si el local contrata un plan al terminar, lo pagado por el Test se descuenta de su primer mes.</li>
-        <li><b>Una cantidad específica de placas o tarjetas, sucursales o necesidades especiales:</b> se cotizan por separado y por escrito con el Founder de FiveTap ({FOUNDER_PHONE}).</li>
+        <li><b>Servicio mensual:</b> cada negocio recibe una cotización por escrito según sus mesas, su equipo y lo que necesita. La cotización indica la mensualidad, el plazo y si el precio incluye ITBMS.</li>
+        <li><b>Sin cobro de instalación:</b> el primer mes se paga el día de la instalación y luego se paga mes a mes.</li>
+        <li><b>Precio final:</b> se cobra exactamente lo que dice la cotización firmada. No hay cargos escondidos ni comisiones que no estén escritas.</li>
+        <li><b>Precio fijo:</b> durante el plazo firmado tu precio no sube.</li>
+        <li><b>Piezas de pago único:</b> placa NFC {money(ONE_TIME.plaque)}, tarjeta NFC {money(ONE_TIME.card)}, Pack Dúo (2 placas) {money(ONE_TIME.packs[0].price)} y Pack Local (4 placas) {money(ONE_TIME.packs[1].price)}, de 1 a {ONE_TIME.max} piezas. Llevan directo a la página de reseñas de Google del local, son del cliente desde que las paga y no incluyen Fivetap Business ni mensualidad.</li>
       </ul>
-      <p>Los planes mensuales se cotizan según cada negocio. Los precios publicados son precios de lanzamiento; si cambian, el precio de un cliente activo se mantiene.</p>
-      <p>En los planes mensuales, las placas y tarjetas son propiedad de FiveTap y funcionan mientras el plan esté activo. Las piezas de pago único son del cliente desde que las paga. Cada plan incluye solo lo descrito; cualquier ampliación se cotiza aparte.</p>
-      <p>Los planes se cobran de forma automática por PayPal, o por Yappy o transferencia si así lo acordamos.</p>
+      <p>Pagos por Yappy, transferencia, efectivo o PayPal, siempre con recibo.</p>
 
-      <h2>3. Instalación</h2>
-      <p>Configuramos las placas, las tarjetas de equipo y FiveTap Business, y lo dejamos funcionando. Lo que incluye cada plan (configuración, instalación en el local, capacitación) es lo que se describe en el plan.</p>
+      <h3>3. Garantía de 30 días</h3>
+      <p>Si en el primer mes Fivetap no cumple lo prometido, el negocio puede cancelar sin pagar más mensualidades ni penalidad.</p>
 
-      <h2>4. Cancelación</h2>
-      <p>El servicio empieza con un contrato de 3 meses, que es el período mínimo. Si el local lo termina antes sin una causa atribuible a FiveTap, paga las mensualidades que falten para completar los 3 meses. Al terminar ese período, el servicio sigue mes a mes y cualquiera de las partes puede terminarlo avisando con 15 días de anticipación. No hay renovaciones anuales automáticas. Al terminar, el local devuelve las placas y tarjetas, que son de FiveTap, dentro de los 10 días siguientes. Si firmaste un contrato, sus condiciones son las que aplican.</p>
+      <h3>4. Plazo, aviso de renovación y cancelación</h3>
+      <ul>
+        <li><b>Mes a mes:</b> se cancela avisando con 30 días de anticipación.</li>
+        <li><b>Con plazo (por ejemplo 12 o 24 meses):</b> si el negocio cancela antes de terminar el plazo sin una causa atribuible a Fivetap, paga 2 mensualidades o las que falten, lo que sea menor.</li>
+        <li><b>Aviso de renovación:</b> Fivetap avisa en Fivetap Business 60 días y 14 días antes de que termine el plazo, y te contacta para revisar tus resultados. Ningún plazo nuevo empieza sin la firma del negocio.</li>
+        <li><b>Cancelar es igual de fácil que contratar:</b> desde Fivetap Business, en Ajustes → «Cancelar el servicio» (un toque, sin llamadas), o con un mensaje por WhatsApp. Te confirmamos la fecha en que termina.</li>
+        <li>Al terminar, el negocio devuelve las placas y tarjetas del servicio mensual dentro de los 10 días siguientes.</li>
+      </ul>
 
-      <h2>5. Cambio y reposición de placas</h2>
-      <p>Cambiamos gratis las piezas gastadas por el uso. Si una se pierde o se rompe, reponerla cuesta {money(REPLACEMENT_FEE)}. Si el servicio falla por nuestra causa más de 72 horas seguidas, ese mes no se cobra.</p>
+      <h3>5. Placas y tarjetas</h3>
+      <p>
+        En el servicio mensual las piezas son de Fivetap y se entregan en préstamo mientras el servicio esté activo. Cambiamos gratis las
+        gastadas por el uso normal; una pieza perdida o rota por mal uso cuesta {money(REPLACEMENT_FEE)}. Si el servicio falla por causa
+        de Fivetap más de 72 horas seguidas, ese período no se cobra.
+      </p>
 
-      <h2>6. Pagos atrasados</h2>
-      <p>Te avisamos 3 días antes de cada vencimiento y el mismo día. Después del vencimiento tienes 5 días de gracia. Si el pago no se registra, al sexto día las placas y FiveTap Business se pausan hasta que te pongas al día. No se borra ningún dato, y al registrar el pago todo vuelve a funcionar el mismo día.</p>
+      <h3>6. Pagos atrasados</h3>
+      <p>
+        Avisamos 3 días antes de cada vencimiento y el mismo día. Después hay 5 días de gracia. Si el pago no se registra, al sexto día las
+        placas y Fivetap Business se pausan hasta ponerse al día. No se borra ningún dato y todo vuelve a funcionar el mismo día del pago.
+      </p>
 
-      <h2>7. Precio congelado</h2>
-      <p>Tu precio no sube mientras tu plan siga activo sin interrupción.</p>
+      <h3>7. Reglas de Google</h3>
+      <p>
+        Fivetap muestra el botón de reseña a todos los clientes. El negocio se compromete a no ofrecer descuentos ni premios a cambio de
+        reseñas y a no filtrar quién puede dejarlas. No controlamos lo que Google publica, oculta o elimina.
+      </p>
 
-      <h2>8. Reglas de Google</h2>
-      <p>FiveTap muestra el botón de reseña a todos tus clientes. Te comprometes a no ofrecer descuentos ni premios a cambio de reseñas y a no filtrar quién puede dejarlas. No controlamos lo que Google publica, oculta o elimina.</p>
+      <h3>8. Lo que no garantizamos</h3>
+      <p>Hacemos fácil que tus clientes dejen reseñas, pero no garantizamos un número de reseñas, de estrellas ni de ventas.</p>
 
-      <h2>9. Lo que no garantizamos</h2>
-      <p>Hacemos fácil que tus clientes dejen reseñas, pero no podemos garantizar un número exacto de reseñas ni de estrellas: eso depende de tus clientes y de Google.</p>
+      <h3>9. Datos de tus clientes y de tu equipo</h3>
+      <p>
+        Los datos de tu club y de tus clientes son tuyos: no se venden y se entregan o borran al terminar. Envía promociones solo a quien
+        está en tu club y atiende el mismo día a quien pida la baja (responde BAJA). Si registras a tu equipo, infórmales que su nombre y
+        su avatar se muestran en su tarjeta y que reciben calificaciones de los clientes. Lee nuestra <a href="/privacidad">política de privacidad</a>.
+      </p>
 
-      <h2>10. Datos</h2>
-      <p>Los datos de tu club de clientes son tuyos. Lee nuestra <a href="/privacidad">política de privacidad</a>.</p>
+      <h3>10. Tu marca y nuestras licencias</h3>
+      <p>
+        Nos autorizas a usar tu nombre, logo y colores solo para tus placas, tu página y tus materiales de Fivetap. Fivetap sigue siendo
+        dueño de su plataforma y de su diseño. Usamos software de código abierto con licencias que permiten el uso comercial (por ejemplo
+        Next.js, React y three.js, con licencia MIT) y tipografías con licencia que permite el uso comercial.
+      </p>
 
-      <h2>11. Ley aplicable</h2>
-      <p>Estos términos se rigen por las leyes de la República de Panamá.</p>
+      <h2>B. Para quien toca una placa</h2>
+      <ul>
+        <li>Usar Fivetap es gratis y no necesitas crear una cuenta.</li>
+        <li>Tus calificaciones y comentarios deben ser honestos y sin insultos, amenazas ni datos de otras personas. Podemos borrar los que no lo sean.</li>
+        <li>Las promociones, productos, precios y reservas son responsabilidad de cada local.</li>
+        <li>Tus datos se tratan como explica la <a href="/privacidad">política de privacidad</a>.</li>
+      </ul>
+
+      <h2>Ley aplicable</h2>
+      <p>Estos términos se rigen por las leyes de la República de Panamá. Versión: <code>{TERMS_VERSION}</code>.</p>
 
       <h2>Contacto</h2>
-      <p><a href={salesWhatsAppUrl("Hola, tengo una consulta sobre los términos de FiveTap.")}>Escríbenos por WhatsApp</a>.</p>
+      <p>
+        info@getfivetap.com · <a href={salesWhatsAppUrl("Hola, tengo una consulta sobre los términos de Fivetap.")}>WhatsApp</a> · {FOUNDER_PHONE}
+      </p>
     </LegalPage>
   );
 }

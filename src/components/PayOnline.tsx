@@ -94,6 +94,7 @@ export function PayOnline({ clientId, presetVenue }: { clientId: string; presetV
         <input className="input" value={venue} onChange={(e) => setVenue(e.target.value)} maxLength={80} placeholder="La Terraza" autoComplete="organization" required />
       </label>
       <p className="pay-total">Total: <b className="num">${item.amount.toLocaleString("en-US")}</b> <span className="muted">· {item.detail}</span></p>
+      <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>Es el precio final: no se suma ningún cargo al pagar.</p>
       <div className={venue.trim().length > 1 ? undefined : "signup-locked"}>
         <div ref={box} />
         {state === "loading" && <p className="muted">Cargando pago seguro…</p>}

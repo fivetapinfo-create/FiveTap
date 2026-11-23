@@ -1,4 +1,5 @@
 import "server-only";
+import { CARD_CONSENT_VERSION } from "./legal";
 import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { sendPush } from "./push";
@@ -50,7 +51,7 @@ export async function joinCard(businessId: string, name: string, phone: string):
   if ((count ?? 0) >= 40) throw new Error("Demasiadas tarjetas nuevas en poco tiempo. Inténtalo en unos minutos.");
   for (let attempt = 0; attempt < 5; attempt++) {
     const { data, error } = await db().from("loyalty_cards")
-      .insert({ business_id: businessId, token: randomBytes(16).toString("base64url"), code: newCode(), name, phone })
+      .insert({ business_id: businessId, token: randomBytes(16).toString("base64url"), code: newCode(), name, phone, consent_version: CARD_CONSENT_VERSION, consent_at: new Date().toISOString() })
       .select("*").single();
     if (!error && data) {
       await db().from("loyalty_events").insert({ card_id: data.id, business_id: businessId, kind: "join" });

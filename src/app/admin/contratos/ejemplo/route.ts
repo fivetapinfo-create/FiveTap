@@ -1,3 +1,4 @@
+import { adminAllowed, notAllowed } from "@/lib/admin-guard";
 import { type Agreement, endOf } from "@/lib/agreement";
 import { agreementPdfResponse } from "@/lib/agreement-pdf-response";
 import { todayPanama } from "@/lib/agenda";
@@ -12,6 +13,7 @@ export const runtime = "nodejs";
  * ?dl=1 downloads it.
  */
 export async function GET(req: Request) {
+  if (!(await adminAllowed())) return notAllowed();
   const sp = new URL(req.url).searchParams;
   const plan = (await planByKey(sp.get("plan") || "start")) ?? (await planByKey("start"));
   const start = todayPanama();

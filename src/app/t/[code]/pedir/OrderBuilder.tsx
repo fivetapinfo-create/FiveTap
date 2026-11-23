@@ -78,6 +78,7 @@ export function OrderBuilder({ items, copy, code, needWhere, error, lang }: { it
         <label className="field"><span>{copy.oNotes}</span><textarea className="textarea" name="notes" maxLength={400} placeholder={copy.oNotesPh} style={{ minHeight: 70 }} /></label>
         <p className="muted" style={{ fontSize: 14 }}>{copy.oPay}</p>
         <Send label={count ? `${copy.oSend} · ${usd(total)}` : copy.oSend} pending={copy.oSending} disabled={!count} />
+        <p className="muted data-note">{copy.dataNote} <a className="link-u" href="/privacidad" target="_blank" rel="noreferrer">{copy.clubPrivacy}</a></p>
       </form>
 
       {count > 0 && (

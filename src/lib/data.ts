@@ -1,4 +1,5 @@
 import "server-only";
+import { CLUB_CONSENT_VERSION } from "./legal";
 import { billingState, type Billing } from "./agenda";
 import { db } from "./supabase";
 import type { Business, BusinessStats, Contact, Feedback, Payment, Tag, TagStats } from "./types";
@@ -60,7 +61,9 @@ export async function logEvent(e: {
   device: Device;
   user_agent: string;
 }) {
-  const { error } = await db().from("events").insert({ ...e, user_agent: e.user_agent.slice(0, 300) });
+  // Only the kind of phone (iPhone, Android, other) is kept: the full browser string is not
+  // needed to count visits, so it is never stored (privacy: only the data we need).
+  const { error } = await db().from("events").insert({ ...e, user_agent: null });
   if (error) console.error("[events]", error.message);
 }
 
@@ -80,10 +83,13 @@ export async function upsertContact(c: {
   phone: string;
   birthday_month: number | null;
   birthday_day: number | null;
+  /** Where the yes was given: the club form or the loyalty card's separate box. */
+  source?: "club" | "tarjeta";
 }) {
+  const { source, ...row } = c;
   const { error } = await db()
     .from("contacts")
-    .upsert({ ...c, consent_at: new Date().toISOString() }, { onConflict: "business_id,phone" });
+    .upsert({ ...row, consent_at: new Date().toISOString(), consent_version: CLUB_CONSENT_VERSION, consent_source: source ?? "club" }, { onConflict: "business_id,phone" });
   if (error) throw new Error(error.message);
 }
 

@@ -1,3 +1,4 @@
+import { adminAllowed, notAllowed } from "@/lib/admin-guard";
 import { getCompany, listFounders } from "@/lib/company";
 import { founderAgreementPdf } from "@/lib/pdf/documents";
 
@@ -5,6 +6,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
+  if (!(await adminAllowed())) return notAllowed();
   const [c, founders] = await Promise.all([getCompany(), listFounders()]);
   if (founders.length === 0) return new Response("Agrega primero al fundador.", { status: 400 });
   const today = new Date(Date.now() - 5 * 3600_000).toISOString().slice(0, 10);

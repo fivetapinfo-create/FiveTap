@@ -11,17 +11,18 @@ import { billingState, todayPanama } from "@/lib/agenda";
 import { businessByOwnerToken, businessDetail, contactsFor } from "@/lib/data";
 import { phoneDigits } from "@/lib/reservation-rules";
 import { db } from "@/lib/supabase";
+import { removeClubMember } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ q?: string; f?: string }> };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ q?: string; f?: string; ok?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
   return { title: "Mis clientes · FiveTap", robots: { index: false, follow: false }, manifest: `/mi/${token}/manifest.webmanifest` };
 }
 
-type Row = { key: string; name: string; phone: string | null; club: boolean; bday: string | null; bdayMonth: number | null; visits: number; reservations: number; noShows: number; last: string | null; next: string | null; joined: string | null; source: string | null };
+type Row = { key: string; name: string; phone: string | null; club: boolean; bday: string | null; bdayMonth: number | null; visits: number; reservations: number; noShows: number; last: string | null; next: string | null; joined: string | null; source: string | null; contactId?: string };
 type Resv = { customer_name: string; phone: string | null; reserved_on: string; status: string };
 
 /** 50760001234 → +507 6000-1234; other numbers keep their digits with a + in front. */
@@ -74,7 +75,7 @@ export default async function ClientsPage({ params, searchParams }: Props) {
   for (const c of contacts) {
     const key = phoneDigits(c.phone) ?? `c:${c.id}`;
     rows.set(key, {
-      key, name: c.name, phone: c.phone, club: true,
+      key, contactId: c.id, name: c.name, phone: c.phone, club: true,
       bday: c.birthday_month && c.birthday_day ? `${c.birthday_day} ${MONTHS[c.birthday_month - 1]}` : null, bdayMonth: c.birthday_month,
       visits: 0, reservations: 0, noShows: 0, last: null, next: null, joined: c.created_at.slice(0, 10), source: (c.tag_id && tagLabel.get(c.tag_id)) || null,
     });
@@ -117,6 +118,7 @@ export default async function ClientsPage({ params, searchParams }: Props) {
           <h1 className="owner-title">Mis clientes</h1>
           <p className="muted">Tu club y tus reservas en una sola lista. Las visitas cuentan las reservas en que el cliente llegó.</p>
         </div>
+        {sp.ok === "baja" && <p className="alert alert-ok" role="status">Listo: ese cliente ya no está en tu club y sus datos se borraron.</p>}
 
         <nav className="cl-tabs" aria-label="Filtrar">
           {tabs.map((t) => (
@@ -169,6 +171,17 @@ export default async function ClientsPage({ params, searchParams }: Props) {
                           <a className="btn btn-wa btn-block" href={wa} target="_blank" rel="noopener noreferrer"><WaIcon /> {r.club ? "Escribir por WhatsApp" : "WhatsApp sobre su reserva"}</a>
                         ) : (
                           <p className="muted">Este cliente no dejó un número válido de WhatsApp.</p>
+                        )}
+                        {r.club && r.contactId && (
+                          <details className="ct-leave">
+                            <summary className="muted">Dar de baja del club (pidió BAJA o salir)</summary>
+                            <form action={removeClubMember}>
+                              <input type="hidden" name="token" value={token} />
+                              <input type="hidden" name="contact_id" value={r.contactId} />
+                              <p className="muted" style={{ fontSize: 13 }}>Se borran su nombre, número y cumpleaños del club y no recibirá más promociones. Hazlo el mismo día que lo pida.</p>
+                              <button className="btn btn-ghost btn-sm" type="submit">Borrar del club</button>
+                            </form>
+                          </details>
                         )}
                       </div>
                     </details>

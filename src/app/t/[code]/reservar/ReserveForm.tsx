@@ -59,6 +59,7 @@ export function ReserveForm({ code, copy, lang, hours, settings, today, nowMin, 
       </label>
       <label className="field"><span>{copy.rNotes}</span><textarea className="textarea" name="notes" maxLength={400} placeholder={copy.rNotesPh} style={{ minHeight: 70 }} /></label>
       <Send label={copy.rSend} pending={copy.rSending} />
+      <p className="muted data-note">{copy.dataNote} <a className="link-u" href="/privacidad" target="_blank" rel="noreferrer">{copy.clubPrivacy}</a></p>
     </form>
   );
 }

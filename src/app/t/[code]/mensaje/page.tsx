@@ -94,6 +94,7 @@ export default async function MessagePage({ params, searchParams }: Props) {
           <SubmitButton className="btn btn-dark btn-block" pending={copy.sending}>
             {copy.send}
           </SubmitButton>
+          <p className="muted data-note">{copy.dataNote} <a className="link-u" href="/privacidad" target="_blank" rel="noreferrer">{copy.clubPrivacy}</a></p>
         </form>
       </div>
     </main>

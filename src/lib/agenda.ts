@@ -409,17 +409,21 @@ export async function agenda(from: string, to: string): Promise<Task[]> {
     }
   }
 
-  // 3-month contracts: two weeks before the end, review results and agree the renewal.
+  // Contracts with a term (3, 12 or 24 months): 60 days and 14 days before the end, the
+  // founder reviews results with the owner and the owner gets a notice in their app. A new
+  // term never starts without the venue's signature.
   for (const a of (agrRes.data ?? []) as { id: string; business_id: string | null; venue_name: string; end_date: string }[]) {
-    const notice = addDays(a.end_date, -14);
-    if (inRange(notice)) {
+    for (const days of [60, 14]) {
+      const notice = addDays(a.end_date, -days);
+      if (!inRange(notice)) continue;
       tasks.push({
-        id: `contrato-fin-${a.id}`,
+        id: `contrato-fin-${a.id}-${days}`,
         kind: "contrato",
         date: notice,
-        title: `El contrato de 3 meses de ${a.venue_name} termina el ${human(a.end_date)}`,
-        detail: "Revisa con el dueño sus resultados y acuerden si renuevan por 3 meses, 12 meses u otro período.",
+        title: `El contrato de ${a.venue_name} termina el ${human(a.end_date)} (faltan ${days} días)`,
+        detail: "Revisa con el dueño sus resultados y acuerden por escrito si siguen y con qué plazo. Ningún plazo nuevo empieza sin su firma.",
         businessId: a.business_id ?? undefined,
+        push: a.business_id ? { title: `Tu contrato con Fivetap termina el ${human(a.end_date)}`, body: `Faltan ${days} días. No se renueva solo: te contactaremos para ver tus resultados y decidir juntos.`, url: "" } : undefined,
       });
     }
   }

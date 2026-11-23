@@ -1,3 +1,4 @@
+import { RETENTION } from "@/lib/legal";
 import { safeEqual } from "@/lib/admin-session";
 import { addDays, agenda, billingAll, cheerOfTheWeek, renewalWhat, todayPanama } from "@/lib/agenda";
 import { sendPushOnce } from "@/lib/push";
@@ -160,11 +161,30 @@ export async function GET(req: Request) {
 
   // Old log rows are no longer needed to avoid repeats.
   await db().from("push_log").delete().lt("sent_at", new Date(Date.now() - 120 * DAY).toISOString());
-  return Response.json({ ok: true, today, sent });
+  // 5. Retention promised in the privacy policy: guest activity older than 24 months and
+  // reservations 12 months after their date are deleted. Never payments, contracts or receipts.
+  const purged = await purgeOldGuestData(today).catch((e) => { console.error("[retention]", e); return null; });
+
+  return Response.json({ ok: true, today, sent, purged });
 }
 
 function count(rows: { business_id: string }[] | null) {
   const m = new Map<string, number>();
   for (const r of rows ?? []) m.set(r.business_id, (m.get(r.business_id) ?? 0) + 1);
   return m;
+}
+
+async function purgeOldGuestData(today: string) {
+  const months = (n: number) => { const d = new Date(`${today}T12:00:00Z`); d.setUTCMonth(d.getUTCMonth() - n); return d.toISOString(); };
+  const activity = months(RETENTION.activityMonths);
+  const out: Record<string, number> = {};
+  for (const table of ["events", "feedback", "service_ratings", "guest_orders"] as const) {
+    const { count, error } = await db().from(table).delete({ count: "exact" }).lt("created_at", activity);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    out[table] = count ?? 0;
+  }
+  const { count, error } = await db().from("reservations").delete({ count: "exact" }).lt("reserved_on", months(RETENTION.reservationsMonths).slice(0, 10));
+  if (error) throw new Error(`reservations: ${error.message}`);
+  out.reservations = count ?? 0;
+  return out;
 }

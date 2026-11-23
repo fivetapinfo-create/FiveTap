@@ -1,3 +1,4 @@
+import { adminAllowed, notAllowed } from "@/lib/admin-guard";
 import { KIND_NAME, PIECE_LABEL, pieceState } from "@/lib/pieces";
 import { pieceUrl } from "@/lib/site";
 import { db } from "@/lib/supabase";
@@ -13,6 +14,7 @@ const day = (iso: string | null) => (iso ? new Date(Date.parse(iso) - 5 * 3600_0
 
 /** The whole NFC inventory as a spreadsheet (backup or to print). Founder only (under /admin). */
 export async function GET() {
+  if (!(await adminAllowed())) return notAllowed();
   const [tagRes, statRes, lastRes] = await Promise.all([
     db().from("tags").select("*, business:businesses(name)").order("created_at"),
     db().from("tag_stats").select("tag_id, scans_30d"),
