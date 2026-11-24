@@ -1414,7 +1414,8 @@ html[data-ft-intro-founder="skip"] .intro-founder, html[data-ft-intro-business="
 /* ================= Social section on the plaque page ================= */
 .gx-social-lead { color: var(--muted); font-size: 14px; margin: -4px 0 12px; }
 .gx-social { display: grid; gap: 10px; }
-.gx-net { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); color: inherit; transition: transform 0.15s var(--ease-out), border-color 0.2s, box-shadow 0.2s; }
+.gx-net-list { display: grid; gap: 10px; }
+.gx-net { display: flex; min-width: 0; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); color: inherit; transition: transform 0.15s var(--ease-out), border-color 0.2s, box-shadow 0.2s; }
 .gx-net:active { transform: scale(0.98); }
 .gx-net:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
 .gx-net > svg { width: 26px; height: 26px; flex: none; padding: 9px; box-sizing: content-box; border-radius: 12px; color: #fff; background: var(--gx-brand); }
@@ -2025,7 +2026,7 @@ html[data-ft-intro-founder="play"] .fs-card { animation-delay: 3.85s; }
 /* A photo of the venue behind the table plaque page (softened so text stays readable, in light and dark) */
 main.guest.has-bg, div.guest.has-bg, .guest.gx.has-bg {
   background-color: var(--paper) !important;
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--paper) 30%, transparent) 0%, color-mix(in srgb, var(--paper) 52%, transparent) 40%, color-mix(in srgb, var(--paper) 72%, transparent) 100%), var(--page-bg) !important;
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--paper) 78%, transparent) 0%, color-mix(in srgb, var(--paper) 90%, transparent) 35%, var(--paper) 70%), var(--page-bg) !important;
   background-size: cover !important; background-position: center top !important; background-repeat: no-repeat !important;
 }
 .biz-setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; padding: 0 16px; }

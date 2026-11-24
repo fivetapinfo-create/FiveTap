@@ -93,8 +93,13 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
   const networks = socials.filter((x) => x.k !== "web");
   const site = socials.find((x) => x.k === "web");
   const handle = (k: string) => (k === "instagram" ? e.instagram : k === "tiktok" ? e.tiktok : k === "facebook" ? e.facebook : null);
-  const showSocial = s.social !== false && Boolean(networks.length || wa);
-  const showContact = s.contact && Boolean(wa || tel || site);
+  // Networks and WhatsApp already have their own buttons at the top: no second "Síguenos" block
+  // repeating them, and "Contacto" only for what has no button (phone, website).
+  const showSocial = false;
+  const showContact = s.contact && Boolean(tel || site);
+  // The venue photo is the cover. A photo uploaded as "background" is used as the cover when
+  // there is no cover, so every business looks like the reference (photo on top, clean buttons).
+  const cover = e.cover_url || business.page_bg_url || null;
   const groups = [...new Set(items.map((x) => x.category || ""))].map((c) => ({ name: c || (items.some((x) => x.category) ? copy.xOther : ""), list: items.filter((x) => (x.category || "") === c) }));
   const nav = [
     showPromos && { id: "promos", label: copy.xPromos },
@@ -110,9 +115,9 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
   );
 
   return (
-    <main className={`guest gx${business.page_bg_url ? " has-bg" : ""}`} style={{ ...style, ...(business.page_bg_url ? { "--page-bg": `url("${business.page_bg_url.replace(/"/g, "")}")` } : {}) } as React.CSSProperties}>
-      <header className={`gx-hero${e.cover_url ? " has-cover" : ""}`}>
-        {e.cover_url ? <img className="gx-cover" src={e.cover_url} alt="" /> : <div className="gx-cover gx-cover-brand" aria-hidden="true" />}
+    <main className="guest gx" style={style as React.CSSProperties}>
+      <header className={`gx-hero${cover ? " has-cover" : ""}`}>
+        {cover ? <img className="gx-cover" src={cover} alt="" /> : <div className="gx-cover gx-cover-brand" aria-hidden="true" />}
         <div className="gx-id">
           <div className="gx-logo rise" style={i(0)}>
             <BusinessLogo name={business.name} logoUrl={business.logo_url} color={brand} />
@@ -338,7 +343,7 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
           <section className="gx-section" id="redes">
             <h2 className="gx-h">{copy.xSocial}</h2>
             <p className="gx-social-lead">{copy.xSocialLead.replace("{name}", business.name)}</p>
-            <div className="gx-social">
+            <div className="gx-net-list">
               {networks.map((x) => (
                 <Ext key={x.k} className={`gx-net gx-net-${x.k}`} href={x.url!}>
                   {x.icon}
@@ -361,7 +366,6 @@ export function GuestExperience({ business, experience: e, promos, items, copy, 
           <section className="gx-section" id="contacto">
             <h2 className="gx-h">{copy.xContact}</h2>
             <ul className="gx-links">
-              {wa && <li><Ext className="gx-link" href={`https://wa.me/${wa}`}><Chat /><span>{copy.xWhatsApp}</span><small>{e.whatsapp}</small></Ext></li>}
               {tel && <li><a className="gx-link" href={preview ? "#" : `tel:${tel}`}><Phone /><span>{copy.xCall}</span><small>{e.phone}</small></a></li>}
               {site && <li><Ext className="gx-link" href={site.url!}>{site.icon}<span>{site.label}</span></Ext></li>}
             </ul>
