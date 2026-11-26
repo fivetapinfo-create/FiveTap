@@ -106,7 +106,9 @@ export function socialUrl(kind: "instagram" | "facebook" | "tiktok", v: string |
 
 /** True when a published experience has something beyond the review card. */
 export function hasContent(e: Experience, promos: number, items: number) {
-  return Boolean(e.cover_url || e.tagline || e.about || e.hours.length || e.address || e.whatsapp || e.phone || e.wifi_ssid || e.gallery.length || promos || items);
+  // Social networks and the website count too: a venue with only its Instagram still gets the
+  // full page (cover, buttons, "Síguenos"), never the plain fallback card.
+  return Boolean(e.cover_url || e.tagline || e.about || e.hours.length || e.address || e.whatsapp || e.phone || e.wifi_ssid || e.gallery.length || e.instagram || e.tiktok || e.facebook || e.website || promos || items);
 }
 
 const SOCIAL_HOSTS = { instagram: ["instagram.com"], facebook: ["facebook.com", "fb.com", "m.facebook.com"], tiktok: ["tiktok.com"] } as const;

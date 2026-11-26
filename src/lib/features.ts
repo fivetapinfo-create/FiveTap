@@ -46,7 +46,9 @@ export type Entitlements = { on?: Partial<Record<FeatureKey, boolean>>; trials?:
 /** The tier FiveTap suggests from what was sold (the founder can always choose another). */
 export function suggestTier(planKey: string | null | undefined, monthly: number): Tier {
   if (planKey === "pro" || planKey === "enterprise" || monthly >= 200) return "empresarial";
-  if (planKey === "start" || monthly >= 100) return "profesional";
+  // Every monthly plan is a custom quote now: any monthly fee gets the full page (promotions,
+  // club, loyalty, team). Esencial stays for one-time pieces, or when the founder picks it.
+  if (planKey === "start" || monthly > 0) return "profesional";
   return "esencial";
 }
 

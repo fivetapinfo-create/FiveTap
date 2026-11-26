@@ -77,7 +77,8 @@ export default async function TapPage({ params, searchParams }: Props) {
   const clubHref = acc.has.club ? `/t/${code}/club${q}` : undefined;
   const cardHref = acc.has.loyalty && (await programFor(tag.business_id)).enabled ? `/t/${code}/tarjeta` : undefined;
   if (x) { if (!acc.has.promos) x.promos = []; if (!acc.has.catalog) x.items = []; }
-  if (x && hasContent(x.experience, x.promos.length, x.items.length)) {
+  // A venue photo alone is enough for the full page too (it becomes the cover).
+  if (x && (hasContent(x.experience, x.promos.length, x.items.length) || tag.business.page_bg_url)) {
     return (
       <>
         {banner}
