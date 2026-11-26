@@ -25,7 +25,7 @@ import { branchStats } from "@/lib/branch-stats";
 import { adminSaveBranch } from "./sucursales";
 import { BranchStats } from "@/components/BranchStats";
 import { verticalByKey } from "@/lib/verticals";
-import { PLAQUE_LABEL, branchesFor, plaqueState, staffFor } from "@/lib/staff";
+import { branchesFor, staffFor } from "@/lib/staff";
 import { moduleOn } from "@/lib/orders";
 import { db } from "@/lib/supabase";
 import { ticketsFor } from "@/lib/support";
@@ -192,96 +192,125 @@ export default async function BusinessPage({ params, searchParams }: Props) {
             <h2>Meseros y sus tarjetas</h2>
             <span className="muted">{crew.length} {crew.length === 1 ? "mesero" : "meseros"} · {waiters.filter((t) => !t.staff_id && t.active).length} tarjetas libres</span>
           </div>
-          <ol className="mz-steps">
-            <li><b>Graba cada chip</b> con el enlace de su tarjeta (abajo, botón “Copiar enlace”). El enlace nunca cambia.</li>
-            <li><b>Agrega los meseros</b> aquí abajo, separando hombres y mujeres. Su avatar sale solo, con el logo del local, y toman la siguiente tarjeta libre.</li>
-            <li><b>Revisa cada uno:</b> otro look, cambiar a hombre o mujer, o cambiar su tarjeta. El chip abre su avatar y su valoración al instante.</li>
-          </ol>
-          <form action={adminAddWaiters} className="mz-add">
+          {/* 1. Create: a name and man or woman. The avatar (logo on shirt and apron) and its link come out on their own. */}
+          <form action={adminAddWaiters} className="mz-new">
             <input type="hidden" name="business_id" value={b.id} />
-            <label className="field"><span>Hombres (uno por línea)</span><textarea className="textarea" name="names_m" rows={3} placeholder={"Carlos\nLuis"} /></label>
-            <label className="field"><span>Mujeres (una por línea)</span><textarea className="textarea" name="names_f" rows={3} placeholder={"Ana\nSofía"} /></label>
+            <label className="field mz-new-name"><span>Nuevo mesero</span><input className="input" name="name" required maxLength={50} placeholder="Nombre (ej. Carlos)" autoComplete="off" /></label>
+            <div className="chips-pick mz-sex" role="radiogroup" aria-label="Hombre o mujer">
+              <label className="pick"><input type="radio" name="body" value="m" defaultChecked /> Hombre</label>
+              <label className="pick"><input type="radio" name="body" value="f" /> Mujer</label>
+            </div>
             {branches.length > 0 && (
-              <label className="field"><span>Sucursal</span>
-                <select className="select" name="branch_id" defaultValue="">
-                  <option value="">Todas / sin sucursal</option>
-                  {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
-                </select>
-              </label>
+              <select className="select" name="branch_id" defaultValue="" aria-label="Sucursal">
+                <option value="">Todas / sin sucursal</option>
+                {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
+              </select>
             )}
-            <button className="btn btn-dark" type="submit">Agregar y asignar tarjetas</button>
+            <button className="btn btn-dark" type="submit">Crear mesero</button>
+            <small className="muted mz-new-note">Sale con su avatar y el logo del local en la camisa y el delantal, y con su enlace listo para grabar en el chip.</small>
           </form>
-          <ul className="mz-cards">
-            {waiters.map((t) => {
-              const st = plaqueState({ active: t.active, kind: "waiter", staff_id: t.staff_id });
-              const who = t.staff_id ? staffName.get(t.staff_id) : null;
-              return (
-                <li key={t.id}>
-                  <div className="mz-top">
-                    <b>{t.label}</b>
-                    <em className={`chip ${st === "active" ? "ok" : st === "unassigned" ? "warn" : "off"}`}>{PLAQUE_LABEL[st]}</em>
-                  </div>
-                  <div className="mz-who">{who ? <>Mesero: <b>{who.name}</b>{!who.approved ? " · avatar por aprobar" : ""}{!who.active ? " · desactivado" : ""}</> : <span className="muted">Sin mesero asignado</span>}</div>
-                  <div className="mz-link">
-                    <span className="code mz-url">{pieceUrl(t.code, "waiter")}</span>
-                    <CopyButton value={pieceUrl(t.code, "waiter")} label="Copiar enlace" />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <details className="mz-many">
+            <summary>Agregar varios a la vez</summary>
+            <form action={adminAddWaiters} className="mz-add">
+              <input type="hidden" name="business_id" value={b.id} />
+              <label className="field"><span>Hombres (uno por línea)</span><textarea className="textarea" name="names_m" rows={3} placeholder={"Carlos\nLuis"} /></label>
+              <label className="field"><span>Mujeres (una por línea)</span><textarea className="textarea" name="names_f" rows={3} placeholder={"Ana\nSofía"} /></label>
+              {branches.length > 0 && (
+                <label className="field"><span>Sucursal</span>
+                  <select className="select" name="branch_id" defaultValue="">
+                    <option value="">Todas / sin sucursal</option>
+                    {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
+                  </select>
+                </label>
+              )}
+              <button className="btn btn-dark" type="submit">Agregar todos</button>
+            </form>
+          </details>
+
+          {/* 2. One card per waiter: avatar, its chip link, and the two looks buttons. The rest under "Más opciones". */}
           {crew.length > 0 && (
-            <ul className="mz-team mz-team-full">
+            <ul className="mz-list">
               {crew.map((s) => {
                 const card = waiters.find((t) => t.staff_id === s.id);
                 const status = !s.active ? "Desactivado" : !s.approved ? "Pendiente de aprobar" : card && card.active ? "Publicado" : "Sin tarjeta activa";
+                const url = card ? pieceUrl(card.code, "waiter") : null;
                 const hid = (op: string) => (<><input type="hidden" name="business_id" value={b.id} /><input type="hidden" name="id" value={s.id} /><input type="hidden" name="op" value={op} /></>);
                 return (
-                  <li key={s.id} id={`mz-${s.id}`}>
+                  <li key={s.id} id={`mz-${s.id}`} className="mz-item">
                     <div className="mz-pic"><AvatarPicture config={s.avatar} logoUrl={b.logo_url} alt={`Avatar de ${s.name}`} /></div>
                     <div className="mz-info">
-                      <b>{s.name}{s.is_demo ? " · demo" : ""}</b>
-                      <small className="muted">{s.title}{card ? ` · ${card.label}` : " · sin tarjeta"}{s.branch_id ? ` · ${branches.find((br) => br.id === s.branch_id)?.name ?? ""}` : ""}</small>
-                      <em className={`chip ${status === "Publicado" ? "ok" : status === "Pendiente de aprobar" ? "warn" : "off"}`}>{status}</em>
+                      <div className="mz-top">
+                        <b>{s.name}{s.is_demo ? " · demo" : ""}</b>
+                        <em className={`chip ${status === "Publicado" ? "ok" : status === "Pendiente de aprobar" ? "warn" : "off"}`}>{status}</em>
+                      </div>
+                      <small className="muted">{s.avatar.body === "f" ? "Mujer" : "Hombre"}{card ? ` · ${card.label}` : " · sin tarjeta"}{s.branch_id ? ` · ${branches.find((br) => br.id === s.branch_id)?.name ?? ""}` : ""}</small>
+                      {url ? (
+                        <div className="mz-chip-link">
+                          <span className="muted">Enlace para el chip NFC</span>
+                          <span className="code mz-url">{url}</span>
+                          <div className="mz-actions">
+                            <CopyButton value={url} label="Copiar enlace" />
+                            {card?.active && s.active && s.approved && <a className="btn btn-ghost btn-sm" href={url} target="_blank" rel="noreferrer">Ver como cliente</a>}
+                          </div>
+                        </div>
+                      ) : <p className="muted">Sin tarjeta: elige una en Más opciones.</p>}
                       <div className="mz-actions">
                         <form action={adminWaiterOp}>{hid("regenerate")}<button className="btn btn-ghost btn-sm" type="submit">Otro look</button></form>
                         <form action={adminWaiterOp}>{hid("body")}<input type="hidden" name="body" value={s.avatar.body === "f" ? "m" : "f"} /><button className="btn btn-ghost btn-sm" type="submit">Cambiar a {s.avatar.body === "f" ? "hombre" : "mujer"}</button></form>
                         {!s.approved && <form action={adminWaiterOp}>{hid("approve")}<button className="btn btn-dark btn-sm" type="submit">Aprobar</button></form>}
-                        <form action={adminWaiterOp}>{hid(s.active ? "deactivate" : "activate")}<button className="btn btn-ghost btn-sm" type="submit">{s.active ? "Desactivar" : "Activar"}</button></form>
-                        {card?.active && s.active && s.approved && <a className="btn btn-ghost btn-sm" href={pieceUrl(card.code, "waiter")} target="_blank" rel="noreferrer">Ver como cliente</a>}
                       </div>
-                      <form action={adminWaiterOp} className="mz-card-pick">
-                        {hid("rename")}
-                        <input className="input" name="name" defaultValue={s.name} maxLength={50} aria-label={`Nombre de ${s.name}`} />
-                        <button className="btn btn-ghost btn-sm" type="submit">Guardar nombre</button>
-                      </form>
-                      {branches.length > 0 && (
+                      <details className="mz-more">
+                        <summary>Más opciones</summary>
                         <form action={adminWaiterOp} className="mz-card-pick">
-                          {hid("branch")}
-                          <select className="select" name="branch_id" defaultValue={s.branch_id ?? ""} aria-label={`Sucursal de ${s.name}`}>
-                            <option value="">Todas las sucursales</option>
-                            {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
-                          </select>
-                          <button className="btn btn-ghost btn-sm" type="submit">Cambiar sucursal</button>
+                          {hid("rename")}
+                          <input className="input" name="name" defaultValue={s.name} maxLength={50} aria-label={`Nombre de ${s.name}`} />
+                          <button className="btn btn-ghost btn-sm" type="submit">Guardar nombre</button>
                         </form>
-                      )}
-                      <form action={adminWaiterOp} className="mz-card-pick">
-                        {hid("card")}
-                        <select className="select" name="tag" defaultValue={card?.id ?? ""} aria-label={`Tarjeta de ${s.name}`}>
-                          <option value="">Sin tarjeta</option>
-                          {waiters.filter((t) => !t.staff_id || t.staff_id === s.id).map((t) => <option key={t.id} value={t.id}>{t.label}{t.active ? "" : " (apagada)"}</option>)}
-                        </select>
-                        <button className="btn btn-ghost btn-sm" type="submit">Cambiar tarjeta</button>
-                      </form>
-                      <details className="mz-del">
-                        <summary>Eliminar</summary>
-                        <form action={adminWaiterOp}>{hid("delete")}<label className="check"><input type="checkbox" name="confirm" value="1" /> <span>Sí, eliminar a {s.name}. Su tarjeta queda libre y su historial se guarda.</span></label><button className="btn btn-danger btn-sm" type="submit">Eliminar mesero</button></form>
+                        <form action={adminWaiterOp} className="mz-card-pick">
+                          {hid("card")}
+                          <select className="select" name="tag" defaultValue={card?.id ?? ""} aria-label={`Tarjeta de ${s.name}`}>
+                            <option value="">Sin tarjeta</option>
+                            {waiters.filter((t) => !t.staff_id || t.staff_id === s.id).map((t) => <option key={t.id} value={t.id}>{t.label}{t.active ? "" : " (apagada)"}</option>)}
+                          </select>
+                          <button className="btn btn-ghost btn-sm" type="submit">Cambiar tarjeta</button>
+                        </form>
+                        {branches.length > 0 && (
+                          <form action={adminWaiterOp} className="mz-card-pick">
+                            {hid("branch")}
+                            <select className="select" name="branch_id" defaultValue={s.branch_id ?? ""} aria-label={`Sucursal de ${s.name}`}>
+                              <option value="">Todas las sucursales</option>
+                              {branches.map((br) => <option key={br.id} value={br.id}>{br.name}</option>)}
+                            </select>
+                            <button className="btn btn-ghost btn-sm" type="submit">Cambiar sucursal</button>
+                          </form>
+                        )}
+                        <form action={adminWaiterOp}>{hid(s.active ? "deactivate" : "activate")}<button className="btn btn-ghost btn-sm" type="submit">{s.active ? "Desactivar" : "Activar"}</button></form>
+                        <details className="mz-del">
+                          <summary>Eliminar</summary>
+                          <form action={adminWaiterOp}>{hid("delete")}<label className="check"><input type="checkbox" name="confirm" value="1" /> <span>Sí, eliminar a {s.name}. Su tarjeta queda libre y su historial se guarda.</span></label><button className="btn btn-danger btn-sm" type="submit">Eliminar mesero</button></form>
+                        </details>
                       </details>
                     </div>
                   </li>
                 );
               })}
             </ul>
+          )}
+
+          {/* 3. Cards nobody carries yet: their links, to record chips in advance. */}
+          {waiters.some((t) => !t.staff_id) && (
+            <details className="mz-free">
+              <summary>Tarjetas libres ({waiters.filter((t) => !t.staff_id).length})</summary>
+              <ul>
+                {waiters.filter((t) => !t.staff_id).map((t) => (
+                  <li key={t.id}>
+                    <b>{t.label}</b>{!t.active && <small className="muted"> · apagada</small>}
+                    <span className="code mz-url">{pieceUrl(t.code, "waiter")}</span>
+                    <CopyButton value={pieceUrl(t.code, "waiter")} label="Copiar" />
+                  </li>
+                ))}
+              </ul>
+            </details>
           )}
         </section>
       ) : null}

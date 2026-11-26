@@ -2177,3 +2177,28 @@ html[data-theme="dark"] .admin .fx-stack > .msg { box-shadow: 0 -6px 18px rgba(0
   html.fx-on .admin .fx-stack > .msg { transition: transform 300ms var(--ease-out); }
 }
 @media print { html.fx-on .fx-blur, html.fx-on .fx-tilt, html.fx-on .fx-mask { opacity: 1 !important; filter: none !important; transform: none !important; clip-path: none !important; } }
+
+/* Founder · Meseros, simple: create with a name, one card per waiter with its chip link. */
+.mz-new { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 14px 16px 6px; }
+.mz-new .mz-new-name { flex: 1 1 220px; margin: 0; }
+.mz-new .mz-sex { flex: none; }
+.mz-new .mz-new-note { flex-basis: 100%; font-size: 12.5px; }
+.mz-many, .mz-free { padding: 4px 16px 10px; }
+.mz-many > summary, .mz-free > summary, .mz-more > summary { cursor: pointer; font-size: 14px; color: var(--muted); padding: 6px 0; }
+.mz-list { list-style: none; margin: 0; padding: 6px 12px 12px; display: grid; gap: 10px; }
+.mz-item { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.mz-item .mz-pic { width: 96px; height: 120px; border-radius: 14px; overflow: hidden; background: var(--paper); }
+.mz-item .mz-pic img, .mz-item .mz-pic canvas { width: 100%; height: 100%; object-fit: cover; }
+.mz-item .mz-info { display: grid; gap: 8px; min-width: 0; align-content: start; }
+.mz-item .mz-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mz-chip-link { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--paper); }
+.mz-chip-link > .muted { font-size: 12px; }
+.mz-chip-link .mz-url { font-size: 13px; word-break: break-all; }
+.mz-item .mz-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.mz-more { display: grid; gap: 8px; }
+.mz-more[open] { padding-top: 2px; }
+.mz-more > :not(summary) { margin-top: 6px; }
+.mz-free ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; }
+.mz-free li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+.mz-free .mz-url { font-size: 12.5px; word-break: break-all; flex: 1 1 200px; }
+@media (max-width: 480px) { .mz-item { grid-template-columns: 76px minmax(0, 1fr); } .mz-item .mz-pic { width: 76px; height: 96px; } }

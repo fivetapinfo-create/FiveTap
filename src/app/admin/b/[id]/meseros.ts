@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { addStaffBatch, approveStaff, linkPlaque, regenerateAvatar, removeStaff, restoreStaff, setStaffActive } from "@/lib/staff";
 import { db } from "@/lib/supabase";
+import { newCode } from "@/lib/codes";
 
 // Waiters managed from the founder's own panel (/admin/b/[id]): the founder never has to
 // jump into the venue's FiveTap Business app to add, review or assign them.
@@ -39,6 +40,9 @@ export async function adminAddWaiters(f: FormData) {
   await run(f, "meseros-agregados", async (businessId) => {
     const lines = (k: string) => String(f.get(k) ?? "").split(/\r?\n|,/).map((n) => n.trim()).filter(Boolean);
     const men = lines("names_m"), women = lines("names_f");
+    // The simple form: one name and man or woman.
+    const one = String(f.get("name") ?? "").replace(/\s+/g, " ").trim().slice(0, 50);
+    if (one) (f.get("body") === "f" ? women : men).push(one);
     if (!men.length && !women.length) throw new Error("Escribe al menos un nombre.");
     // Optional branch: only one of this business's own branches.
     let branchId: string | null = null;
@@ -59,6 +63,20 @@ export async function adminAddWaiters(f: FormData) {
     const free = ((data ?? []) as { id: string; label: string; branch_id: string | null }[])
       .filter((t) => !branchId || !t.branch_id || t.branch_id === branchId)
       .sort((a, z) => rank(a) - rank(z) || a.label.localeCompare(z.label, "es", { numeric: true }));
+    // No free card left: create the missing ones ("Mesero 1", "Mesero 2"…), so a new waiter
+    // always comes out with its own link ready for the chip.
+    if (ids.length > free.length) {
+      const { count } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", businessId).eq("kind", "waiter");
+      let n = (count ?? 0) + 1;
+      for (let k = free.length; k < ids.length; k++) {
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const { data, error } = await db().from("tags").insert({ business_id: businessId, kind: "waiter", branch_id: branchId, label: `Mesero ${n}`, code: newCode() }).select("id, label, branch_id").single();
+          if (data) { free.push(data as { id: string; label: string; branch_id: string | null }); break; }
+          if (error && error.code !== "23505") throw new Error(error.message);
+        }
+        n++;
+      }
+    }
     for (let i = 0; i < ids.length && i < free.length; i++) await linkPlaque(businessId, free[i].id, ids[i]);
     if (ids.length > free.length) return "meseros-sin-tarjeta";
   });

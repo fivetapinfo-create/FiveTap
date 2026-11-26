@@ -2,7 +2,7 @@ const OK: Record<string, string> = {
   sucursal: "Sucursal guardada.",
   "prueba-borrado": "Borrado.",
   "prueba-limpia": "Datos de prueba borrados. La app del dueño quedó limpia.",
-  "meseros-agregados": "Meseros agregados: cada uno ya tiene su avatar con el logo y su tarjeta asignada.",
+  "meseros-agregados": "Listo: cada mesero ya tiene su avatar con el logo en la camisa y el delantal, y su enlace para el chip (abajo, Copiar enlace).",
   "meseros-sin-tarjeta": "Meseros agregados. Algunos quedaron sin tarjeta porque no hay tarjetas libres: agrega más tarjetas de mesero.",
   mesero: "Mesero actualizado.",
   "mesero-eliminado": "Mesero eliminado. Su tarjeta quedó libre y su historial se guarda.",
