@@ -253,7 +253,13 @@ export default async function BusinessPage({ params, searchParams }: Props) {
                             {card?.active && s.active && s.approved && <a className="btn btn-ghost btn-sm" href={url} target="_blank" rel="noreferrer">Ver como cliente</a>}
                           </div>
                         </div>
-                      ) : <p className="muted">Sin tarjeta: elige una en Más opciones.</p>}
+                      ) : (
+                        <form action={adminWaiterOp} className="mz-chip-link">
+                          {hid("newcard")}
+                          <span className="muted">Aún no tiene tarjeta ni enlace para el chip.</span>
+                          <button className="btn btn-dark btn-sm" type="submit" style={{ width: "fit-content" }}>Darle su tarjeta</button>
+                        </form>
+                      )}
                       <div className="mz-actions">
                         <form action={adminWaiterOp}>{hid("regenerate")}<button className="btn btn-ghost btn-sm" type="submit">Otro look</button></form>
                         <form action={adminWaiterOp}>{hid("body")}<input type="hidden" name="body" value={s.avatar.body === "f" ? "m" : "f"} /><button className="btn btn-ghost btn-sm" type="submit">Cambiar a {s.avatar.body === "f" ? "hombre" : "mujer"}</button></form>

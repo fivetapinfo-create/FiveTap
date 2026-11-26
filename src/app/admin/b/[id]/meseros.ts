@@ -115,6 +115,21 @@ export async function adminWaiterOp(f: FormData) {
       for (const t of (data ?? []) as { id: string }[]) await linkPlaque(businessId, t.id, null);
       const tag = String(f.get("tag") ?? "");
       if (tag) await linkPlaque(businessId, tag, id);
+    } else if (op === "newcard") {
+      // A waiter left without a card: a new one ("Mesero N") with its own link, assigned to them.
+      const { data: had } = await db().from("tags").select("id").eq("business_id", businessId).eq("staff_id", id).limit(1);
+      if (had?.length) throw new Error("Este mesero ya tiene tarjeta.");
+      const { data: st } = await db().from("staff").select("branch_id").eq("id", id).eq("business_id", businessId).maybeSingle();
+      if (!st) throw new Error("Mesero no encontrado.");
+      const { count } = await db().from("tags").select("id", { count: "exact", head: true }).eq("business_id", businessId).eq("kind", "waiter");
+      let tagId = "";
+      for (let attempt = 0; attempt < 4 && !tagId; attempt++) {
+        const { data, error } = await db().from("tags").insert({ business_id: businessId, kind: "waiter", branch_id: st.branch_id ?? null, label: `Mesero ${(count ?? 0) + 1}`, code: newCode() }).select("id").single();
+        if (data) tagId = data.id;
+        else if (error && error.code !== "23505") throw new Error(error.message);
+      }
+      if (!tagId) throw new Error("No se pudo crear la tarjeta. Inténtalo otra vez.");
+      await linkPlaque(businessId, tagId, id);
     } else if (op === "delete") {
       if (f.get("confirm") !== "1") throw new Error("Marca la casilla para confirmar.");
       await removeStaff(businessId, id);
