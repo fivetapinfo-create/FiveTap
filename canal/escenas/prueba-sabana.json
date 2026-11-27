@@ -1,0 +1,8 @@
+{"fondo":"sabana","seed":3,"elementos":[
+ {"tipo":"sol","x":640,"y":30,"r":140},
+ {"tipo":"texto","x":60,"y":250,"txt":"DÍA","tam":96,"color":"#151515","borde":0,"fuente":"Mano","ancla":"start"},
+ {"tipo":"texto","x":60,"y":350,"txt":"LISTO","tam":96,"color":"#151515","borde":0,"fuente":"Mano","ancla":"start"},
+ {"tipo":"check","x":300,"y":290,"escala":1},
+ {"tipo":"acacia","x":860,"y":540,"escala":1},
+ {"tipo":"personaje","x":440,"y":560,"pose":"parado","expr":"feliz","ojos":[0.5,-0.7],"accesorio":"rizos","panuelo":true}
+]}

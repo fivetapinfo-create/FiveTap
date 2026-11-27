@@ -1,0 +1,36 @@
+{
+ "fondo": "cueva-noche",
+ "seed": 9,
+ "elementos": [
+  {
+   "tipo": "fuego",
+   "x": 760,
+   "y": 360,
+   "escala": 0.9
+  },
+  {
+   "tipo": "personaje",
+   "x": 560,
+   "y": 500,
+   "rot": -74,
+   "cabezaRot": 64,
+   "pose": "acostado",
+   "expr": "confundido",
+   "ojos": [
+    0.7,
+    -0.6
+   ],
+   "panuelo": true,
+   "sombra": false,
+   "escala": 1.45
+  },
+  {
+   "tipo": "texto",
+   "x": 640,
+   "y": 120,
+   "txt": "¿DORMIR 2 VECES?",
+   "tam": 118,
+   "borde": 16
+  }
+ ]
+}

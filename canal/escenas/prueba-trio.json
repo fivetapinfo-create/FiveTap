@@ -1,0 +1,5 @@
+{"fondo":"blanco","seed":5,"elementos":[
+ {"tipo":"personaje","x":260,"y":500,"pose":"parado","expr":"asustado","ojos":[0,0],"accesorio":"casco","objeto":"llave"},
+ {"tipo":"personaje","x":640,"y":500,"pose":"senala","expr":"presumido","cara":{"bigote":true},"ojos":[0.3,0],"accesorio":"chistera","objeto":"microfono"},
+ {"tipo":"personaje","x":1020,"y":500,"pose":"manosCintura","expr":"sospecha","ojos":[-0.6,0],"mira":"izq","accesorio":"marinero"}
+]}
