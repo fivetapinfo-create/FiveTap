@@ -3,6 +3,7 @@ import { OwnerTabs } from "@/components/OwnerTabs";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Snackbar } from "@/components/Snackbar";
 import { ScrollFx } from "@/components/ScrollFx";
+import { Island } from "@/components/Island";
 import { accessRole } from "@/lib/access";
 import { businessByOwnerToken } from "@/lib/data";
 import { accessOf } from "@/lib/entitlements";
@@ -28,6 +29,7 @@ export default async function OwnerLayout({ children, params }: { children: Reac
         <PullToRefresh />
         <Snackbar />
         <ScrollFx />
+        <Island />
       </>
     );
   }

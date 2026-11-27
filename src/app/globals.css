@@ -2202,3 +2202,90 @@ html[data-theme="dark"] .admin .fx-stack > .msg { box-shadow: 0 -6px 18px rgba(0
 .mz-free li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
 .mz-free .mz-url { font-size: 12.5px; word-break: break-all; flex: 1 1 200px; }
 @media (max-width: 480px) { .mz-item { grid-template-columns: 76px minmax(0, 1fr); } .mz-item .mz-pic { width: 76px; height: 96px; } }
+
+/* ---------- Apple-style motion (Founder + Fivetap Business) ----------
+   Springs: critically damped by default (no overshoot); a little bounce only where something
+   arrives with momentum (the island). Curves sampled from damping/response (WWDC "Fluid Interfaces"). */
+:root {
+  --spring: linear(0, 0.069, 0.2108, 0.3666, 0.5094, 0.6295, 0.7254, 0.7994, 0.8551, 0.8963, 0.9264, 0.9481, 0.9636, 0.9746, 0.9823, 0.9878, 0.9916, 0.9942, 0.996, 0.9973, 0.9981, 0.9987, 0.9991, 0.9994, 1);
+  --spring-bounce: linear(0, 0.1017, 0.3081, 0.5244, 0.7063, 0.8401, 0.9286, 0.9809, 1.0077, 1.0183, 1.0197, 1.0168, 1.0125, 1.0084, 1.005, 1.0026, 1.0011, 1.0002, 0.9998, 0.9996, 0.9996, 0.9997, 0.9998, 0.9999, 1);
+}
+@supports not (transition-timing-function: linear(0, 1)) { :root { --spring: cubic-bezier(0.2, 0.9, 0.1, 1); --spring-bounce: cubic-bezier(0.34, 1.4, 0.64, 1); } }
+
+/* Response: feedback on press, instantly (100 ms), and a springy release. */
+.admin .btn, .admin .qa-card, .admin a.kpi, .admin .cc-grid > a, .admin .ct summary, .admin .mz-item, .admin .la .btn { transition: transform 420ms var(--spring), background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.admin .btn:active, .admin a.kpi:active, .admin .cc-grid > a:active, .admin .ct summary:active { transform: scale(0.97); transition-duration: 100ms; }
+.admin .qa-card:active { transform: scale(0.95); transition-duration: 100ms; }
+.copy-btn.is-done { color: var(--ok, #127a3e); border-color: color-mix(in srgb, var(--ok, #127a3e) 35%, transparent); }
+.copy-check { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; stroke-dasharray: 22; stroke-dashoffset: 22; animation: draw-check 420ms var(--spring) forwards; }
+@keyframes draw-check { to { stroke-dashoffset: 0; } }
+
+/* Dynamic Island notice: grows out of the top like the iPhone island, then folds back. */
+.island { position: fixed; top: max(10px, env(safe-area-inset-top)); left: 50%; z-index: 90; display: flex; align-items: center; gap: 10px; max-width: min(92vw, 420px); padding: 10px 18px 10px 12px; border-radius: 999px; background: #0b0b0c; color: #fff; font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28); transform: translateX(-50%); transform-origin: 50% 0; animation: island-in 560ms var(--spring-bounce) both; pointer-events: none; }
+.island.out { animation: island-out 320ms var(--spring) both; }
+.island-ic { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: #1f9d55; }
+.island-error .island-ic { background: #d63b3b; }
+.island-share .island-ic { background: #2a7de1; }
+.island-ic svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.island-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; animation: island-txt 420ms var(--spring) 120ms both; }
+@keyframes island-in { from { transform: translateX(-50%) scale(0.35, 0.6); opacity: 0; filter: blur(4px); } }
+@keyframes island-out { to { transform: translateX(-50%) scale(0.4, 0.6); opacity: 0; filter: blur(4px); } }
+@keyframes island-txt { from { opacity: 0; transform: translateY(4px); } }
+
+/* Link actions + iOS action sheet (anchored at the bottom, dims the page, drag to dismiss). */
+.la { display: flex; flex-wrap: wrap; gap: 6px; }
+.sheet-layer { position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, 0.36); animation: sheet-dim 300ms var(--spring) both; }
+.sheet { width: min(560px, 100%); max-height: 88vh; overflow: auto; display: grid; gap: 12px; padding: 6px 18px max(18px, env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; background: var(--surface, #fff); color: var(--ink); box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.22); transition: transform 460ms var(--spring); animation: sheet-up 480ms var(--spring) both; touch-action: none; }
+.sheet .field, .sheet textarea, .sheet input { touch-action: auto; }
+.sheet-layer.closing { animation: sheet-undim 260ms var(--spring) both; }
+.sheet-layer.closing .sheet { animation: sheet-down 260ms var(--spring) both; }
+.sheet-grab { display: grid; place-items: center; height: 26px; cursor: grab; touch-action: none; }
+.sheet-grab span { width: 40px; height: 5px; border-radius: 99px; background: var(--line-strong, rgba(0, 0, 0, 0.2)); }
+.sheet-head { display: grid; gap: 4px; }
+.sheet-head b { font-size: 17px; letter-spacing: -0.01em; }
+.sheet-url { font-size: 12.5px; color: var(--muted); word-break: break-all; }
+.sheet-actions { display: grid; gap: 8px; }
+.sheet-cancel { font-weight: 600; }
+html.sheet-open { overflow: hidden; }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes sheet-down { to { transform: translateY(100%); } }
+@keyframes sheet-dim { from { background: rgba(0, 0, 0, 0); } }
+@keyframes sheet-undim { to { background: rgba(0, 0, 0, 0); } }
+@media (min-width: 700px) { .sheet-layer { align-items: center; } .sheet { border-radius: 22px; } @keyframes sheet-up { from { transform: translateY(24px) scale(0.97); opacity: 0; } } @keyframes sheet-down { to { transform: translateY(24px) scale(0.97); opacity: 0; } } }
+
+/* Pages arrive softly; menus and notices materialize (scale + blur together, not a plain fade). */
+.admin .admin-main { animation: page-in 460ms var(--spring) both; }
+@keyframes page-in { from { opacity: 0; transform: translateY(10px); } }
+.admin details[open] > :not(summary) { animation: unfold 360ms var(--spring) both; }
+@keyframes unfold { from { opacity: 0; transform: translateY(-6px); } }
+.admin .alert { animation: materialize 420ms var(--spring) both; }
+@keyframes materialize { from { opacity: 0; transform: scale(0.97); filter: blur(4px); } }
+.admin .nav-more-menu { transform-origin: top right; animation: materialize 300ms var(--spring) both; }
+
+/* Accessibility: gentle cross-fades instead of movement, solid surfaces, stronger edges. */
+@media (prefers-reduced-motion: reduce) {
+  .island, .island.out, .island-txt, .sheet, .sheet-layer, .sheet-layer.closing .sheet, .admin .admin-main, .admin details[open] > :not(summary), .admin .alert, .admin .nav-more-menu { animation: fade-only 200ms ease both !important; }
+  .island.out, .sheet-layer.closing, .sheet-layer.closing .sheet { animation: fade-out 160ms ease both !important; }
+  .admin .btn:active, .admin .qa-card:active { transform: none; }
+  .copy-check { animation: none; stroke-dashoffset: 0; }
+}
+@keyframes fade-only { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@media (prefers-reduced-transparency: reduce) {
+  html.fx-scrolled .admin .admin-top { background: #0a0a0a; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .admin .panel, .admin .kpi, .admin .qa-card, .sheet { border: 1.5px solid var(--ink); }
+}
+
+/* Links hub (Founder business page + Business "Mis enlaces"). */
+.lk-list { list-style: none; margin: 0; padding: 4px 12px 12px; display: grid; gap: 8px; }
+.lk-row { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.lk-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.lk-top b { font-size: 15.5px; letter-spacing: -0.01em; }
+.lk-top small { color: var(--muted); font-size: 12.5px; }
+.lk-url { font-size: 12.5px; color: var(--muted); word-break: break-all; }
+.lk-group { padding: 10px 16px 0; margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.lk-quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px 4px; align-items: center; }
+.lk-quick form { display: flex; gap: 6px; align-items: center; }
+.lk-quick .input { min-height: 38px; padding: 6px 12px; width: 150px; }

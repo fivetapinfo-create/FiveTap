@@ -5,6 +5,8 @@ import { after } from "next/server";
 import { BusinessLogo } from "@/components/BusinessLogo";
 import { ClubPanel } from "@/components/ClubPanel";
 import { CopyButton } from "@/components/CopyButton";
+import { LinksHub } from "@/components/LinksHub";
+import { linkGroups } from "@/lib/links";
 import { MessageActions } from "@/components/MessageActions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BILLING_LABEL, addDays, billingState, human, planLabel } from "@/lib/agenda";
@@ -139,6 +141,25 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         </div>
       </div>
 
+      {/* Links hub: every link of this business in one place, with Copy · Share · Open, and quick creation. */}
+      <section className="panel" id="enlaces">
+        <div className="panel-head">
+          <h2>Enlaces</h2>
+          <span className="muted">Mesas, meseros, reseñas y la app</span>
+        </div>
+        <div className="lk-quick">
+          <form action={addTags}>
+            <input type="hidden" name="business_id" value={b.id} />
+            <input type="hidden" name="count" value="1" />
+            <input type="hidden" name="kind" value="table" />
+            <input className="input" name="label" placeholder={`${v.spot} (nombre)`} aria-label="Nombre de la mesa" maxLength={30} />
+            <button className="btn btn-dark btn-sm" type="submit">+ Mesa</button>
+          </form>
+          {b.mode === "full" && <a className="btn btn-ghost btn-sm" href="#meseros-panel">+ Mesero</a>}
+        </div>
+        <LinksHub groups={linkGroups(b, tags, { ownerApp: true, isWaiter })} />
+      </section>
+
       {/* What the plaques open, in one place: easy to find. */}
       <section className="panel biz-setup">
         <div className="panel-head"><h2>Configurar lo que abren las placas</h2></div>
@@ -147,7 +168,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
           <Link href={`/admin/b/${b.id}/experiencia#redes`}><b>Redes sociales</b><small>Instagram, TikTok, Facebook, WhatsApp, web</small></Link>
           <Link href={`/admin/b/${b.id}/experiencia#fondo`}><b>Fondo con foto del local</b><small>Detrás de la página de la mesa</small></Link>
           <Link href={`/admin/b/${b.id}/experiencia#escenario`}><b>Escenario del mesero</b><small>El local en low-poly detrás del avatar</small></Link>
-          <a href={`/mi/${b.owner_token}/equipo`}><b>Meseros y tarjetas</b><small>Agregar meseros, avatares, asignar tarjetas</small></a>
+          <a href="#meseros-panel"><b>Meseros y tarjetas</b><small>Crear meseros con avatar y su enlace</small></a>
         </div>
         <p className="muted biz-setup-note">Enlaces para grabar en el chip: las <b>placas de mesa</b> usan <span className="code">/t/código</span> (el local) y las <b>tarjetas de mesero</b> usan <span className="code">/m/código</span> (el servicio de esa persona). Los encuentras en Placas.</p>
       </section>
@@ -328,6 +349,7 @@ export default async function BusinessPage({ params, searchParams }: Props) {
         <a href="#pagos">Pagos</a>
         <a href="#resenas">Reseñas</a>
         <a href="#permisos">Permisos</a>
+        <a href="#enlaces">Enlaces</a>
         <a href="#meseros-panel">Meseros</a>
         <a href="#app">Accesos</a>
         {waiters.length > 0 && <a href="#equipo">Equipo</a>}

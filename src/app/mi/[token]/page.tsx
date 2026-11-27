@@ -217,6 +217,7 @@ export default async function OwnerPage({ params, searchParams }: Props) {
         <nav className="qa-grid" aria-label="Accesos rápidos">
           {[
             { href: "#mensajes", label: "Mensajes", icon: <Chat />, badge: pending.length || null, on: true },
+            { href: `/mi/${token}/enlaces`, label: "Mis enlaces", icon: <Home />, on: true },
             { href: `/mi/${token}/clientes`, label: "Mis clientes", icon: <Users />, on: acc.has.clients },
             { href: `/mi/${token}/pagina`, label: "Mi página", icon: <Home />, on: acc.has.promos || acc.has.catalog },
             ...(b.mode === "full" ? [{ href: `/mi/${token}/fidelidad`, label: "Fidelidad", icon: <Card />, on: acc.has.loyalty }] : []),

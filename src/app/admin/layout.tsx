@@ -12,6 +12,7 @@ import { openTicketsCount } from "@/lib/support";
 import { pendingClaimsCount } from "@/lib/claims";
 import { AdminNav } from "./AdminNav";
 import { ScrollFx } from "@/components/ScrollFx";
+import { Island } from "@/components/Island";
 
 export const metadata: Metadata = {
   title: "Panel — FiveTap",
@@ -37,6 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="admin">
       <FounderIntro />
       <ScrollFx />
+      <Island />
       {faceId && <PanelLock minutes={UNLOCK_MINUTES} />}
       <header className="admin-top no-print">
         <div className="container">
